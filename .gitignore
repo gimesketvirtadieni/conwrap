@@ -1,7 +1,5 @@
 syntax: glob
-.settings/*
-Debug/*
-Release/*
-
-/Debug/
+.settings/
+Debug/
+Release/
 /UnitTest/
