@@ -15,6 +15,7 @@
 #include <future>
 #include <functional>
 #include "HandlerContext.hpp"
+#include "HandlerWrapper.hpp"
 
 
 template <typename ResourceType>
@@ -60,4 +61,6 @@ class Processor
 			f(createHandlerContext());
 			p.set_value();
 		}
+
+		virtual HandlerWrapper wrapHandler(std::function<void()> handler) = 0;
 };

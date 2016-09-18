@@ -27,6 +27,8 @@ class HandlerContext
 		: resourcePtr(r)
 		, processorPtr(p) {}
 
+		virtual ~HandlerContext() {}
+
 		inline Processor<ResourceType>* getProcessor()
 		{
 			return processorPtr;

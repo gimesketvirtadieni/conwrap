@@ -12,8 +12,10 @@
 
 #pragma once
 
+#include <functional>
 #include <memory>
 #include "HandlerContext.hpp"
+#include "HandlerWrapper.hpp"
 #include "ProcessorAsioImpl.hpp"
 
 
@@ -52,14 +54,19 @@ class ProcessorAsio : public Processor<ResourceType>
 			return processorImplPtr->getDispatcher();
 		}
 
-		virtual ResourceType* getResource()
+		virtual ResourceType* getResource() override
 		{
 			return processorImplPtr->getResource();
 		}
 
-		virtual void flush()
+		virtual void flush() override
 		{
 			processorImplPtr->flush();
+		}
+
+		virtual HandlerWrapper wrapHandler(std::function<void()> handler) override
+		{
+			return processorImplPtr->wrapHandler(handler);
 		}
 
 	protected:
@@ -69,7 +76,7 @@ class ProcessorAsio : public Processor<ResourceType>
 		{
 		}
 
-		virtual void post(std::function<void()> handler)
+		virtual void post(std::function<void()> handler) override
 		{
 			processorImplPtr->post(handler);
 		}

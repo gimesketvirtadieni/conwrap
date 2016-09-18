@@ -43,11 +43,10 @@ int main(int argc, char *argv[])
 			std::cout << "Hello from asio handler1\n\r";
 		});
 		processorAsio.flush();
-/*
-		processorAsio.getDispatcher()->post(processorAsio.createHandler([] {
+
+		processorAsio.getDispatcher()->post(processorAsio.wrapHandler([] {
 			std::cout << "Hello from asio handler2\n\r";
 		}));
-*/
 	}
 	std::cout << "Back to main\n\r";
 

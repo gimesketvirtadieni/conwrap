@@ -17,6 +17,7 @@
 #include <mutex>
 #include <thread>
 #include "HandlerContext.hpp"
+#include "HandlerWrapper.hpp"
 #include "Processor.hpp"
 #include "ProcessorQueue.hpp"
 
@@ -36,68 +37,82 @@ class ProcessorAsioImpl : public Processor<ResourceType>
 			return &dispatcher;
 		}
 
-		virtual ResourceType* getResource()
+		virtual ResourceType* getResource() override
 		{
 			return processorQueue.getResource();
 		}
 
-		virtual void flush()
+		virtual void flush() override
 		{
-			if (!thread.joinable())
 			{
 				std::lock_guard<std::recursive_mutex> guard(lock);
 
-				// stopping dispatcher will make sure all handlers are in processor queue
-				stop();
+				if (thread.joinable())
+				{
+					// stopping dispatcher will make sure all handlers are in processor queue
+					stop();
 
-				// start processing as flush will not be affected by incomming handlers
-				start();
+					// start processing as flush will not be affected by incomming handlers
+					start();
+				}
 			}
 
 			// flushing processor's queue
 			processorQueue.flush();
 		}
 
-		virtual void post(std::function<void()> handler)
+		virtual void post(std::function<void()> handler) override
 		{
-			dispatcher.post([=]
-			{
-				handler();
-			});
+			dispatcher.post(wrapHandler(handler));
 		}
 
 		void start()
 		{
-			if (!thread.joinable())
 			{
 				std::lock_guard<std::recursive_mutex> guard(lock);
 
-				// creating work object to make sure dispatcher performs until work object is deleted
-				workPtr = std::make_unique<boost::asio::io_service::work>(dispatcher);
-
-				// running dispacther on its dedicated thread
-				thread = std::thread([&]
+				if (!thread.joinable())
 				{
-					dispatcher.run();
-				});
+					// creating work object to make sure dispatcher performs until work object is deleted
+					workPtr = std::make_unique<boost::asio::io_service::work>(dispatcher);
+
+					// running dispacther on its dedicated thread
+					thread = std::thread([&]
+					{
+						dispatcher.run();
+					});
+				}
 			}
 		}
 
 		void stop()
 		{
-			if (thread.joinable())
 			{
 				std::lock_guard<std::recursive_mutex> guard(lock);
 
-				// reseting work object will make dispatcher exit as soon as there is no handler to process
-				workPtr.reset();
+				if (thread.joinable())
+				{
+					// reseting work object will make dispatcher exit as soon as there is no handler to process
+					workPtr.reset();
 
-				// waiting for the thread to finish
-				thread.join();
+					// waiting for the thread to finish
+					thread.join();
 
-				// cleanning up
-				dispatcher.reset();
+					// cleanning up
+					dispatcher.reset();
+				}
 			};
+		}
+
+		virtual HandlerWrapper wrapHandler(std::function<void()> handler) override
+		{
+			return HandlerWrapper([=]
+			{
+				processorQueue.process([=](auto)
+				{
+					handler();
+				});
+			});
 		}
 
 	private:
