@@ -1,0 +1,7 @@
+syntax: glob
+.settings/*
+Debug/*
+Release/*
+
+/Debug/
+/UnitTest/
