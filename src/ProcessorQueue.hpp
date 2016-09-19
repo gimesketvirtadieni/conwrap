@@ -56,11 +56,6 @@ class ProcessorQueue : public Processor<ResourceType>
 			processorImplPtr->flush();
 		}
 
-		virtual HandlerWrapper wrapHandler(std::function<void()> handler) override
-		{
-			return processorImplPtr->wrapHandler(handler);
-		}
-
 	protected:
 		ProcessorQueue(std::shared_ptr<ProcessorQueueImpl<ResourceType>> processorImplPtr)
 		: processorImplPtr(processorImplPtr)
@@ -69,6 +64,11 @@ class ProcessorQueue : public Processor<ResourceType>
 		virtual void post(std::function<void()> handler) override
 		{
 			processorImplPtr->post(handler);
+		}
+
+		virtual HandlerWrapper wrapHandler(std::function<void()> handler) override
+		{
+			return processorImplPtr->wrapHandler(handler);
 		}
 
 	private:
