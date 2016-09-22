@@ -135,15 +135,10 @@ namespace conwrap
 								// running dispacther on its dedicated thread
 								thread = std::thread([&]
 								{
-									// TODO: rewrite...
-									dispatcher.reset();
-									auto processedCount = dispatcher.run();
-
-									for (processedCount = 1 ;processedCount > 0;)
+									for (std::size_t processedCount; (processedCount = dispatcher.run()) > 0;)
 									{
 										processorQueue.flush();
 										dispatcher.reset();
-										processedCount = dispatcher.run();
 									}
 								});
 							}
