@@ -12,10 +12,10 @@
 
 #pragma once
 
+#include <condition_variable>
+#include <exception>
 #include <queue>
 #include <mutex>
-#include <exception>
-#include <condition_variable>
 
 
 template<typename T1, typename Container1 = std::deque<T1>>
@@ -39,6 +39,12 @@ class ConcurrentQueue
 			return queue_.c.begin();
 		}
 
+		bool empty() const
+		{
+			std::lock_guard<std::mutex> lock(m_);
+			return queue_.empty();
+		}
+
 		iterator end()
 		{
 			return queue_.c.end();
@@ -49,52 +55,65 @@ class ConcurrentQueue
 			return queue_.c.end();
 		}
 
+		void flush()
+		{
+			{
+				std::unique_lock<std::mutex> lock(m_);
+				data_cond_.wait(lock, [&] { return queue_.empty();});
+			}
+		}
+
+		T1* get()
+		{
+			T1* result = nullptr;
+			{
+				std::lock_guard<std::mutex> lock(m_);
+				if (!queue_.empty()) {
+					result = &queue_.front();
+				}
+			}
+			return result;
+		}
+
 		void push(T1 item)
 		{
 			{
 				std::lock_guard<std::mutex> lock(m_);
 				queue_.push(std::move(item));
 			}
-			data_cond_.notify_one();
+			data_cond_.notify_all();
 		}
 
-bool poll(T1 &popped_item) {
-std::lock_guard<std::mutex> lock(m_);
-if (queue_.empty()) {
- return false;
-}
-popped_item = std::move(queue_.front());
-queue_.pop();
-return true;
-}
+		bool remove() {
+			auto result = false;
+			{
+				std::lock_guard<std::mutex> lock(m_);
+				if (!queue_.empty()) {
 
-/// Try to retrieve, if no items, wait till an item is available and try again
-void pop(T1 &popped_item) {
-std::unique_lock<std::mutex> lock(m_);
-while (queue_.empty())
-{
-data_cond_.wait(lock);
-//  This 'while' loop is equal to
-//  data_cond_.wait(lock, [](bool result){return !queue_.empty();});
-}
-popped_item = std::move(queue_.front());
-queue_.pop();
-}
+					// remove the first item in the queue
+					queue_.pop();
+					data_cond_.notify_all();
+					result = true;
+				}
+			}
+			return result;
+		}
 
-bool empty() const {
-std::lock_guard<std::mutex> lock(m_);
-return queue_.empty();
-}
+		unsigned size() const
+		{
+			std::lock_guard<std::mutex> lock(m_);
+			return queue_.size();
+		}
 
-unsigned size() const
-{
-std::lock_guard<std::mutex> lock(m_);
-return queue_.size();
-}
-
+		void wait()
+		{
+			{
+				std::unique_lock<std::mutex> lock(m_);
+				data_cond_.wait(lock, [&] {return !queue_.empty();});
+			}
+		}
 
 	protected:
-
 		// defining internal struct to gain access to sequence of elements in a std::queue
 		template<typename T2, typename Container2>
 		struct IterableQueue : public std::queue<T2, Container2>
