@@ -12,12 +12,12 @@
 
 #pragma once
 
+#include <conwrap/HandlerContext.hpp>
+#include <conwrap/Processor.hpp>
+#include <conwrap/ProcessorQueue.hpp>
+#include <conwrap/ProcessorAsio.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <HandlerContext.hpp>
-#include <Processor.hpp>
-#include <ProcessorQueue.hpp>
-#include <ProcessorAsio.hpp>
 
 
 struct Dummy {

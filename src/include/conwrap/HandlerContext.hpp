@@ -14,6 +14,7 @@
 
 #include <functional>
 
+
 // forward declaration
 template <typename ResourceType>
 class Processor;

@@ -17,10 +17,10 @@
 #include <memory>
 #include <mutex>
 #include <thread>
-#include "HandlerContext.hpp"
-#include "HandlerWrapper.hpp"
-#include "Processor.hpp"
-#include "ProcessorQueue.hpp"
+#include <conwrap/HandlerContext.hpp>
+#include <conwrap/HandlerWrapper.hpp>
+#include <conwrap/Processor.hpp>
+#include <conwrap/ProcessorQueue.hpp>
 
 
 template <typename ResourceType>

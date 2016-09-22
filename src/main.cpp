@@ -10,12 +10,11 @@
  * Author: gimesketvirtadieni at gmail dot com (Andrej Kislovskij)
  */
 
+#include <conwrap/HandlerContext.hpp>
+#include <conwrap/ProcessorAsio.hpp>
+#include <conwrap/ProcessorQueue.hpp>
 #include <functional>
 #include <iostream>
-
-#include "HandlerContext.hpp"
-#include "ProcessorAsio.hpp"
-#include "ProcessorQueue.hpp"
 
 
 struct Dummy

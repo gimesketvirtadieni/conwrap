@@ -14,8 +14,8 @@
 
 #include <future>
 #include <functional>
-#include "HandlerContext.hpp"
-#include "HandlerWrapper.hpp"
+#include <conwrap/HandlerContext.hpp>
+#include <conwrap/HandlerWrapper.hpp>
 
 
 template <typename ResourceType>

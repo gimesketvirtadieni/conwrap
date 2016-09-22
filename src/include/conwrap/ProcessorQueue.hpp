@@ -14,9 +14,9 @@
 
 #include <memory>
 #include <thread>
-#include "ConcurrentQueue.hpp"
-#include "HandlerContext.hpp"
-#include "HandlerWrapper.hpp"
+#include <conwrap/ConcurrentQueue.hpp>
+#include <conwrap/HandlerContext.hpp>
+#include <conwrap/HandlerWrapper.hpp>
 
 
 template <typename ResourceType>
