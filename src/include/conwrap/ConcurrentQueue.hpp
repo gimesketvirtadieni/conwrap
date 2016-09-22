@@ -18,115 +18,119 @@
 #include <mutex>
 
 
-template<typename T1, typename Container1 = std::deque<T1>>
-class ConcurrentQueue
+namespace conwrap
 {
-	public:
-		typedef typename Container1::iterator       iterator;
-		typedef typename Container1::const_iterator const_iterator;
 
-		ConcurrentQueue() {}
+	template<typename ResourceType1, typename Container1 = std::deque<ResourceType1>>
+	class ConcurrentQueue
+	{
+		public:
+			typedef typename Container1::iterator       iterator;
+			typedef typename Container1::const_iterator const_iterator;
 
-		virtual ~ConcurrentQueue() {}
+			ConcurrentQueue() {}
 
-		iterator begin()
-		{
-			return queue_.c.begin();
-		}
+			ConcurrentQueue(const ConcurrentQueue&) = delete;
 
-		const_iterator begin() const
-		{
-			return queue_.c.begin();
-		}
+			ConcurrentQueue &operator=(const ConcurrentQueue&) = delete;
 
-		bool empty() const
-		{
-			std::lock_guard<std::mutex> lock(m_);
-			return queue_.empty();
-		}
+			virtual ~ConcurrentQueue() {}
 
-		iterator end()
-		{
-			return queue_.c.end();
-		}
-
-		const_iterator end() const
-		{
-			return queue_.c.end();
-		}
-
-		void flush()
-		{
+			iterator begin()
 			{
-				std::unique_lock<std::mutex> lock(m_);
-				data_cond_.wait(lock, [&] { return queue_.empty();});
+				return queue_.c.begin();
 			}
-		}
 
-		T1* get()
-		{
-			T1* result = nullptr;
+			const_iterator begin() const
+			{
+				return queue_.c.begin();
+			}
+
+			bool empty() const
 			{
 				std::lock_guard<std::mutex> lock(m_);
-				if (!queue_.empty()) {
-					result = &queue_.front();
+				return queue_.empty();
+			}
+
+			iterator end()
+			{
+				return queue_.c.end();
+			}
+
+			const_iterator end() const
+			{
+				return queue_.c.end();
+			}
+
+			void flush()
+			{
+				{
+					std::unique_lock<std::mutex> lock(m_);
+					data_cond_.wait(lock, [&] { return queue_.empty();});
 				}
 			}
-			return result;
-		}
 
-		void push(T1 item)
-		{
+			ResourceType1* get()
 			{
-				std::lock_guard<std::mutex> lock(m_);
-				queue_.push(std::move(item));
+				ResourceType1* result = nullptr;
+				{
+					std::lock_guard<std::mutex> lock(m_);
+					if (!queue_.empty()) {
+						result = &queue_.front();
+					}
+				}
+				return result;
 			}
-			data_cond_.notify_all();
-		}
 
-		bool remove() {
-			auto result = false;
+			void push(ResourceType1 item)
+			{
+				{
+					std::lock_guard<std::mutex> lock(m_);
+					queue_.push(std::move(item));
+				}
+				data_cond_.notify_all();
+			}
+
+			bool remove() {
+				auto result = false;
+				{
+					std::lock_guard<std::mutex> lock(m_);
+					if (!queue_.empty()) {
+
+						// remove the first item in the queue
+						queue_.pop();
+						data_cond_.notify_all();
+						result = true;
+					}
+				}
+				return result;
+			}
+
+			unsigned size() const
 			{
 				std::lock_guard<std::mutex> lock(m_);
-				if (!queue_.empty()) {
+				return queue_.size();
+			}
 
-					// remove the first item in the queue
-					queue_.pop();
-					data_cond_.notify_all();
-					result = true;
+			void wait()
+			{
+				{
+					std::unique_lock<std::mutex> lock(m_);
+					data_cond_.wait(lock, [&] {return !queue_.empty();});
 				}
 			}
-			return result;
-		}
 
-		unsigned size() const
-		{
-			std::lock_guard<std::mutex> lock(m_);
-			return queue_.size();
-		}
-
-		void wait()
-		{
+		protected:
+			// defining internal struct to gain access to sequence of elements in a std::queue
+			template<typename ResourceType2, typename Container2>
+			struct IterableQueue : public std::queue<ResourceType2, Container2>
 			{
-				std::unique_lock<std::mutex> lock(m_);
-				data_cond_.wait(lock, [&] {return !queue_.empty();});
-			}
-		}
+				using std::queue<ResourceType2, Container2>::c;
+			};
 
-	protected:
-		// defining internal struct to gain access to sequence of elements in a std::queue
-		template<typename T2, typename Container2>
-		struct IterableQueue : public std::queue<T2, Container2>
-		{
-			using std::queue<T2, Container2>::c;
-		};
-
-
-	private:
-		IterableQueue<T1, Container1> queue_;
-		mutable std::mutex m_;
-		std::condition_variable data_cond_;
-
-		ConcurrentQueue(const ConcurrentQueue &other) = delete;
-		ConcurrentQueue &operator=(const ConcurrentQueue &) = delete;
-};
+		private:
+			IterableQueue<ResourceType1, Container1> queue_;
+			mutable std::mutex                       m_;
+			std::condition_variable                  data_cond_;
+	};
+}

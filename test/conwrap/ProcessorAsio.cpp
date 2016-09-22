@@ -17,16 +17,16 @@
 TEST(ProcessorAsio, Getters1)
 {
 	{
-		ProcessorAsio<Dummy> processor;
+		conwrap::ProcessorAsio<Dummy> processor;
 
 		EXPECT_TRUE(processor.getResource() != nullptr);
 		EXPECT_EQ(&processor, processor.getResource()->processorPtr);
 	}
 
 	{
-		auto                 dummyPtr    = std::make_unique<Dummy>();
-		auto                 dummyRawPtr = dummyPtr.get();
-		ProcessorAsio<Dummy> processor(std::move(dummyPtr));
+		auto dummyPtr    = std::make_unique<Dummy>();
+		auto dummyRawPtr = dummyPtr.get();
+		conwrap::ProcessorAsio<Dummy> processor(std::move(dummyPtr));
 
 		EXPECT_EQ(dummyRawPtr, processor.getResource());
 		EXPECT_EQ(&processor, processor.getResource()->processorPtr);
@@ -39,7 +39,7 @@ TEST(ProcessorAsio, Destructor1) {
 
 	// processor's scope used to activate destructor before exiting test case
 	{
-		ProcessorAsio<Dummy> processor;
+		conwrap::ProcessorAsio<Dummy> processor;
 
 		called = false;
 		processor.process([&](auto)
@@ -62,7 +62,7 @@ TEST(ProcessorAsio, Destructor2)
 
 	// processor's scope used to activate destructor before exiting test case
 	{
-		ProcessorAsio<Dummy> processor;
+		conwrap::ProcessorAsio<Dummy> processor;
 
 		called = false;
 		processor.process([&](auto handlerContext)
@@ -86,8 +86,8 @@ TEST(ProcessorAsio, Destructor2)
 
 TEST(ProcessorAsio, Flush1)
 {
-	std::atomic<bool>    wasCalled;
-	ProcessorAsio<Dummy> processor;
+	std::atomic<bool>             wasCalled;
+	conwrap::ProcessorAsio<Dummy> processor;
 
 	wasCalled = false;
 	processor.process([&](auto)
@@ -107,8 +107,8 @@ TEST(ProcessorAsio, Flush1)
 
 TEST(ProcessorAsio, Process1)
 {
-	std::atomic<bool>    wasCalled;
-	ProcessorAsio<Dummy> processor;
+	std::atomic<bool>             wasCalled;
+	conwrap::ProcessorAsio<Dummy> processor;
 
 	wasCalled = false;
 	auto asyncCall = processor.process([&](auto)
@@ -128,8 +128,8 @@ TEST(ProcessorAsio, Process1)
 
 TEST(ProcessorAsio, Process2)
 {
-	std::atomic<int>     val;
-	ProcessorAsio<Dummy> processor;
+	std::atomic<int>              val;
+	conwrap::ProcessorAsio<Dummy> processor;
 
 	val = 123;
 	auto syncCall = processor.process([&](auto) -> int
@@ -146,8 +146,8 @@ TEST(ProcessorAsio, Process2)
 
 TEST(ProcessorAsio, wrapHandler1)
 {
-	std::atomic<bool>    wasCalled;
-	ProcessorAsio<Dummy> processor;
+	std::atomic<bool>             wasCalled;
+	conwrap::ProcessorAsio<Dummy> processor;
 
 	auto dispatcher = processor.getDispatcher();
 	auto handler    = processor.wrapHandler([&]

@@ -15,23 +15,28 @@
 #include <functional>
 
 
-class HandlerWrapper
+namespace conwrap
 {
-	public:
-		HandlerWrapper(std::function<void()> h = [] {}) : handler(h) {}
 
-		virtual ~HandlerWrapper() {}
+	class HandlerWrapper
+	{
+		public:
+			HandlerWrapper(std::function<void()> h = [] {}) : handler(h) {}
 
-		inline std::function<void()> getHandler()
-		{
-			return handler;
-		}
+			virtual ~HandlerWrapper() {}
 
-		inline void operator()()
-		{
-			handler();
-		}
+			inline std::function<void()> getHandler()
+			{
+				return handler;
+			}
 
-	private:
-		std::function<void()> handler;
-};
+			inline void operator()()
+			{
+				handler();
+			}
+
+		private:
+			std::function<void()> handler;
+	};
+
+}

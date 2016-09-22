@@ -15,32 +15,37 @@
 #include <functional>
 
 
-// forward declaration
-template <typename ResourceType>
-class Processor;
-
-
-template <typename ResourceType>
-class HandlerContext
+namespace conwrap
 {
-	public:
-		HandlerContext(ResourceType* r = nullptr, Processor<ResourceType>* p = nullptr)
-		: resourcePtr(r)
-		, processorPtr(p) {}
 
-		virtual ~HandlerContext() {}
+	// forward declaration
+	template <typename ResourceType>
+	class Processor;
 
-		inline Processor<ResourceType>* getProcessor()
-		{
-			return processorPtr;
-		}
 
-		inline ResourceType* getResource()
-		{
-			return resourcePtr;
-		}
+	template <typename ResourceType>
+	class HandlerContext
+	{
+		public:
+			HandlerContext(ResourceType* r = nullptr, Processor<ResourceType>* p = nullptr)
+			: resourcePtr(r)
+			, processorPtr(p) {}
 
-	private:
-		ResourceType*            resourcePtr;
-		Processor<ResourceType>* processorPtr;
-};
+			virtual ~HandlerContext() {}
+
+			inline Processor<ResourceType>* getProcessor()
+			{
+				return processorPtr;
+			}
+
+			inline ResourceType* getResource()
+			{
+				return resourcePtr;
+			}
+
+		private:
+			ResourceType*            resourcePtr;
+			Processor<ResourceType>* processorPtr;
+	};
+
+}

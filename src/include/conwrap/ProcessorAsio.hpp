@@ -23,176 +23,181 @@
 #include <conwrap/ProcessorQueue.hpp>
 
 
-template <typename ResourceType>
-class ProcessorAsio : public Processor<ResourceType>
+namespace conwrap
 {
-	public:
-		template <typename... Args>
-		ProcessorAsio(Args... args)
-		: processorImplPtr(std::make_shared<ProcessorAsioImpl<ResourceType>>(std::move(std::make_unique<ResourceType>(this, std::forward<Args>(args)...))))
-		, processorProxyPtr(std::unique_ptr<ProcessorAsio<ResourceType>>(new ProcessorAsio<ResourceType>(processorImplPtr)))
-		, proxy(false)
-		{
-			processorImplPtr->start();
-		}
 
-		template <typename... Args>
-		ProcessorAsio(std::unique_ptr<ResourceType> resource)
-		: processorImplPtr(std::make_shared<ProcessorAsioImpl<ResourceType>>(std::move(resource)))
-		, processorProxyPtr(std::unique_ptr<ProcessorAsio<ResourceType>>(new ProcessorAsio<ResourceType>(processorImplPtr)))
-		, proxy(false)
-		{
-			processorImplPtr->start();
-		}
-
-		virtual ~ProcessorAsio()
-		{
-			if (!proxy)
+	template <typename ResourceType>
+	class ProcessorAsio : public Processor<ResourceType>
+	{
+		public:
+			template <typename... Args>
+			ProcessorAsio(Args... args)
+			: processorImplPtr(std::make_shared<ProcessorAsioImpl<ResourceType>>(std::move(std::make_unique<ResourceType>(this, std::forward<Args>(args)...))))
+			, processorProxyPtr(std::unique_ptr<ProcessorAsio<ResourceType>>(new ProcessorAsio<ResourceType>(processorImplPtr)))
+			, proxy(false)
 			{
-				processorImplPtr->stop();
+				processorImplPtr->start();
 			}
-		}
 
-		boost::asio::io_service* getDispatcher()
-		{
-			return processorImplPtr->getDispatcher();
-		}
+			template <typename... Args>
+			ProcessorAsio(std::unique_ptr<ResourceType> resource)
+			: processorImplPtr(std::make_shared<ProcessorAsioImpl<ResourceType>>(std::move(resource)))
+			, processorProxyPtr(std::unique_ptr<ProcessorAsio<ResourceType>>(new ProcessorAsio<ResourceType>(processorImplPtr)))
+			, proxy(false)
+			{
+				processorImplPtr->start();
+			}
 
-		virtual ResourceType* getResource() override
-		{
-			return processorImplPtr->getResource();
-		}
-
-		virtual void flush() override
-		{
-			processorImplPtr->flush();
-		}
-
-		virtual HandlerWrapper wrapHandler(std::function<void()> handler) override
-		{
-			return processorImplPtr->wrapHandler(handler);
-		}
-
-	protected:
-		template <typename ResourceType2>
-		class ProcessorAsioImpl : public Processor<ResourceType2>
-		{
-			public:
-				template <typename... Args>
-				ProcessorAsioImpl(std::unique_ptr<ResourceType2> r)
-				: processorQueue(std::move(r)) {}
-
-				virtual ~ProcessorAsioImpl() {}
-
-				boost::asio::io_service* getDispatcher()
+			virtual ~ProcessorAsio()
+			{
+				if (!proxy)
 				{
-					return &dispatcher;
+					processorImplPtr->stop();
 				}
+			}
 
-				virtual ResourceType2* getResource() override
-				{
-					return processorQueue.getResource();
-				}
+			boost::asio::io_service* getDispatcher()
+			{
+				return processorImplPtr->getDispatcher();
+			}
 
-				virtual void flush() override
-				{
+			virtual ResourceType* getResource() override
+			{
+				return processorImplPtr->getResource();
+			}
+
+			virtual void flush() override
+			{
+				processorImplPtr->flush();
+			}
+
+			virtual HandlerWrapper wrapHandler(std::function<void()> handler) override
+			{
+				return processorImplPtr->wrapHandler(handler);
+			}
+
+		protected:
+			template <typename ResourceType2>
+			class ProcessorAsioImpl : public Processor<ResourceType2>
+			{
+				public:
+					template <typename... Args>
+					ProcessorAsioImpl(std::unique_ptr<ResourceType2> r)
+					: processorQueue(std::move(r)) {}
+
+					virtual ~ProcessorAsioImpl() {}
+
+					boost::asio::io_service* getDispatcher()
 					{
-						std::lock_guard<std::recursive_mutex> guard(lock);
-
-						// TODO: redesign to avoid invoking stop-start as it changes running thread
-						if (thread.joinable())
-						{
-							// stopping dispatcher will make sure all handlers are in processor queue
-							stop();
-
-							// start processing as flush will not be affected by incomming handlers
-							start();
-						}
+						return &dispatcher;
 					}
 
-					// flushing processor's queue
-					processorQueue.flush();
-				}
-
-				virtual void post(std::function<void()> handler) override
-				{
-					dispatcher.post(wrapHandler(handler));
-				}
-
-				void start()
-				{
+					virtual ResourceType2* getResource() override
 					{
-						std::lock_guard<std::recursive_mutex> guard(lock);
+						return processorQueue.getResource();
+					}
 
-						if (!thread.joinable())
+					virtual void flush() override
+					{
 						{
-							// creating work object to make sure dispatcher performs until work object is deleted
-							workPtr = std::make_unique<boost::asio::io_service::work>(dispatcher);
+							std::lock_guard<std::recursive_mutex> guard(lock);
 
-							// running dispacther on its dedicated thread
-							thread = std::thread([&]
+							// TODO: redesign to avoid invoking stop-start as it changes running thread
+							if (thread.joinable())
 							{
-								// TODO: rewrite...
-								dispatcher.reset();
-								auto processedCount = dispatcher.run();
+								// stopping dispatcher will make sure all handlers are in processor queue
+								stop();
 
-								for (processedCount = 1 ;processedCount > 0;)
+								// start processing as flush will not be affected by incomming handlers
+								start();
+							}
+						}
+
+						// flushing processor's queue
+						processorQueue.flush();
+					}
+
+					virtual void post(std::function<void()> handler) override
+					{
+						dispatcher.post(wrapHandler(handler));
+					}
+
+					void start()
+					{
+						{
+							std::lock_guard<std::recursive_mutex> guard(lock);
+
+							if (!thread.joinable())
+							{
+								// creating work object to make sure dispatcher performs until work object is deleted
+								workPtr = std::make_unique<boost::asio::io_service::work>(dispatcher);
+
+								// running dispacther on its dedicated thread
+								thread = std::thread([&]
 								{
-									processorQueue.flush();
+									// TODO: rewrite...
 									dispatcher.reset();
-									processedCount = dispatcher.run();
-								}
-							});
+									auto processedCount = dispatcher.run();
+
+									for (processedCount = 1 ;processedCount > 0;)
+									{
+										processorQueue.flush();
+										dispatcher.reset();
+										processedCount = dispatcher.run();
+									}
+								});
+							}
 						}
 					}
-				}
 
-				void stop()
-				{
+					void stop()
 					{
-						std::lock_guard<std::recursive_mutex> guard(lock);
-
-						if (thread.joinable())
 						{
-							// reseting work object will make dispatcher exit as soon as there is no handler to process
-							workPtr.reset();
+							std::lock_guard<std::recursive_mutex> guard(lock);
 
-							// waiting for the thread to finish
-							thread.join();
-						}
-					};
-				}
+							if (thread.joinable())
+							{
+								// reseting work object will make dispatcher exit as soon as there is no handler to process
+								workPtr.reset();
 
-				virtual HandlerWrapper wrapHandler(std::function<void()> handler) override
-				{
-					return HandlerWrapper([=]
+								// waiting for the thread to finish
+								thread.join();
+							}
+						};
+					}
+
+					virtual HandlerWrapper wrapHandler(std::function<void()> handler) override
 					{
-						processorQueue.process([=](auto)
+						return HandlerWrapper([=]
 						{
-							handler();
+							processorQueue.process([=](auto)
+							{
+								handler();
+							});
 						});
-					});
-				}
+					}
 
-			private:
-				ProcessorQueue<ResourceType2>                  processorQueue;
-				std::unique_ptr<boost::asio::io_service::work> workPtr;
-				boost::asio::io_service                        dispatcher;
-				std::thread                                    thread;
-				std::recursive_mutex                           lock;
-		};
+				private:
+					ProcessorQueue<ResourceType2>                  processorQueue;
+					std::unique_ptr<boost::asio::io_service::work> workPtr;
+					boost::asio::io_service                        dispatcher;
+					std::thread                                    thread;
+					std::recursive_mutex                           lock;
+			};
 
-		ProcessorAsio(std::shared_ptr<ProcessorAsioImpl<ResourceType>> processorImplPtr)
-		: processorImplPtr(processorImplPtr)
-		, proxy(true) {}
+			ProcessorAsio(std::shared_ptr<ProcessorAsioImpl<ResourceType>> processorImplPtr)
+			: processorImplPtr(processorImplPtr)
+			, proxy(true) {}
 
-		virtual void post(std::function<void()> handler) override
-		{
-			processorImplPtr->post(handler);
-		}
+			virtual void post(std::function<void()> handler) override
+			{
+				processorImplPtr->post(handler);
+			}
 
-	private:
-		std::shared_ptr<ProcessorAsioImpl<ResourceType>> processorImplPtr;
-		std::unique_ptr<ProcessorAsio<ResourceType>>     processorProxyPtr;
-		bool                                             proxy;
-};
+		private:
+			std::shared_ptr<ProcessorAsioImpl<ResourceType>> processorImplPtr;
+			std::unique_ptr<ProcessorAsio<ResourceType>>     processorProxyPtr;
+			bool                                             proxy;
+	};
+
+}

@@ -17,16 +17,16 @@
 TEST(ProcessorQueue, Getters1)
 {
 	{
-		ProcessorQueue<Dummy> processor;
+		conwrap::ProcessorQueue<Dummy> processor;
 
 		EXPECT_TRUE(processor.getResource() != nullptr);
 		EXPECT_EQ(&processor, processor.getResource()->processorPtr);
 	}
 
 	{
-		auto                  dummyPtr    = std::make_unique<Dummy>();
-		auto                  dummyRawPtr = dummyPtr.get();
-		ProcessorQueue<Dummy> processor(std::move(dummyPtr));
+		auto dummyPtr    = std::make_unique<Dummy>();
+		auto dummyRawPtr = dummyPtr.get();
+		conwrap::ProcessorQueue<Dummy> processor(std::move(dummyPtr));
 
 		EXPECT_EQ(dummyRawPtr, processor.getResource());
 		EXPECT_EQ(&processor, processor.getResource()->processorPtr);
@@ -40,7 +40,7 @@ TEST(ProcessorQueue, Destructor1)
 
 	// processor's scope used to activate destructor before exiting test case
 	{
-		ProcessorQueue<Dummy> processor;
+		conwrap::ProcessorQueue<Dummy> processor;
 
 		called = false;
 		processor.process([&](auto)
@@ -63,7 +63,7 @@ TEST(ProcessorQueue, Destructor2)
 
 	// processor's scope used to activate destructor before exiting test case
 	{
-		ProcessorQueue<Dummy> processor;
+		conwrap::ProcessorQueue<Dummy> processor;
 
 		called = false;
 		processor.process([&](auto handlerContext)
@@ -86,8 +86,8 @@ TEST(ProcessorQueue, Destructor2)
 
 TEST(ProcessorQueue, Flush1)
 {
-	std::atomic<bool>     wasCalled;
-	ProcessorQueue<Dummy> processor;
+	std::atomic<bool>              wasCalled;
+	conwrap::ProcessorQueue<Dummy> processor;
 
 	wasCalled = false;
 	processor.process([&](auto)
@@ -107,8 +107,8 @@ TEST(ProcessorQueue, Flush1)
 
 TEST(ProcessorQueue, Process1)
 {
-	std::atomic<bool>     wasCalled;
-	ProcessorQueue<Dummy> processor;
+	std::atomic<bool>              wasCalled;
+	conwrap::ProcessorQueue<Dummy> processor;
 
 	wasCalled = false;
 	auto asyncCall = processor.process([&](auto)
@@ -128,8 +128,8 @@ TEST(ProcessorQueue, Process1)
 
 TEST(ProcessorQueue, Process2)
 {
-	std::atomic<int>      val;
-	ProcessorQueue<Dummy> processor;
+	std::atomic<int>               val;
+	conwrap::ProcessorQueue<Dummy> processor;
 
 	val = 123;
 	auto syncCall = processor.process([&](auto) -> int

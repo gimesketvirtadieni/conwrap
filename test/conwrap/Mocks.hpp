@@ -22,37 +22,42 @@
 
 struct Dummy {
 	Dummy() {}
-	Dummy(Processor<Dummy>* processorPtr) : processorPtr(processorPtr) {}
+	Dummy(conwrap::Processor<Dummy>* processorPtr) : processorPtr(processorPtr) {}
 	virtual ~Dummy() {}
 
-	Processor<Dummy>* processorPtr;
+	conwrap::Processor<Dummy>* processorPtr;
 };
 
 
-class ProcessorMock : public Processor<Dummy>
+namespace conwrap
 {
-	public:
-		ProcessorMock() : resourcePtr(std::make_unique<Dummy>()) {}
 
-		ProcessorMock(std::unique_ptr<Dummy> r) : resourcePtr(std::move(r)) {}
+	class ProcessorMock : public conwrap::Processor<Dummy>
+	{
+		public:
+			ProcessorMock() : resourcePtr(std::make_unique<Dummy>()) {}
 
-		virtual Dummy* getResource() override
-		{
-			return resourcePtr.get();
-		}
+			ProcessorMock(std::unique_ptr<Dummy> r) : resourcePtr(std::move(r)) {}
 
-		virtual void flush() override {}
+			virtual Dummy* getResource() override
+			{
+				return resourcePtr.get();
+			}
 
-		virtual void post(std::function<void()> handler) override
-		{
-			wrapHandler(handler)();
-		}
+			virtual void flush() override {}
 
-		virtual HandlerWrapper wrapHandler(std::function<void()> handler) override
-		{
-			return HandlerWrapper(handler);
-		}
+			virtual void post(std::function<void()> handler) override
+			{
+				wrapHandler(handler)();
+			}
 
-	private:
-		std::unique_ptr<Dummy> resourcePtr;
-};
+			virtual conwrap::HandlerWrapper wrapHandler(std::function<void()> handler) override
+			{
+				return conwrap::HandlerWrapper(handler);
+			}
+
+		private:
+			std::unique_ptr<Dummy> resourcePtr;
+	};
+
+}

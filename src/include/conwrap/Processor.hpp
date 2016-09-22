@@ -18,49 +18,54 @@
 #include <conwrap/HandlerWrapper.hpp>
 
 
-template <typename ResourceType>
-class Processor
+namespace conwrap
 {
-	public:
-		// TODO: figure out how to make this method protected
-		inline HandlerContext<ResourceType> createHandlerContext()
-		{
-			return HandlerContext<ResourceType> (getResource(), this);
-		}
 
-		virtual ResourceType* getResource() = 0;
-
-		virtual void flush() = 0;
-
-		template <typename F>
-		auto process(F fun) -> std::future<decltype(fun(createHandlerContext()))>
-		{
-			auto promisePtr = std::make_shared<std::promise<decltype(fun(createHandlerContext()))>>();
-
-			// posting a new handler
-			post([=]
+	template <typename ResourceType>
+	class Processor
+	{
+		public:
+			// TODO: figure out how to make this method protected
+			inline HandlerContext<ResourceType> createHandlerContext()
 			{
-				setPromiseValue(*promisePtr, fun);
-			});
+				return HandlerContext<ResourceType> (getResource(), this);
+			}
 
-			return promisePtr->get_future();
-		}
+			virtual ResourceType* getResource() = 0;
 
-	protected:
-		virtual void post(std::function<void()>) = 0;
+			virtual void flush() = 0;
 
-		template <typename Fut, typename Fun>
-		void setPromiseValue(std::promise<Fut>& p, Fun& f)
-		{
-			p.set_value(f(createHandlerContext()));
-		}
+			template <typename F>
+			auto process(F fun) -> std::future<decltype(fun(createHandlerContext()))>
+			{
+				auto promisePtr = std::make_shared<std::promise<decltype(fun(createHandlerContext()))>>();
 
-		template <typename Fun>
-		void setPromiseValue(std::promise<void>& p, Fun& f)
-		{
-			f(createHandlerContext());
-			p.set_value();
-		}
+				// posting a new handler
+				post([=]
+				{
+					setPromiseValue(*promisePtr, fun);
+				});
 
-		virtual HandlerWrapper wrapHandler(std::function<void()> handler) = 0;
-};
+				return promisePtr->get_future();
+			}
+
+		protected:
+			virtual void post(std::function<void()>) = 0;
+
+			template <typename Fut, typename Fun>
+			void setPromiseValue(std::promise<Fut>& p, Fun& f)
+			{
+				p.set_value(f(createHandlerContext()));
+			}
+
+			template <typename Fun>
+			void setPromiseValue(std::promise<void>& p, Fun& f)
+			{
+				f(createHandlerContext());
+				p.set_value();
+			}
+
+			virtual HandlerWrapper wrapHandler(std::function<void()>) = 0;
+	};
+
+}

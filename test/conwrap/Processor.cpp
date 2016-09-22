@@ -16,15 +16,15 @@
 TEST(Processor, getResource1)
 {
 	{
-		ProcessorMock processor;
+		conwrap::ProcessorMock processor;
 
 		EXPECT_TRUE(processor.getResource() != nullptr);
 	}
 
 	{
-		auto          dummyPtr    = std::make_unique<Dummy>();
-		auto          dummyRawPtr = dummyPtr.get();
-		ProcessorMock processor(std::move(dummyPtr));
+		auto dummyPtr    = std::make_unique<Dummy>();
+		auto dummyRawPtr = dummyPtr.get();
+		conwrap::ProcessorMock processor(std::move(dummyPtr));
 
 		EXPECT_EQ(dummyRawPtr, processor.getResource());
 	}
@@ -34,11 +34,11 @@ TEST(Processor, getResource1)
 TEST(Processor, Process1)
 {
 	std::atomic<bool> called;
-	auto              dummyPtr           = std::make_unique<Dummy>();
-	auto              dummyRawPtr        = dummyPtr.get();
-	auto              dummyResultRawPtr  = dummyRawPtr;
-	ProcessorMock     processor(std::move(dummyPtr));
-	Processor<Dummy>* processorResultPtr;
+	auto dummyPtr          = std::make_unique<Dummy>();
+	auto dummyRawPtr       = dummyPtr.get();
+	auto dummyResultRawPtr = dummyRawPtr;
+	conwrap::ProcessorMock     processor(std::move(dummyPtr));
+	conwrap::Processor<Dummy>* processorResultPtr;
 
 	called             = false;
 	dummyResultRawPtr  = nullptr;
@@ -59,11 +59,11 @@ TEST(Processor, Process1)
 TEST(Processor, Process2)
 {
 	std::atomic<bool> called;
-	auto              dummyPtr           = std::make_unique<Dummy>();
-	auto              dummyRawPtr        = dummyPtr.get();
-	auto              dummyResultRawPtr  = dummyRawPtr;
-	ProcessorMock     processor(std::move(dummyPtr));
-	Processor<Dummy>* processorResultPtr;
+	auto dummyPtr          = std::make_unique<Dummy>();
+	auto dummyRawPtr       = dummyPtr.get();
+	auto dummyResultRawPtr = dummyRawPtr;
+	conwrap::ProcessorMock     processor(std::move(dummyPtr));
+	conwrap::Processor<Dummy>* processorResultPtr;
 
 	called             = false;
 	dummyResultRawPtr  = nullptr;
@@ -86,8 +86,8 @@ TEST(Processor, Process2)
 
 TEST(Processor, Process3)
 {
-	std::atomic<int> val;
-	ProcessorMock    processor;
+	std::atomic<int>       val;
+	conwrap::ProcessorMock processor;
 
 	val = 123;
 	auto syncCall = processor.process([&](auto) -> int
