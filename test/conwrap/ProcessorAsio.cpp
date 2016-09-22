@@ -14,19 +14,19 @@
 #include "Mocks.hpp"
 
 
-TEST(ProcessorQueue, Getters1)
+TEST(ProcessorAsio, Getters1)
 {
 	{
-		ProcessorQueue<Dummy> processor;
+		ProcessorAsio<Dummy> processor;
 
 		EXPECT_TRUE(processor.getResource() != nullptr);
 		EXPECT_EQ(&processor, processor.getResource()->processorPtr);
 	}
 
 	{
-		auto                  dummyPtr    = std::make_unique<Dummy>();
-		auto                  dummyRawPtr = dummyPtr.get();
-		ProcessorQueue<Dummy> processor(std::move(dummyPtr));
+		auto                 dummyPtr    = std::make_unique<Dummy>();
+		auto                 dummyRawPtr = dummyPtr.get();
+		ProcessorAsio<Dummy> processor(std::move(dummyPtr));
 
 		EXPECT_EQ(dummyRawPtr, processor.getResource());
 		EXPECT_EQ(&processor, processor.getResource()->processorPtr);
@@ -34,13 +34,12 @@ TEST(ProcessorQueue, Getters1)
 }
 
 
-TEST(ProcessorQueue, Destructor1)
-{
+TEST(ProcessorAsio, Destructor1) {
 	std::atomic<bool> called;
 
 	// processor's scope used to activate destructor before exiting test case
 	{
-		ProcessorQueue<Dummy> processor;
+		ProcessorAsio<Dummy> processor;
 
 		called = false;
 		processor.process([&](auto)
@@ -57,17 +56,18 @@ TEST(ProcessorQueue, Destructor1)
 }
 
 
-TEST(ProcessorQueue, Destructor2)
+TEST(ProcessorAsio, Destructor2)
 {
 	std::atomic<bool> called;
 
 	// processor's scope used to activate destructor before exiting test case
 	{
-		ProcessorQueue<Dummy> processor;
+		ProcessorAsio<Dummy> processor;
 
 		called = false;
 		processor.process([&](auto handlerContext)
 		{
+
 			// simulating some action
 			std::chrono::milliseconds wait{10};
 			std::this_thread::sleep_for(wait);
@@ -84,10 +84,10 @@ TEST(ProcessorQueue, Destructor2)
 }
 
 
-TEST(ProcessorQueue, Flush1)
+TEST(ProcessorAsio, Flush1)
 {
-	std::atomic<bool>     wasCalled;
-	ProcessorQueue<Dummy> processor;
+	std::atomic<bool>    wasCalled;
+	ProcessorAsio<Dummy> processor;
 
 	wasCalled = false;
 	processor.process([&](auto)
@@ -105,10 +105,10 @@ TEST(ProcessorQueue, Flush1)
 }
 
 
-TEST(ProcessorQueue, Process1)
+TEST(ProcessorAsio, Process1)
 {
-	std::atomic<bool>     wasCalled;
-	ProcessorQueue<Dummy> processor;
+	std::atomic<bool>    wasCalled;
+	ProcessorAsio<Dummy> processor;
 
 	wasCalled = false;
 	auto asyncCall = processor.process([&](auto)
@@ -126,10 +126,10 @@ TEST(ProcessorQueue, Process1)
 }
 
 
-TEST(ProcessorQueue, Process2)
+TEST(ProcessorAsio, Process2)
 {
-	std::atomic<int>      val;
-	ProcessorQueue<Dummy> processor;
+	std::atomic<int>     val;
+	ProcessorAsio<Dummy> processor;
 
 	val = 123;
 	auto syncCall = processor.process([&](auto) -> int
@@ -141,4 +141,29 @@ TEST(ProcessorQueue, Process2)
 		return val;
 	});
 	EXPECT_EQ(val, syncCall.get());
+}
+
+
+TEST(ProcessorAsio, wrapHandler1)
+{
+	std::atomic<bool>    wasCalled;
+	ProcessorAsio<Dummy> processor;
+
+	auto dispatcher = processor.getDispatcher();
+	auto handler    = processor.wrapHandler([&]
+	{
+		// simulating some action
+		std::chrono::milliseconds wait{10};
+		std::this_thread::sleep_for(wait);
+
+		// setting called atomic flag
+		wasCalled = true;
+	});
+
+	wasCalled = false;
+	dispatcher->post(handler);
+
+	EXPECT_TRUE(wasCalled == false);
+	processor.flush();
+	EXPECT_TRUE(wasCalled == true);
 }

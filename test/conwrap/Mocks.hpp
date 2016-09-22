@@ -17,6 +17,7 @@
 #include <HandlerContext.hpp>
 #include <Processor.hpp>
 #include <ProcessorQueue.hpp>
+#include <ProcessorAsio.hpp>
 
 
 struct Dummy {
