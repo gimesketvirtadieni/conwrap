@@ -13,8 +13,10 @@
 #pragma once
 
 #include <memory>
+#include <thread>
+#include "ConcurrentQueue.hpp"
 #include "HandlerContext.hpp"
-#include "ProcessorQueueImpl.hpp"
+#include "HandlerWrapper.hpp"
 
 
 template <typename ResourceType>
@@ -57,6 +59,98 @@ class ProcessorQueue : public Processor<ResourceType>
 		}
 
 	protected:
+		template <typename ResourceType2>
+		class ProcessorQueueImpl : public Processor<ResourceType2>
+		{
+			public:
+				template <typename... Args>
+				ProcessorQueueImpl(std::unique_ptr<ResourceType2> r)
+				: resourcePtr(std::move(r))
+				, exec(false) {}
+
+				virtual ~ProcessorQueueImpl() {}
+
+				virtual ResourceType2* getResource() override
+				{
+					return resourcePtr.get();
+				}
+
+				virtual void flush() override
+				{
+					// waiting for the queue to become empty
+					// TODO: this should be re-designed to use proper flush semantic as current solution waits until queue becomes empty
+					queue.flush();
+				}
+
+				virtual void post(std::function<void()> handler) override
+				{
+					queue.push(wrapHandler(handler));
+				}
+
+				void start()
+				{
+					{
+						std::lock_guard<std::recursive_mutex> guard(lock);
+
+						if (!thread.joinable())
+						{
+							thread = std::thread([&]
+							{
+								for(finished = false; !(queue.empty() && finished);)
+								{
+									// waiting for a handler
+									queue.wait();
+
+									// executing handler
+									if (auto handlerWrapperPtr = queue.get())
+									{
+										(*handlerWrapperPtr)();
+									}
+
+									// removing executed item
+									queue.remove();
+								}
+							});
+						}
+					}
+				}
+
+				void stop()
+				{
+					{
+						std::lock_guard<std::recursive_mutex> guard(lock);
+
+						if (thread.joinable())
+						{
+							this->process([&](auto)
+							{
+								// no need to protect with a lock because this assigment will be done on consumer's thread
+								finished = true;
+							});
+
+							// waiting until consumer finsihes all pending handlers
+							thread.join();
+						}
+					}
+				}
+
+				virtual HandlerWrapper wrapHandler(std::function<void()> handler) override
+				{
+					return HandlerWrapper(handler);
+				}
+
+			private:
+				std::unique_ptr<ResourceType2>  resourcePtr;
+				ConcurrentQueue<HandlerWrapper> queue;
+				std::thread                     thread;
+				std::recursive_mutex            lock;
+				bool                            finished;
+
+				std::recursive_mutex            lock2;
+				bool                            exec;
+				std::condition_variable         cv;
+		};
+
 		ProcessorQueue(std::shared_ptr<ProcessorQueueImpl<ResourceType>> processorImplPtr)
 		: processorImplPtr(processorImplPtr)
 		, proxy(true) {}
