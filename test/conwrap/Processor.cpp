@@ -33,6 +33,48 @@ TEST(Processor, getResource1)
 
 TEST(Processor, Process1)
 {
+	std::atomic<bool>      called;
+	conwrap::ProcessorMock processor;
+
+	called = false;
+	processor.process([&]
+	{
+		called = true;
+	});
+	EXPECT_TRUE(called);
+}
+
+
+TEST(Processor, Process2)
+{
+	std::atomic<int>       val;
+	conwrap::ProcessorMock processor;
+
+	val = 123;
+	auto syncCall = processor.process([&]() -> int
+	{
+		return val;
+	});
+	EXPECT_EQ(val, syncCall.get());
+}
+
+
+TEST(Processor, Process3)
+{
+	std::atomic<int>       val;
+	conwrap::ProcessorMock processor;
+
+	val = 123;
+	auto syncCall = processor.process([&](auto) -> int
+	{
+		return val;
+	});
+	EXPECT_EQ(val, syncCall.get());
+}
+
+
+TEST(Processor, Process4)
+{
 	std::atomic<bool> called;
 	auto dummyPtr          = std::make_unique<Dummy>();
 	auto dummyRawPtr       = dummyPtr.get();
@@ -56,7 +98,58 @@ TEST(Processor, Process1)
 }
 
 
-TEST(Processor, Process2)
+TEST(Processor, Process5)
+{
+	std::atomic<bool>      called;
+	conwrap::ProcessorMock processor;
+
+	called = false;
+	processor.process([&](auto handlerContext)
+	{
+		handlerContext.getProcessor()->process([&]
+		{
+			called = true;
+		});
+	});
+	EXPECT_TRUE(called);
+}
+
+
+TEST(Processor, Process6)
+{
+	std::atomic<int>       val;
+	conwrap::ProcessorMock processor;
+
+	val = 123;
+	auto syncCall = processor.process([&](auto handlerContext) -> int
+	{
+		return handlerContext.getProcessor()->process([&]() -> int
+		{
+			return val;
+		}).get();
+	});
+	EXPECT_EQ(val, syncCall.get());
+}
+
+
+TEST(Processor, Process7)
+{
+	std::atomic<int>       val;
+	conwrap::ProcessorMock processor;
+
+	val = 123;
+	auto syncCall = processor.process([&](auto handlerContext) -> int
+	{
+		return handlerContext.getProcessor()->process([&](auto) -> int
+		{
+			return val;
+		}).get();
+	});
+	EXPECT_EQ(val, syncCall.get());
+}
+
+
+TEST(Processor, Process8)
 {
 	std::atomic<bool> called;
 	auto dummyPtr          = std::make_unique<Dummy>();
@@ -81,18 +174,4 @@ TEST(Processor, Process2)
 	EXPECT_TRUE(called);
 	EXPECT_EQ(dummyRawPtr, dummyResultRawPtr);
 	EXPECT_EQ(&processor,  processorResultPtr);
-}
-
-
-TEST(Processor, Process3)
-{
-	std::atomic<int>       val;
-	conwrap::ProcessorMock processor;
-
-	val = 123;
-	auto syncCall = processor.process([&](auto) -> int
-	{
-		return val;
-	});
-	EXPECT_EQ(val, syncCall.get());
 }

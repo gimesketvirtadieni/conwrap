@@ -111,7 +111,7 @@ namespace conwrap
 								});
 
 								// waiting for the main loop to restart
-								this->process([](HandlerContext<ResourceType2>) {}).wait();
+								this->process([] {}).wait();
 							}
 						}
 					}

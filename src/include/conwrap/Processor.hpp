@@ -36,6 +36,20 @@ namespace conwrap
 			virtual void flush() = 0;
 
 			template <typename F>
+			auto process(F fun) -> std::future<decltype(fun())>
+			{
+				auto promisePtr = std::make_shared<std::promise<decltype(fun())>>();
+
+				// posting a new handler
+				post([=]
+				{
+					setPromiseValue(*promisePtr, fun);
+				});
+
+				return promisePtr->get_future();
+			}
+
+			template <typename F>
 			auto process(F fun) -> std::future<decltype(fun(createHandlerContext()))>
 			{
 				auto promisePtr = std::make_shared<std::promise<decltype(fun(createHandlerContext()))>>();
@@ -43,7 +57,7 @@ namespace conwrap
 				// posting a new handler
 				post([=]
 				{
-					setPromiseValue(*promisePtr, fun);
+					setPromiseValueWithContext(*promisePtr, fun);
 				});
 
 				return promisePtr->get_future();
@@ -55,11 +69,24 @@ namespace conwrap
 			template <typename Fut, typename Fun>
 			void setPromiseValue(std::promise<Fut>& p, Fun& f)
 			{
-				p.set_value(f(createHandlerContext()));
+				p.set_value(f());
 			}
 
 			template <typename Fun>
 			void setPromiseValue(std::promise<void>& p, Fun& f)
+			{
+				f();
+				p.set_value();
+			}
+
+			template <typename Fut, typename Fun>
+			void setPromiseValueWithContext(std::promise<Fut>& p, Fun& f)
+			{
+				p.set_value(f(createHandlerContext()));
+			}
+
+			template <typename Fun>
+			void setPromiseValueWithContext(std::promise<void>& p, Fun& f)
 			{
 				f(createHandlerContext());
 				p.set_value();
