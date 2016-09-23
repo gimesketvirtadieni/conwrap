@@ -11,6 +11,7 @@
  */
 
 #include <chrono>
+#include <thread>
 #include "Mocks.hpp"
 
 
@@ -102,6 +103,28 @@ TEST(ProcessorAsio, Flush1)
 	EXPECT_TRUE(wasCalled == false);
 	processor.flush();
 	EXPECT_TRUE(wasCalled == true);
+}
+
+
+TEST(ProcessorAsio, Flush2)
+{
+	std::thread::id id1;
+	std::thread::id id2;
+	{
+		conwrap::ProcessorAsio<Dummy> processor;
+
+		processor.process([&](auto)
+		{
+			id1 = std::this_thread::get_id();
+		});
+		processor.flush();
+		processor.process([&](auto)
+		{
+			id2 = std::this_thread::get_id();
+		});
+		processor.flush();
+		EXPECT_EQ(id1, id2);
+	}
 }
 
 

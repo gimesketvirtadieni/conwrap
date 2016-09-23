@@ -100,45 +100,49 @@ namespace conwrap
 					virtual void flush() override
 					{
 						{
-							std::lock_guard<std::recursive_mutex> guard(lock);
+							std::lock_guard<std::mutex> guard(lock);
 
-							// TODO: redesign to avoid invoking stop-start as it changes running thread
 							if (thread.joinable())
 							{
-								// stopping dispatcher will make sure all handlers are in processor queue
-								stop();
+								// reseting work object will make dispatcher exit as soon as there is no handler to process
+								dispatcher.post([&]
+								{
+									workPtr.reset();
+								});
 
-								// start processing as flush will not be affected by incomming handlers
-								start();
+								// waiting for the main loop to restart
+								this->process([](HandlerContext<ResourceType2>) {}).wait();
 							}
 						}
-
-						// flushing processor's queue
-						processorQueue.flush();
 					}
 
 					virtual void post(std::function<void()> handler) override
 					{
+						// TODO: handler wrapping should be moved to Processor class
 						dispatcher.post(wrapHandler(handler));
 					}
 
 					void start()
 					{
 						{
-							std::lock_guard<std::recursive_mutex> guard(lock);
+							std::lock_guard<std::mutex> guard(lock);
 
 							if (!thread.joinable())
 							{
-								// creating work object to make sure dispatcher performs until work object is deleted
-								workPtr = std::make_unique<boost::asio::io_service::work>(dispatcher);
-
 								// running dispacther on its dedicated thread
 								thread = std::thread([&]
 								{
-									for (std::size_t processedCount; (processedCount = dispatcher.run()) > 0;)
+									for (finished = false; !finished;)
 									{
-										processorQueue.flush();
-										dispatcher.reset();
+										// creating work object to make sure dispatcher performs until work object is deleted
+										workPtr = std::make_unique<boost::asio::io_service::work>(dispatcher);
+
+										// the main processing loop
+										while (processPending() > 0)
+										{
+											// queue must be flushed because it may generate new handlers
+											processorQueue.flush();
+										}
 									}
 								});
 							}
@@ -148,17 +152,21 @@ namespace conwrap
 					void stop()
 					{
 						{
-							std::lock_guard<std::recursive_mutex> guard(lock);
+							std::lock_guard<std::mutex> guard(lock);
 
 							if (thread.joinable())
 							{
-								// reseting work object will make dispatcher exit as soon as there is no handler to process
-								workPtr.reset();
+								// deleting work object and setting finsihed flag
+								dispatcher.post([&]
+								{
+									workPtr.reset();
+									finished = true;
+								});
 
 								// waiting for the thread to finish
 								thread.join();
 							}
-						};
+						}
 					}
 
 					virtual HandlerWrapper wrapHandler(std::function<void()> handler) override
@@ -172,12 +180,20 @@ namespace conwrap
 						});
 					}
 
+				protected:
+					auto processPending()
+					{
+						dispatcher.reset();
+						return dispatcher.run();
+					}
+
 				private:
 					ProcessorQueue<ResourceType2>                  processorQueue;
 					std::unique_ptr<boost::asio::io_service::work> workPtr;
 					boost::asio::io_service                        dispatcher;
 					std::thread                                    thread;
-					std::recursive_mutex                           lock;
+					std::mutex                                     lock;
+					bool                                           finished;
 			};
 
 			ProcessorAsio(std::shared_ptr<ProcessorAsioImpl<ResourceType>> processorImplPtr)
