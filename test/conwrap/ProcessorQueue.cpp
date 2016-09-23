@@ -105,6 +105,28 @@ TEST(ProcessorQueue, Flush1)
 }
 
 
+TEST(ProcessorQueue, Flush2)
+{
+	std::thread::id id1;
+	std::thread::id id2;
+	{
+		conwrap::ProcessorQueue<Dummy> processor;
+
+		processor.process([&](auto)
+		{
+			id1 = std::this_thread::get_id();
+		});
+		processor.flush();
+		processor.process([&](auto)
+		{
+			id2 = std::this_thread::get_id();
+		});
+		processor.flush();
+		EXPECT_EQ(id1, id2);
+	}
+}
+
+
 TEST(ProcessorQueue, Process1)
 {
 	std::atomic<bool>              wasCalled;
