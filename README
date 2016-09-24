@@ -24,10 +24,10 @@ std::future<DummyResult> resultFuture = std::async(std::launch::async, [=](int p
 
 However std::async is not a good fit for task-based processing. CONWRAP provides an alternative to std::async in a following way:
 
-conwrap::ProcessorQueue<Dummy> processor;
-std::future<DummyResult> resultFuture = processor.process([&](auto handlerContext)
+conwrap::ProcessorQueue<Dummy> processor2;
+std::future<DummyResult> resultFuture = processor2.process([param = 123](auto handlerContext)
 {
-	auto dummyPtr = handlerContext->getResource();
-	return dummyPtr->syncMethod();
+	auto dummyPtr = handlerContext.getResource();
+	return dummyPtr->syncMethod(param);
 });
 
