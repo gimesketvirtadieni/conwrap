@@ -41,10 +41,10 @@ namespace conwrap
 				auto promisePtr = std::make_shared<std::promise<decltype(fun())>>();
 
 				// posting a new handler
-				post([=]
+				post(wrapHandler([=]
 				{
 					setPromiseValue(*promisePtr, fun);
-				});
+				}));
 
 				return promisePtr->get_future();
 			}
@@ -55,16 +55,16 @@ namespace conwrap
 				auto promisePtr = std::make_shared<std::promise<decltype(fun(createHandlerContext()))>>();
 
 				// posting a new handler
-				post([=]
+				post(wrapHandler([=]
 				{
 					setPromiseValueWithContext(*promisePtr, fun);
-				});
+				}));
 
 				return promisePtr->get_future();
 			}
 
 		protected:
-			virtual void post(std::function<void()>) = 0;
+			virtual void post(HandlerWrapper) = 0;
 
 			template <typename Fut, typename Fun>
 			void setPromiseValue(std::promise<Fut>& p, Fun& f)

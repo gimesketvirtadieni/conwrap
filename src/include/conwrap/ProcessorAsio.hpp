@@ -105,10 +105,10 @@ namespace conwrap
 							if (thread.joinable())
 							{
 								// reseting work object will make dispatcher exit as soon as there is no handler to process
-								dispatcher.post([&]
+								post(wrapHandler([&]
 								{
 									workPtr.reset();
-								});
+								}));
 
 								// waiting for the main loop to restart
 								this->process([] {}).wait();
@@ -116,10 +116,9 @@ namespace conwrap
 						}
 					}
 
-					virtual void post(std::function<void()> handler) override
+					virtual void post(HandlerWrapper handlerWrapper) override
 					{
-						// TODO: handler wrapping should be moved to Processor class
-						dispatcher.post(wrapHandler(handler));
+						dispatcher.post(handlerWrapper);
 					}
 
 					void start()
@@ -157,11 +156,11 @@ namespace conwrap
 							if (thread.joinable())
 							{
 								// deleting work object and setting finsihed flag
-								dispatcher.post([&]
+								post(wrapHandler([&]
 								{
 									workPtr.reset();
 									finished = true;
-								});
+								}));
 
 								// waiting for the thread to finish
 								thread.join();
@@ -200,9 +199,9 @@ namespace conwrap
 			: processorImplPtr(processorImplPtr)
 			, proxy(true) {}
 
-			virtual void post(std::function<void()> handler) override
+			virtual void post(HandlerWrapper handlerWrapper) override
 			{
-				processorImplPtr->post(handler);
+				processorImplPtr->post(handlerWrapper);
 			}
 
 		private:

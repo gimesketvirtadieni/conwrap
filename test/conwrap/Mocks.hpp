@@ -46,9 +46,9 @@ namespace conwrap
 
 			virtual void flush() override {}
 
-			virtual void post(std::function<void()> handler) override
+			virtual void post(HandlerWrapper handlerWrapper) override
 			{
-				wrapHandler(handler)();
+				handlerWrapper();
 			}
 
 			virtual conwrap::HandlerWrapper wrapHandler(std::function<void()> handler) override

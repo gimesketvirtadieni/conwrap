@@ -84,9 +84,9 @@ namespace conwrap
 						queue.flush();
 					}
 
-					virtual void post(std::function<void()> handler) override
+					virtual void post(HandlerWrapper handlerWrapper) override
 					{
-						queue.push(wrapHandler(handler));
+						queue.push(handlerWrapper);
 					}
 
 					void start()
@@ -153,9 +153,9 @@ namespace conwrap
 			: processorImplPtr(processorImplPtr)
 			, proxy(true) {}
 
-			virtual void post(std::function<void()> handler) override
+			virtual void post(HandlerWrapper handlerWrapper) override
 			{
-				processorImplPtr->post(handler);
+				processorImplPtr->post(handlerWrapper);
 			}
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler) override
