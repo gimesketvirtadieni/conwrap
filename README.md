@@ -1,5 +1,5 @@
-Snapcast
-========
+Concurrent Wrapper (conwrap)
+============================
 
 
 Consider a simple sync method:
