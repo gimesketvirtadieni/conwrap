@@ -17,6 +17,7 @@
 #include <conwrap/ConcurrentQueue.hpp>
 #include <conwrap/HandlerContext.hpp>
 #include <conwrap/HandlerWrapper.hpp>
+#include <conwrap/Processor.hpp>
 
 
 namespace conwrap
