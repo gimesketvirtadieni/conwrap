@@ -1,6 +1,8 @@
 Concurrent Wrapper (conwrap)
 ============================
 
+Preface
+-------
 
 Consider a simple sync method:
 
