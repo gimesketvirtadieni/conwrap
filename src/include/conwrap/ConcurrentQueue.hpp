@@ -38,68 +38,71 @@ namespace conwrap
 
 			iterator begin()
 			{
-				return queue_.c.begin();
+				return queue.c.begin();
 			}
 
 			const_iterator begin() const
 			{
-				return queue_.c.begin();
+				return queue.c.begin();
 			}
 
 			bool empty() const
 			{
-				std::lock_guard<std::mutex> lock(m_);
-				return queue_.empty();
+				std::lock_guard<std::mutex> lock(queueMutex);
+				return queue.empty();
 			}
 
 			iterator end()
 			{
-				return queue_.c.end();
+				return queue.c.end();
 			}
 
 			const_iterator end() const
 			{
-				return queue_.c.end();
+				return queue.c.end();
 			}
 
 			void flush()
 			{
 				{
-					std::unique_lock<std::mutex> lock(m_);
-					data_cond_.wait(lock, [&] { return queue_.empty();});
+					std::unique_lock<std::mutex> lock(queueMutex);
+					conditionVariable.wait(lock, [&]
+					{
+						return queue.empty();
+					});
 				}
 			}
 
 			ResourceType1* get()
 			{
-				ResourceType1* result = nullptr;
+				ResourceType1* resultPtr = nullptr;
 				{
-					std::lock_guard<std::mutex> lock(m_);
-					if (!queue_.empty()) {
-						result = &queue_.front();
+					std::lock_guard<std::mutex> lock(queueMutex);
+					if (!queue.empty()) {
+						resultPtr = &queue.front();
 					}
 				}
-				return result;
+				return resultPtr;
 			}
 
 			void push(ResourceType1 item)
 			{
 				{
-					std::lock_guard<std::mutex> lock(m_);
-					queue_.push(std::move(item));
+					std::lock_guard<std::mutex> lock(queueMutex);
+					queue.push(std::move(item));
 				}
-				data_cond_.notify_all();
+				conditionVariable.notify_all();
 			}
 
 			bool remove() {
 				auto result = false;
 				{
-					std::lock_guard<std::mutex> lock(m_);
-					if (!queue_.empty()) {
+					std::lock_guard<std::mutex> lock(queueMutex);
+					if (!queue.empty()) {
 
 						// remove the first item in the queue
-						queue_.pop();
-						data_cond_.notify_all();
+						queue.pop();
+						conditionVariable.notify_all();
 						result = true;
 					}
 				}
@@ -108,15 +111,18 @@ namespace conwrap
 
 			unsigned size() const
 			{
-				std::lock_guard<std::mutex> lock(m_);
-				return queue_.size();
+				std::lock_guard<std::mutex> lock(queueMutex);
+				return queue.size();
 			}
 
 			void wait()
 			{
 				{
-					std::unique_lock<std::mutex> lock(m_);
-					data_cond_.wait(lock, [&] {return !queue_.empty();});
+					std::unique_lock<std::mutex> lock(queueMutex);
+					conditionVariable.wait(lock, [&]
+					{
+						return !queue.empty();
+					});
 				}
 			}
 
@@ -129,8 +135,8 @@ namespace conwrap
 			};
 
 		private:
-			IterableQueue<ResourceType1, Container1> queue_;
-			mutable std::mutex                       m_;
-			std::condition_variable                  data_cond_;
+			IterableQueue<ResourceType1, Container1> queue;
+			mutable std::mutex                       queueMutex;
+			std::condition_variable                  conditionVariable;
 	};
 }
