@@ -19,14 +19,14 @@
 
 struct Dummy
 {
-	Dummy(Processor<Dummy>*) {}
+	Dummy(conwrap::Processor<Dummy>*) {}
 };
 
 
 int main(int argc, char *argv[])
 {
 	{
-		ProcessorQueue<Dummy> processorQueue;
+		conwrap::ProcessorQueue<Dummy> processorQueue;
 		processorQueue.process([](auto)
 		{
 			std::cout << "Hello from queue handler\n\r";
@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
 	std::cout << "Back to main\n\r";
 
 	{
-		ProcessorAsio<Dummy> processorAsio;
+		conwrap::ProcessorAsio<Dummy> processorAsio;
 		processorAsio.process([](auto)
 		{
 			std::cout << "Hello from asio handler1\n\r";
