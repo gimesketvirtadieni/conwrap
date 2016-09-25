@@ -1,15 +1,16 @@
-Preface
+Snapcast
+========
 
 
 Consider a simple sync method:
 
 class Dummy
 {
-	public:
-		Result syncMethod(int param)
-		{
-			return Result();
-		}
+  public:
+    Result syncMethod(int param)
+    {
+      return Result();
+    }
 };
 
 
@@ -18,16 +19,16 @@ To call this method asynchronously one can use std::async helper template:
 Dummy dummy;
 std::future<DummyResult> resultFuture = std::async(std::launch::async, [=](int param) mutable -> DummyResult
 {
-	return dummy.syncMethod(param);
+  return dummy.syncMethod(param);
 }, 123 /* param value */);
 
 
 However std::async is not a good fit for task-based processing. CONWRAP provides an alternative to std::async in a following way:
 
-conwrap::ProcessorQueue<Dummy> processor2;
-std::future<DummyResult> resultFuture = processor2.process([param = 123](auto handlerContext)
+conwrap::ProcessorQueue<Dummy> processor;
+std::future<DummyResult> resultFuture = processor.process([param = 123](auto context)
 {
-	auto dummyPtr = handlerContext.getResource();
-	return dummyPtr->syncMethod(param);
+  auto dummyPtr = context.getResource();
+  return dummyPtr->syncMethod(param);
 });
 
