@@ -172,7 +172,7 @@ namespace conwrap
 					{
 						return HandlerWrapper([=]
 						{
-							processorQueue.process([=](auto)
+							processorQueue.process([=]
 							{
 								handler();
 							});
