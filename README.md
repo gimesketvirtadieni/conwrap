@@ -15,7 +15,8 @@ class Dummy
 };
 ```
 
-To call this method asynchronously one can use `c++std::async` helper template:
+
+To call this method asynchronously one can use ```c++std::async``` helper template:
 ```c++
 Dummy dummy;
 std::future<DummyResult> resultFuture = std::async(std::launch::async, [=](int param) mutable -> DummyResult
@@ -23,6 +24,7 @@ std::future<DummyResult> resultFuture = std::async(std::launch::async, [=](int p
   return dummy.syncMethod(param);
 }, 123 /* param value */);
 ```
+
 
 However std::async is not a good fit for task-based processing. CONWRAP provides an alternative to std::async in a following way:
 ```c++
