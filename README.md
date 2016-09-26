@@ -24,7 +24,7 @@ std::future<DummyResult> resultFuture = std::async(std::launch::async, [=](int p
 }, /* param value */ 123);
 ```
 
-However std::async is not a good fit for task-based processing. CONWRAP provides an alternative to std::async in a following way:
+However `std::async` is not a good fit for task-based processing. Concurrent Wrapper provides an alternative to std::async like following:
 ```c++
 conwrap::ProcessorQueue<Dummy> processor;
 std::future<DummyResult> resultFuture = processor.process([param = 123](auto context)
