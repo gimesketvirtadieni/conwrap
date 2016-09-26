@@ -22,8 +22,13 @@
 
 struct Dummy {
 	Dummy() {}
-	Dummy(conwrap::Processor<Dummy>* processorPtr) : processorPtr(processorPtr) {}
+
 	virtual ~Dummy() {}
+
+	void setProcessor(conwrap::Processor<Dummy>* p)
+	{
+		processorPtr = p;
+	}
 
 	conwrap::Processor<Dummy>* processorPtr;
 };

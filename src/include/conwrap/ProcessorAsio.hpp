@@ -32,7 +32,7 @@ namespace conwrap
 		public:
 			template <typename... Args>
 			ProcessorAsio(Args... args)
-			: processorImplPtr(std::make_shared<ProcessorAsioImpl<ResourceType>>(std::move(std::make_unique<ResourceType>(this, std::forward<Args>(args)...))))
+			: processorImplPtr(std::make_shared<ProcessorAsioImpl<ResourceType>>(std::move(createResource(std::forward<Args>(args)...))))
 			, processorProxyPtr(std::unique_ptr<ProcessorAsio<ResourceType>>(new ProcessorAsio<ResourceType>(processorImplPtr)))
 			, proxy(false)
 			{
@@ -198,6 +198,17 @@ namespace conwrap
 			ProcessorAsio(std::shared_ptr<ProcessorAsioImpl<ResourceType>> processorImplPtr)
 			: processorImplPtr(processorImplPtr)
 			, proxy(true) {}
+
+			template <typename... Args>
+			std::unique_ptr<ResourceType> createResource(Args... args)
+			{
+				auto resourcePtr = std::make_unique<ResourceType>(std::forward<Args>(args)...);
+
+				// TODO: implemet compile-time reflection to make this invocation optional
+				resourcePtr->setProcessor(this);
+
+				return std::move(resourcePtr);
+			}
 
 			virtual void post(HandlerWrapper handlerWrapper) override
 			{
