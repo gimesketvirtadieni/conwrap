@@ -1,19 +1,18 @@
-Concurrent Wrapper (conwrap)
-============================
+# Concurrent Wrapper (conwrap)
+=====================================
 
-Preface
--------
+##Preface
 
 Consider a simple sync method:
 
-class Dummy
+`class Dummy
 {
   public:
     Result syncMethod(int param)
     {
       return Result();
     }
-};
+};`
 
 
 To call this method asynchronously one can use std::async helper template:
