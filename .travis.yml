@@ -19,5 +19,9 @@ before_install:
   fi
 
 install:
+  - if [ "$CXX" == "g++" ]; then sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 10; fi
+  - if [ "$CXX" == "g++" ]; then sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 10; fi
+  - echo $PWD
+  - echo $CXX
 
 script: "./scripts/buildAndTest.sh"
