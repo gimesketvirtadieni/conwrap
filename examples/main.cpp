@@ -19,7 +19,7 @@
 
 struct Dummy
 {
-	Dummy(conwrap::Processor<Dummy>*) {}
+	void setProcessor(conwrap::Processor<Dummy>*) {}
 };
 
 
