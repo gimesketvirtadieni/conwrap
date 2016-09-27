@@ -7,7 +7,7 @@ g++ -std=c++1y -Isrc/include -Icontrib/gmock/include -Icontrib/gmock -Icontrib/g
 g++ -std=c++1y -Isrc/include -Icontrib/gmock/include -Icontrib/gmock -Icontrib/gtest/include -Icontrib/gtest -O0 -g3 -Wall -c -fmessage-length=0 -o build/gmock-internal-utils.o contrib/gmock/src/gmock-internal-utils.cc 
 g++ -std=c++1y -Isrc/include -Icontrib/gmock/include -Icontrib/gmock -Icontrib/gtest/include -Icontrib/gtest -O0 -g3 -Wall -c -fmessage-length=0 -o build/gtest-port.o contrib/gtest/src/gtest-port.cc 
 g++ -std=c++1y -Isrc/include -Icontrib/gmock/include -Icontrib/gmock -Icontrib/gtest/include -Icontrib/gtest -O0 -g3 -Wall -c -fmessage-length=0 -o build/gtest-printers.o contrib/gtest/src/gtest-printers.cc 
-g++ -std=c++1y -Isrc/include -Icontrib/gmock/include -Icontrib/gmock -Icontrib/gtest/include -Icontrib/gtest -O0 -g3 -Wall -c -fmessage-length=0 -o build/src/gmock-spec-builders.o contrib/gmock/src/gmock-spec-builders.cc 
+g++ -std=c++1y -Isrc/include -Icontrib/gmock/include -Icontrib/gmock -Icontrib/gtest/include -Icontrib/gtest -O0 -g3 -Wall -c -fmessage-length=0 -o build/gmock-spec-builders.o contrib/gmock/src/gmock-spec-builders.cc 
 g++ -std=c++1y -Isrc/include -Icontrib/gmock/include -Icontrib/gmock -Icontrib/gtest/include -Icontrib/gtest -O0 -g3 -Wall -c -fmessage-length=0 -o build/gtest.o contrib/gtest/src/gtest.cc 
 g++ -std=c++1y -Isrc/include -Icontrib/gmock/include -Icontrib/gmock -Icontrib/gtest/include -Icontrib/gtest -O0 -g3 -Wall -c -fmessage-length=0 -o build/ProcessorAsio.o test/conwrap/ProcessorAsio.cpp 
 g++ -std=c++1y -Isrc/include -Icontrib/gmock/include -Icontrib/gmock -Icontrib/gtest/include -Icontrib/gtest -O0 -g3 -Wall -c -fmessage-length=0 -o build/gtest-typed-test.o contrib/gtest/src/gtest-typed-test.cc 

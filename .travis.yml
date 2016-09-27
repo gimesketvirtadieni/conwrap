@@ -23,6 +23,5 @@ install:
   - if [ "$CXX" == "g++" ]; then sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 10; fi
   - echo $CXX
   - echo $PWD
-  - echo `ls -ld`
 
 script: "./scripts/buildAndTest.sh"
