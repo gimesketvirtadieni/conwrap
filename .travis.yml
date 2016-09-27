@@ -17,7 +17,7 @@ before_install:
     sudo apt-get update -qq;
     sudo apt-get install gcc-5 g++-5;
   fi
- 
+
 install:
 
 script: "./scripts/buildAndTest.sh"
