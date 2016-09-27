@@ -1,5 +1,4 @@
-language:
-  - cpp
+language: cpp
 
 os:
   - linux
@@ -13,7 +12,8 @@ branches:
 
 before_install:
   if [ ${TRAVIS_OS_NAME} = 'linux' ]; 
-  then 
+  then
+    sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test;
     sudo apt-get update;
     sudo apt-get install gcc-5 g++-5;
   fi
