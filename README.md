@@ -18,7 +18,7 @@ class Dummy
 To call this method asynchronously one can use `std::async` helper template:
 ```c++
 Dummy dummy;
-std::future<DummyResult> resultFuture = std::async(std::launch::async, [=](int param) mutable -> DummyResult
+std::future<Result> resultFuture = std::async(std::launch::async, [=](int param) mutable -> Result
 {
 	return dummy.syncMethod(param);
 }, /* param value */ 123);
@@ -27,7 +27,7 @@ std::future<DummyResult> resultFuture = std::async(std::launch::async, [=](int p
 However `std::async` is not a good fit for task-based processing. On the other hand Concurrent Wrapper provides functionality to invoke arbitrary code asynchronously in a task-based processing fashion:
 ```c++
 conwrap::ProcessorQueue<Dummy> processor;
-std::future<DummyResult> resultFuture = processor.process([param = 123](auto context)
+std::future<Result> resultFuture = processor.process([param = 123](auto context)
 {
 	auto dummyPtr = context.getResource();
 	return dummyPtr->syncMethod(param);
