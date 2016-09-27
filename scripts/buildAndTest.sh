@@ -1,7 +1,6 @@
 #!/bin/bash
 
 mkdir -p  build
-cd build
 
 gcc -std=c++1y -Isrc/include -Icontrib/gmock/include -Icontrib/gmock -Icontrib/gtest/include -Icontrib/gtest -O0 -g3 -Wall -c -fmessage-length=0 -o build/gmock.o contrib/gmock/src/gmock.cc 
 g++ -std=c++1y -Isrc/include -Icontrib/gmock/include -Icontrib/gmock -Icontrib/gtest/include -Icontrib/gtest -O0 -g3 -Wall -c -fmessage-length=0 -o build/gtest-test-part.o contrib/gtest/src/gtest-test-part.cc 
