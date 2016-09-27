@@ -21,3 +21,5 @@ g++ -std=c++1y -Isrc/include -Icontrib/gmock/include -Icontrib/gmock -Icontrib/g
 
 g++ -o conwrap build/gmock-cardinalities.o build/gmock-internal-utils.o build/gmock-matchers.o build/gmock-spec-builders.o build/gmock.o build/gtest-death-test.o build/gtest-filepath.o build/gtest-port.o build/gtest-printers.o build/gtest-test-part.o build/gtest-typed-test.o build/gtest.o build/Processor.o build/ProcessorAsio.o build/ProcessorQueue.o build/main.o -lboost_system -lpthread 
 
+cd  build
+./conwrap
