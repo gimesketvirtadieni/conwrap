@@ -19,7 +19,7 @@ g++ -std=c++1y -Isrc/include -Icontrib/gmock/include -Icontrib/gmock -Icontrib/g
 g++ -std=c++1y -Isrc/include -Icontrib/gmock/include -Icontrib/gmock -Icontrib/gtest/include -Icontrib/gtest -O0 -g3 -Wall -c -fmessage-length=0 -o build/Processor.o test/conwrap/Processor.cpp 
 g++ -std=c++1y -Isrc/include -Icontrib/gmock/include -Icontrib/gmock -Icontrib/gtest/include -Icontrib/gtest -O0 -g3 -Wall -c -fmessage-length=0 -o build/gtest-death-test.o contrib/gtest/src/gtest-death-test.cc 
 
-g++ -o conwrap build/gmock-cardinalities.o build/gmock-internal-utils.o build/gmock-matchers.o build/gmock-spec-builders.o build/gmock.o build/gtest-death-test.o build/gtest-filepath.o build/gtest-port.o build/gtest-printers.o build/gtest-test-part.o build/gtest-typed-test.o build/gtest.o build/Processor.o build/ProcessorAsio.o build/ProcessorQueue.o build/main.o -lboost_system -lpthread 
+g++ -o build/conwrap build/gmock-cardinalities.o build/gmock-internal-utils.o build/gmock-matchers.o build/gmock-spec-builders.o build/gmock.o build/gtest-death-test.o build/gtest-filepath.o build/gtest-port.o build/gtest-printers.o build/gtest-test-part.o build/gtest-typed-test.o build/gtest.o build/Processor.o build/ProcessorAsio.o build/ProcessorQueue.o build/main.o -lboost_system -lpthread 
 
 cd  build
 ./conwrap
