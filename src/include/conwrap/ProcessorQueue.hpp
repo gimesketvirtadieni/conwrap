@@ -93,7 +93,7 @@ namespace conwrap
 					void start()
 					{
 						{
-							std::lock_guard<std::recursive_mutex> guard(lock);
+							std::lock_guard<std::mutex> guard(lock);
 
 							if (!thread.joinable())
 							{
@@ -121,7 +121,7 @@ namespace conwrap
 					void stop()
 					{
 						{
-							std::lock_guard<std::recursive_mutex> guard(lock);
+							std::lock_guard<std::mutex> guard(lock);
 
 							if (thread.joinable())
 							{
@@ -139,6 +139,7 @@ namespace conwrap
 
 					virtual HandlerWrapper wrapHandler(std::function<void()> handler) override
 					{
+						// TODO: create a proper wrapper
 						return HandlerWrapper(handler);
 					}
 
@@ -146,7 +147,7 @@ namespace conwrap
 					std::unique_ptr<ResourceType2>  resourcePtr;
 					ConcurrentQueue<HandlerWrapper> queue;
 					std::thread                     thread;
-					std::recursive_mutex            lock;
+					std::mutex                      lock;
 					bool                            finished;
 			};
 
