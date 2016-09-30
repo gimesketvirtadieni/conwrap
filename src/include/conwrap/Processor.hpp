@@ -26,10 +26,7 @@ namespace conwrap
 	{
 		public:
 			// TODO: figure out how to make this method protected
-			inline HandlerContext<ResourceType> createHandlerContext()
-			{
-				return HandlerContext<ResourceType> (getResource(), this);
-			}
+			virtual HandlerContext<ResourceType> createHandlerContext() = 0;
 
 			virtual ResourceType* getResource() = 0;
 

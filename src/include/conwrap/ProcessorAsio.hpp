@@ -56,6 +56,11 @@ namespace conwrap
 				}
 			}
 
+			virtual HandlerContext<ResourceType> createHandlerContext() override
+			{
+				return processorImplPtr->createHandlerContext();
+			}
+
 			boost::asio::io_service* getDispatcher()
 			{
 				return processorImplPtr->getDispatcher();
@@ -86,6 +91,11 @@ namespace conwrap
 					: processorQueue(std::move(r)) {}
 
 					virtual ~ProcessorAsioImpl() {}
+
+					virtual HandlerContext<ResourceType> createHandlerContext() override
+					{
+						return HandlerContext<ResourceType> (getResource(), this);
+					}
 
 					boost::asio::io_service* getDispatcher()
 					{

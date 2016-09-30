@@ -52,6 +52,11 @@ namespace conwrap
 				}
 			}
 
+			virtual HandlerContext<ResourceType> createHandlerContext() override
+			{
+				return processorImplPtr->createHandlerContext();
+			}
+
 			virtual ResourceType* getResource() override
 			{
 				return processorImplPtr->getResource();
@@ -72,6 +77,11 @@ namespace conwrap
 					: resourcePtr(std::move(r)) {}
 
 					virtual ~ProcessorQueueImpl() {}
+
+					virtual HandlerContext<ResourceType> createHandlerContext() override
+					{
+						return HandlerContext<ResourceType> (getResource(), this);
+					}
 
 					virtual ResourceType2* getResource() override
 					{
