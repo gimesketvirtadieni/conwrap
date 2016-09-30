@@ -44,6 +44,11 @@ namespace conwrap
 
 			ProcessorMock(std::unique_ptr<Dummy> r) : resourcePtr(std::move(r)) {}
 
+			virtual HandlerContext<Dummy> createHandlerContext() override
+			{
+				return HandlerContext<Dummy> (getResource(), this);
+			}
+
 			virtual Dummy* getResource() override
 			{
 				return resourcePtr.get();
