@@ -28,7 +28,8 @@ std::future<Result> resultFuture = std::async(
 	{
 		return dummy.syncMethod(param);  // invoking syncMethod method from the submitted task
 	},
-	123);                                // param value that will be passed to the submitted task
+	123                                  // param value that will be passed to the submitted task
+);
 ```
 
 However `std::async` is not a good fit for task-based processing. On the other hand Concurrent Wrapper provides functionality to invoke arbitrary code asynchronously in a task-based processing fashion:
@@ -50,10 +51,16 @@ std::future<Result> resultFuture = processor.process([param = 123](auto context)
 
 ##Background
 
-If you are into C++ asynchronous code then you recall great talk by Herb Sutter: [“C++ and Beyond 2012: Herb Sutter - C++ Concurrency”](https://channel9.msdn.com/Shows/Going+Deep/C-and-Beyond-2012-Herb-Sutter-Concurrency-and-Parallelism). Otherwise I highly recommend watching it as Herb presents a pattern for a generic wrapper. This pattern can be used to turn synchronous code into asynchronous one in a so elegant way that it cannot be wrong. However there is a catch: presented design is too simplistic and omits one crucial feature: task (handler) should be able to issue a new task (handler). Why is this feature so crucial and why it ruins elegance of presented design?
+If you are into C++ asynchronous code then you recall great talk by Herb Sutter: [“C++ and Beyond 2012: Herb Sutter - C++ Concurrency”](https://channel9.msdn.com/Shows/Going+Deep/C-and-Beyond-2012-Herb-Sutter-Concurrency-and-Parallelism). Otherwise I highly recommend watching it as Herb presents a pattern for a generic wrapper. This pattern can be used to turn synchronous code into asynchronous one in a so elegant way that it cannot be wrong. However there is a catch: presented design is too simplistic and omits one crucial feature: task (handler) should be able to issue a new task (handler). Why is this feature so crucial and why it ruins elegance of the presented design?
 
 If you are building an application with very simple logic of the tasks that you submit for asynchronous execution (like for example log library where a task simply outputs a message to all sinks) then mentioned feature is irrelevant. But in most cases logic presented in the tasks is more complex and requires new tasks to be issued based on certain conditions. For example if you develop a server using [Boos.Asio]( http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) then your onReceive task (handler) will submit a new task (handler) to keep receiving new data coming in.
 
-Now why submitting a new task from a running tasks spoils elegance. Without this functionality terminating processing and flushing processing queue are straight-forward to implement:
-- To terminate processing one just need to add a new task that will tell processor to stop. This can be safely done from the processor’s destructor which will wait for that task to complete (see Herb’s talk for details).
-- If you want to flush then one just need to submit an empty task and wait when it’s complete; it would mean all tasks before empty one were processed.
+Now why submitting a new task from a running tasks spoils all the elegance? Without this functionality processing termination and processing flushing are straight-forward to implement:
+- To terminate processing one just need to add a new task that will tell processor to stop. This can be done safely from the processor’s destructor which will wait for that task to complete (see Herb’s talk for details).
+- If you want to flush then one just need to submit an empty task and wait when it’s complete; it would mean all the tasks before empty one were processed.
+
+Neither termination nor queue flush works as described above if tasks may submit a new task. Indeed:
+- Once termination task is submitted, there might be pending tasks in the queue, which will submit a new task so termination task will not be the last one.
+- Once flush task is submitted, pending task may submit a new task, which will be executed after flush task completes; this contradicts to flush semantic.
+
+Wouldn’t it be nice to have it all: asynchronous wrapper turning synchronous code into asynchronous tasks (just like Herb presented) with possibility to submit a new task from running task, with possibility to destroy processing safely at any time, with possibility to flush pending tasks to make sure there are no dangling pointers… Well, this is what this library does for you ;)
