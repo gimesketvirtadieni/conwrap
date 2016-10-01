@@ -36,6 +36,7 @@ namespace conwrap
 			, processorProxyPtr(std::unique_ptr<ProcessorAsio<ResourceType>>(new ProcessorAsio<ResourceType>(processorImplPtr)))
 			, proxy(false)
 			{
+				processorImplPtr->setProcessor(processorProxyPtr.get());
 				processorImplPtr->start();
 			}
 
@@ -76,9 +77,14 @@ namespace conwrap
 				processorImplPtr->flush();
 			}
 
-			virtual HandlerWrapper wrapHandler(std::function<void()> handler) override
+			virtual void post(HandlerWrapper handlerWrapper) override
 			{
-				return processorImplPtr->wrapHandler(handler);
+				processorImplPtr->post(handlerWrapper);
+			}
+
+			virtual HandlerWrapper wrapHandler(std::function<void()> handler)
+			{
+				return wrapHandler(handler, proxy);
 			}
 
 		protected:
@@ -94,7 +100,7 @@ namespace conwrap
 
 					virtual HandlerContext<ResourceType> createHandlerContext() override
 					{
-						return HandlerContext<ResourceType> (getResource(), this);
+						return HandlerContext<ResourceType> (getResource(), processorPtr);
 					}
 
 					boost::asio::io_service* getDispatcher()
@@ -115,7 +121,7 @@ namespace conwrap
 							if (thread.joinable())
 							{
 								// reseting work object will make dispatcher exit as soon as there is no handler to process
-								post(wrapHandler([&]
+								post(this->wrapHandler([&]
 								{
 									workPtr.reset();
 								}));
@@ -129,6 +135,11 @@ namespace conwrap
 					virtual void post(HandlerWrapper handlerWrapper) override
 					{
 						dispatcher.post(handlerWrapper);
+					}
+
+					void setProcessor(ProcessorAsio<ResourceType2>* p)
+					{
+						processorPtr = p;
 					}
 
 					void start()
@@ -180,13 +191,18 @@ namespace conwrap
 
 					virtual HandlerWrapper wrapHandler(std::function<void()> handler) override
 					{
+						return wrapHandler(handler, false);
+					}
+
+					virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
+					{
 						return HandlerWrapper([=]
 						{
-							processorQueue.process([=]
+							processorQueue.post(processorQueue.wrapHandler([=]
 							{
 								handler();
-							});
-						});
+							}, proxy));
+						}, proxy);
 					}
 
 				protected:
@@ -198,6 +214,7 @@ namespace conwrap
 
 				private:
 					ProcessorQueue<ResourceType2>                  processorQueue;
+					ProcessorAsio<ResourceType2>*                  processorPtr;
 					std::unique_ptr<boost::asio::io_service::work> workPtr;
 					boost::asio::io_service                        dispatcher;
 					std::thread                                    thread;
@@ -220,9 +237,9 @@ namespace conwrap
 				return std::move(resourcePtr);
 			}
 
-			virtual void post(HandlerWrapper handlerWrapper) override
+			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
 			{
-				processorImplPtr->post(handlerWrapper);
+				return processorImplPtr->wrapHandler(handler, proxy);
 			}
 
 		private:

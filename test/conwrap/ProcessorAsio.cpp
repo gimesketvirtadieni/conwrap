@@ -23,7 +23,6 @@ TEST(ProcessorAsio, Getters1)
 		EXPECT_TRUE(processor.getResource() != nullptr);
 		EXPECT_EQ(&processor, processor.getResource()->processorPtr);
 	}
-
 	{
 		auto dummyPtr    = std::make_unique<Dummy>();
 		auto dummyRawPtr = dummyPtr.get();
@@ -43,7 +42,7 @@ TEST(ProcessorAsio, Destructor1) {
 		conwrap::ProcessorAsio<Dummy> processor;
 
 		called = false;
-		processor.process([&](auto)
+		processor.process([&]
 		{
 			// simulating some action
 			std::chrono::milliseconds wait{10};
@@ -66,7 +65,7 @@ TEST(ProcessorAsio, Destructor2)
 		conwrap::ProcessorAsio<Dummy> processor;
 
 		called = false;
-		processor.process([&](auto handlerContext)
+		processor.process([&](auto context)
 		{
 
 			// simulating some action
@@ -74,7 +73,7 @@ TEST(ProcessorAsio, Destructor2)
 			std::this_thread::sleep_for(wait);
 
 			// by this moment destructor has been called already
-			handlerContext.getProcessor()->process([&](auto handlerContext)
+			context.getProcessor()->process([&]
 			{
 				called = true;
 			});
@@ -91,7 +90,7 @@ TEST(ProcessorAsio, Flush1)
 	conwrap::ProcessorAsio<Dummy> processor;
 
 	wasCalled = false;
-	processor.process([&](auto)
+	processor.process([&]
 	{
 		// simulating some action
 		std::chrono::milliseconds wait{10};
@@ -113,12 +112,12 @@ TEST(ProcessorAsio, Flush2)
 	{
 		conwrap::ProcessorAsio<Dummy> processor;
 
-		processor.process([&](auto)
+		processor.process([&]
 		{
 			id1 = std::this_thread::get_id();
 		});
 		processor.flush();
-		processor.process([&](auto)
+		processor.process([&]
 		{
 			id2 = std::this_thread::get_id();
 		});
@@ -134,7 +133,7 @@ TEST(ProcessorAsio, Process1)
 	conwrap::ProcessorAsio<Dummy> processor;
 
 	wasCalled = false;
-	auto asyncCall = processor.process([&](auto)
+	auto asyncCall = processor.process([&]
 	{
 		// simulating some action
 		std::chrono::milliseconds wait{10};
@@ -155,7 +154,7 @@ TEST(ProcessorAsio, Process2)
 	conwrap::ProcessorAsio<Dummy> processor;
 
 	val = 123;
-	auto syncCall = processor.process([&](auto) -> int
+	auto syncCall = processor.process([&]() -> int
 	{
 		// simulating some action
 		std::chrono::milliseconds wait{10};
@@ -164,6 +163,19 @@ TEST(ProcessorAsio, Process2)
 		return val;
 	});
 	EXPECT_EQ(val, syncCall.get());
+}
+
+
+TEST(ProcessorAsio, Process3)
+{
+	std::atomic<void*>            ptr;
+	conwrap::ProcessorAsio<Dummy> processor;
+
+	processor.process([&](auto context)
+	{
+		ptr = context.getProcessor();
+	}).wait();
+	EXPECT_NE(&processor, ptr);
 }
 
 

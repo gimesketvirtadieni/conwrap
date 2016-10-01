@@ -43,7 +43,7 @@ TEST(ProcessorQueue, Destructor1)
 		conwrap::ProcessorQueue<Dummy> processor;
 
 		called = false;
-		processor.process([&](auto)
+		processor.process([&]
 		{
 			// simulating some action
 			std::chrono::milliseconds wait{10};
@@ -66,14 +66,14 @@ TEST(ProcessorQueue, Destructor2)
 		conwrap::ProcessorQueue<Dummy> processor;
 
 		called = false;
-		processor.process([&](auto handlerContext)
+		processor.process([&](auto context)
 		{
 			// simulating some action
 			std::chrono::milliseconds wait{10};
 			std::this_thread::sleep_for(wait);
 
 			// by this moment destructor has been called already
-			handlerContext.getProcessor()->process([&](auto handlerContext)
+			context.getProcessor()->process([&]
 			{
 				called = true;
 			});
@@ -90,7 +90,7 @@ TEST(ProcessorQueue, Flush1)
 	conwrap::ProcessorQueue<Dummy> processor;
 
 	wasCalled = false;
-	processor.process([&](auto)
+	processor.process([&]
 	{
 		// simulating some action
 		std::chrono::milliseconds wait{10};
@@ -112,12 +112,12 @@ TEST(ProcessorQueue, Flush2)
 	{
 		conwrap::ProcessorQueue<Dummy> processor;
 
-		processor.process([&](auto)
+		processor.process([&]
 		{
 			id1 = std::this_thread::get_id();
 		});
 		processor.flush();
-		processor.process([&](auto)
+		processor.process([&]
 		{
 			id2 = std::this_thread::get_id();
 		});
@@ -127,13 +127,52 @@ TEST(ProcessorQueue, Flush2)
 }
 
 
+TEST(ProcessorQueue, Flush3)
+{
+	conwrap::ProcessorQueue<Dummy> processor;
+
+	processor.process([&](auto context)
+	{
+		// simulating some action
+		std::chrono::milliseconds wait{5};
+		std::this_thread::sleep_for(wait);
+
+		context.getProcessor()->process([&]
+		{
+			// simulating some action
+			std::chrono::milliseconds wait{10};
+			std::this_thread::sleep_for(wait);
+		});
+	});
+
+	auto asyncCall = std::async(
+	    std::launch::async,
+	    [&]
+	    {
+			// this delay will make sure that following handler is submitted AFTER the flush call
+			std::chrono::milliseconds wait{10};
+			std::this_thread::sleep_for(wait);
+
+			processor.process([&]
+			{
+				// simulating some action
+				std::chrono::milliseconds wait{10};
+				std::this_thread::sleep_for(wait);
+			});
+	    }
+	);
+	processor.flush();
+	asyncCall.wait();
+}
+
+
 TEST(ProcessorQueue, Process1)
 {
 	std::atomic<bool>              wasCalled;
 	conwrap::ProcessorQueue<Dummy> processor;
 
 	wasCalled = false;
-	auto asyncCall = processor.process([&](auto)
+	auto asyncCall = processor.process([&]
 	{
 		// simulating some action
 		std::chrono::milliseconds wait{10};
@@ -154,7 +193,7 @@ TEST(ProcessorQueue, Process2)
 	conwrap::ProcessorQueue<Dummy> processor;
 
 	val = 123;
-	auto syncCall = processor.process([&](auto) -> int
+	auto syncCall = processor.process([&]() -> int
 	{
 		// simulating some action
 		std::chrono::milliseconds wait{10};
@@ -163,4 +202,17 @@ TEST(ProcessorQueue, Process2)
 		return val;
 	});
 	EXPECT_EQ(val, syncCall.get());
+}
+
+
+TEST(ProcessorQueue, Process3)
+{
+	std::atomic<void*>             ptr;
+	conwrap::ProcessorQueue<Dummy> processor;
+
+	processor.process([&](auto context)
+	{
+		ptr = context.getProcessor();
+	}).wait();
+	EXPECT_NE(&processor, ptr);
 }

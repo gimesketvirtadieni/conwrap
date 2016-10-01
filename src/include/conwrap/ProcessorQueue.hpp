@@ -23,9 +23,17 @@
 namespace conwrap
 {
 
+	// forward declaration
+	template <typename ResourceType>
+	class ProcessorAsio;
+
+
 	template <typename ResourceType>
 	class ProcessorQueue : public Processor<ResourceType>
 	{
+		// friend declaration
+		template <typename> friend class ProcessorAsio;
+
 		public:
 			template <typename... Args>
 			ProcessorQueue(Args... args)
@@ -33,6 +41,7 @@ namespace conwrap
 			, processorProxyPtr(std::unique_ptr<ProcessorQueue<ResourceType>>(new ProcessorQueue<ResourceType>(processorImplPtr)))
 			, proxy(false)
 			{
+				processorImplPtr->setProcessor(processorProxyPtr.get());
 				processorImplPtr->start();
 			}
 
@@ -67,6 +76,16 @@ namespace conwrap
 				processorImplPtr->flush();
 			}
 
+			virtual void post(HandlerWrapper handlerWrapper) override
+			{
+				processorImplPtr->post(handlerWrapper);
+			}
+
+			virtual HandlerWrapper wrapHandler(std::function<void()> handler)
+			{
+				return wrapHandler(handler, proxy);
+			}
+
 		protected:
 			template <typename ResourceType2>
 			class ProcessorQueueImpl : public Processor<ResourceType2>
@@ -80,7 +99,7 @@ namespace conwrap
 
 					virtual HandlerContext<ResourceType> createHandlerContext() override
 					{
-						return HandlerContext<ResourceType> (getResource(), this);
+						return HandlerContext<ResourceType> (getResource(), processorPtr);
 					}
 
 					virtual ResourceType2* getResource() override
@@ -98,6 +117,11 @@ namespace conwrap
 					virtual void post(HandlerWrapper handlerWrapper) override
 					{
 						queue.push(handlerWrapper);
+					}
+
+					void setProcessor(ProcessorQueue<ResourceType2>* p)
+					{
+						processorPtr = p;
 					}
 
 					void start()
@@ -118,6 +142,16 @@ namespace conwrap
 										if (auto handlerWrapperPtr = queue.get())
 										{
 											(*handlerWrapperPtr)();
+
+											// TODO: work in progress
+											// if (!handlerWrapperPtr->getProxy())
+											// {
+											//  	for each in the queue
+											//  		where proxy and epoche is empty
+											//  		wrapped handler.epoche = current epoche
+											//
+											//  	increase epoche
+											// }
 										}
 
 										// removing executed item
@@ -135,7 +169,7 @@ namespace conwrap
 
 							if (thread.joinable())
 							{
-								this->process([&](auto)
+								this->process([&]
 								{
 									// no need to protect with a lock because this assigment will be done on consumer's thread
 									finished = true;
@@ -149,12 +183,17 @@ namespace conwrap
 
 					virtual HandlerWrapper wrapHandler(std::function<void()> handler) override
 					{
-						// TODO: create a proper wrapper
-						return HandlerWrapper(handler);
+						return wrapHandler(handler, false);
+					}
+
+					virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
+					{
+						return HandlerWrapper(handler, proxy);
 					}
 
 				private:
 					std::unique_ptr<ResourceType2>  resourcePtr;
+					ProcessorQueue<ResourceType2>*  processorPtr;
 					ConcurrentQueue<HandlerWrapper> queue;
 					std::thread                     thread;
 					std::mutex                      lock;
@@ -176,14 +215,9 @@ namespace conwrap
 				return std::move(resourcePtr);
 			}
 
-			virtual void post(HandlerWrapper handlerWrapper) override
+			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
 			{
-				processorImplPtr->post(handlerWrapper);
-			}
-
-			virtual HandlerWrapper wrapHandler(std::function<void()> handler) override
-			{
-				return processorImplPtr->wrapHandler(handler);
+				return processorImplPtr->wrapHandler(handler, proxy);
 			}
 
 		private:

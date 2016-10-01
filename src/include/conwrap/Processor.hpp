@@ -32,6 +32,8 @@ namespace conwrap
 
 			virtual void flush() = 0;
 
+			virtual void post(HandlerWrapper) = 0;
+
 			template <typename F>
 			auto process(F fun) -> std::future<decltype(fun())>
 			{
@@ -60,9 +62,9 @@ namespace conwrap
 				return promisePtr->get_future();
 			}
 
-		protected:
-			virtual void post(HandlerWrapper) = 0;
+			virtual HandlerWrapper wrapHandler(std::function<void()>) = 0;
 
+		protected:
 			template <typename Fut, typename Fun>
 			void setPromiseValue(std::promise<Fut>& p, Fun& f)
 			{
@@ -89,7 +91,7 @@ namespace conwrap
 				p.set_value();
 			}
 
-			virtual HandlerWrapper wrapHandler(std::function<void()>) = 0;
+			virtual HandlerWrapper wrapHandler(std::function<void()>, bool) = 0;
 	};
 
 }

@@ -65,7 +65,7 @@ TEST(Processor, Process3)
 	conwrap::ProcessorMock processor;
 
 	val = 123;
-	auto syncCall = processor.process([&](auto) -> int
+	auto syncCall = processor.process([&]() -> int
 	{
 		return val;
 	});
@@ -140,7 +140,7 @@ TEST(Processor, Process7)
 	val = 123;
 	auto syncCall = processor.process([&](auto handlerContext) -> int
 	{
-		return handlerContext.getProcessor()->process([&](auto) -> int
+		return handlerContext.getProcessor()->process([&]() -> int
 		{
 			return val;
 		}).get();

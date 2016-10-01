@@ -21,7 +21,7 @@ namespace conwrap
 	class HandlerWrapper
 	{
 		public:
-			HandlerWrapper(std::function<void()> h = [] {}) : handler(h) {}
+			HandlerWrapper(std::function<void()> h, bool p) : handler(h) {}
 
 			virtual ~HandlerWrapper() {}
 
