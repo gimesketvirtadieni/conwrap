@@ -19,6 +19,8 @@
 #include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/Processor.hpp>
 
+#include <iostream>
+
 
 namespace conwrap
 {
@@ -37,12 +39,14 @@ namespace conwrap
 		public:
 			template <typename... Args>
 			ProcessorQueue(Args... args)
-			: processorImplPtr(std::make_shared<ProcessorQueueImpl<ResourceType>>(std::move(createResource(std::forward<Args>(args)...))))
+			: processorImplPtr(std::make_shared<ProcessorQueueImpl<ResourceType>>(std::move(std::make_unique<ResourceType>(std::forward<Args>(args)...))))
 			, processorProxyPtr(std::unique_ptr<ProcessorQueue<ResourceType>>(new ProcessorQueue<ResourceType>(processorImplPtr)))
 			, proxy(false)
 			{
 				processorImplPtr->setProcessor(processorProxyPtr.get());
 				processorImplPtr->start();
+
+				std::cout << "Q2 processorProxyPtr=" << processorProxyPtr.get() << " processorImplPtr=" << processorImplPtr.get() << "\n\r";
 			}
 
 			ProcessorQueue(std::unique_ptr<ResourceType> resource)
@@ -50,7 +54,10 @@ namespace conwrap
 			, processorProxyPtr(std::unique_ptr<ProcessorQueue<ResourceType>>(new ProcessorQueue<ResourceType>(processorImplPtr)))
 			, proxy(false)
 			{
+				processorImplPtr->setProcessor(processorProxyPtr.get());
 				processorImplPtr->start();
+
+				std::cout << "Q3 processorProxyPtr=" << processorProxyPtr.get() << " processorImplPtr=" << processorImplPtr.get() << "\n\r";
 			}
 
 			virtual ~ProcessorQueue()
@@ -93,7 +100,8 @@ namespace conwrap
 				public:
 					template <typename... Args>
 					ProcessorQueueImpl(std::unique_ptr<ResourceType2> r)
-					: resourcePtr(std::move(r)) {}
+					: resourcePtr(std::move(r))
+					, epoch(1) {}
 
 					virtual ~ProcessorQueueImpl() {}
 
@@ -109,9 +117,18 @@ namespace conwrap
 
 					virtual void flush() override
 					{
-						// waiting for the queue to become empty
-						// TODO: this should be re-designed to use proper flush semantic as current solution waits until queue becomes empty
-						queue.flush();
+						// figuring out current epoch
+						auto currentEpoch = this->process([=]() -> auto
+						{
+							return this->epoch;
+						}).get();
+
+						// waiting for any 'child' handlers to be processed
+						while (childExists(currentEpoch))
+						{
+							// TODO: insert flush handler after the last child instead of adding at the end of the queue
+							this->process([=] {}).wait();
+						}
 					}
 
 					virtual void post(HandlerWrapper handlerWrapper) override
@@ -122,6 +139,9 @@ namespace conwrap
 					void setProcessor(ProcessorQueue<ResourceType2>* p)
 					{
 						processorPtr = p;
+
+						// TODO: implemet compile-time reflection to make this invocation optional
+						resourcePtr->setProcessor(processorPtr);
 					}
 
 					void start()
@@ -141,17 +161,28 @@ namespace conwrap
 										// executing handler
 										if (auto handlerWrapperPtr = queue.get())
 										{
+											// TODO: work in progress
+											// if this handler was submitted via non-proxy interface
+											if (!handlerWrapperPtr->getProxy())
+											{
+												handlerWrapperPtr->setEpoch(epoch);
+
+												// increasing epoch counter if this handler was submitted via non-proxy interface
+												// TODO: MAX case must be handled
+												epoch++;
+											}
+
+											// executing handler
 											(*handlerWrapperPtr)();
 
-											// TODO: work in progress
-											// if (!handlerWrapperPtr->getProxy())
-											// {
-											//  	for each in the queue
-											//  		where proxy and epoche is empty
-											//  		wrapped handler.epoche = current epoche
-											//
-											//  	increase epoche
-											// }
+											// setting epoch value for each newly created handler
+											for (auto& h : queue)
+											{
+												if (h.getProxy() && !h.getEpoch())
+												{
+													h.setEpoch(handlerWrapperPtr->getEpoch());
+												}
+											}
 										}
 
 										// removing executed item
@@ -191,6 +222,24 @@ namespace conwrap
 						return HandlerWrapper(handler, proxy);
 					}
 
+				protected:
+					bool childExists(unsigned long long currentEpoch)
+					{
+						auto found = false;
+
+						for (auto& h : queue)
+						{
+							auto epoch = h.getEpoch();
+							if (h.getProxy() && epoch && epoch < currentEpoch)
+							{
+								found = true;
+								break;
+							}
+						}
+
+						return found;
+					}
+
 				private:
 					std::unique_ptr<ResourceType2>  resourcePtr;
 					ProcessorQueue<ResourceType2>*  processorPtr;
@@ -198,22 +247,12 @@ namespace conwrap
 					std::thread                     thread;
 					std::mutex                      lock;
 					bool                            finished;
+					unsigned long long              epoch;
 			};
 
 			ProcessorQueue(std::shared_ptr<ProcessorQueueImpl<ResourceType>> processorImplPtr)
 			: processorImplPtr(processorImplPtr)
 			, proxy(true) {}
-
-			template <typename... Args>
-			std::unique_ptr<ResourceType> createResource(Args... args)
-			{
-				auto resourcePtr = std::make_unique<ResourceType>(std::forward<Args>(args)...);
-
-				// TODO: implemet compile-time reflection to make this invocation optional
-				resourcePtr->setProcessor(this);
-
-				return std::move(resourcePtr);
-			}
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
 			{

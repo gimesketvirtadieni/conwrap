@@ -53,11 +53,15 @@ namespace conwrap
 			{
 				auto promisePtr = std::make_shared<std::promise<decltype(fun(createHandlerContext()))>>();
 
-				// posting a new handler
-				post(wrapHandler([=]
+
+				auto handlerWrapper = wrapHandler([=]
 				{
 					setPromiseValueWithContext(*promisePtr, fun);
-				}));
+				});
+
+
+				// posting a new handler
+				post(handlerWrapper);
 
 				return promisePtr->get_future();
 			}

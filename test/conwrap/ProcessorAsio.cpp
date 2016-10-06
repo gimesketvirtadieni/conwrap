@@ -14,6 +14,8 @@
 #include <thread>
 #include "Mocks.hpp"
 
+#include <iostream>
+
 
 TEST(ProcessorAsio, Getters1)
 {
@@ -21,7 +23,6 @@ TEST(ProcessorAsio, Getters1)
 		conwrap::ProcessorAsio<Dummy> processor;
 
 		EXPECT_TRUE(processor.getResource() != nullptr);
-		EXPECT_EQ(&processor, processor.getResource()->processorPtr);
 	}
 	{
 		auto dummyPtr    = std::make_unique<Dummy>();
@@ -29,7 +30,8 @@ TEST(ProcessorAsio, Getters1)
 		conwrap::ProcessorAsio<Dummy> processor(std::move(dummyPtr));
 
 		EXPECT_EQ(dummyRawPtr, processor.getResource());
-		EXPECT_EQ(&processor, processor.getResource()->processorPtr);
+		EXPECT_NE(nullptr, processor.getResource()->processorPtr);
+		std::cout << "H1 processor=" << &processor << " processor.getResource()->processorPtr=" << processor.getResource()->processorPtr << "\n\r";
 	}
 }
 
@@ -176,6 +178,20 @@ TEST(ProcessorAsio, Process3)
 		ptr = context.getProcessor();
 	}).wait();
 	EXPECT_NE(&processor, ptr);
+}
+
+
+TEST(ProcessorAsio, Process4)
+{
+	std::atomic<bool>             wasCalled;
+	conwrap::ProcessorAsio<Dummy> processor;
+
+	wasCalled = false;
+	processor.getResource()->processorPtr->process([&](auto context)
+	{
+		wasCalled = true;
+	}).wait();
+	EXPECT_TRUE(wasCalled);
 }
 
 

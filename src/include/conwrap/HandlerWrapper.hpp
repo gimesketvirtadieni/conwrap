@@ -14,6 +14,8 @@
 
 #include <functional>
 
+#include <iostream>
+
 
 namespace conwrap
 {
@@ -21,22 +23,42 @@ namespace conwrap
 	class HandlerWrapper
 	{
 		public:
-			HandlerWrapper(std::function<void()> h, bool p) : handler(h) {}
+			HandlerWrapper(std::function<void()> h, bool p)
+			: handler(h)
+			, proxy(p)
+			, epoch(0) {}
 
 			virtual ~HandlerWrapper() {}
 
-			inline std::function<void()> getHandler()
+			inline auto getEpoch()
+			{
+				return epoch;
+			}
+
+			inline auto getHandler()
 			{
 				return handler;
 			}
 
-			inline void operator()()
+			inline auto getProxy()
+			{
+				return proxy;
+			}
+
+			inline auto operator()()
 			{
 				handler();
 			}
 
+			inline void setEpoch(auto e)
+			{
+				epoch = e;
+			}
+
 		private:
 			std::function<void()> handler;
+			bool                  proxy;
+			unsigned long long    epoch;
 	};
 
 }

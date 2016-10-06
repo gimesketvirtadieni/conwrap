@@ -1,0 +1,9 @@
+[submodule "contrib/aaa/googletest"]
+	path = contrib/aaa/googletest
+	url = https://github.com/google/googletest
+[submodule "contrib/googletest"]
+	path = contrib/googletest
+	url = https://github.com/google/googletest
+[submodule "contrib/asio"]
+	path = contrib/asio
+	url = https://github.com/chriskohlhoff/asio

@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include <boost/asio.hpp>
+#include <asio.hpp>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -21,6 +21,8 @@
 #include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/Processor.hpp>
 #include <conwrap/ProcessorQueue.hpp>
+
+#include <iostream>
 
 
 namespace conwrap
@@ -32,12 +34,14 @@ namespace conwrap
 		public:
 			template <typename... Args>
 			ProcessorAsio(Args... args)
-			: processorImplPtr(std::make_shared<ProcessorAsioImpl<ResourceType>>(std::move(createResource(std::forward<Args>(args)...))))
+			: processorImplPtr(std::make_shared<ProcessorAsioImpl<ResourceType>>(std::move(std::make_unique<ResourceType>(std::forward<Args>(args)...))))
 			, processorProxyPtr(std::unique_ptr<ProcessorAsio<ResourceType>>(new ProcessorAsio<ResourceType>(processorImplPtr)))
 			, proxy(false)
 			{
 				processorImplPtr->setProcessor(processorProxyPtr.get());
 				processorImplPtr->start();
+
+				std::cout << "H2 processorProxyPtr=" << processorProxyPtr.get() << " processorImplPtr=" << processorImplPtr.get() << "\n\r";
 			}
 
 			template <typename... Args>
@@ -46,7 +50,10 @@ namespace conwrap
 			, processorProxyPtr(std::unique_ptr<ProcessorAsio<ResourceType>>(new ProcessorAsio<ResourceType>(processorImplPtr)))
 			, proxy(false)
 			{
+				processorImplPtr->setProcessor(processorProxyPtr.get());
 				processorImplPtr->start();
+
+				std::cout << "H3 processorProxyPtr=" << processorProxyPtr.get() << " processorImplPtr=" << processorImplPtr.get() << "\n\r";
 			}
 
 			virtual ~ProcessorAsio()
@@ -62,7 +69,7 @@ namespace conwrap
 				return processorImplPtr->createHandlerContext();
 			}
 
-			boost::asio::io_service* getDispatcher()
+			asio::io_service* getDispatcher()
 			{
 				return processorImplPtr->getDispatcher();
 			}
@@ -103,7 +110,7 @@ namespace conwrap
 						return HandlerContext<ResourceType> (getResource(), processorPtr);
 					}
 
-					boost::asio::io_service* getDispatcher()
+					asio::io_service* getDispatcher()
 					{
 						return &dispatcher;
 					}
@@ -140,6 +147,9 @@ namespace conwrap
 					void setProcessor(ProcessorAsio<ResourceType2>* p)
 					{
 						processorPtr = p;
+
+						// TODO: implemet compile-time reflection to make this invocation optional
+						processorQueue.getResource()->setProcessor(processorPtr);
 					}
 
 					void start()
@@ -155,7 +165,7 @@ namespace conwrap
 									for (finished = false; !finished;)
 									{
 										// creating work object to make sure dispatcher performs until work object is deleted
-										workPtr = std::make_unique<boost::asio::io_service::work>(dispatcher);
+										workPtr = std::make_unique<asio::io_service::work>(dispatcher);
 
 										// the main processing loop
 										while (processPending() > 0)
@@ -213,29 +223,18 @@ namespace conwrap
 					}
 
 				private:
-					ProcessorQueue<ResourceType2>                  processorQueue;
-					ProcessorAsio<ResourceType2>*                  processorPtr;
-					std::unique_ptr<boost::asio::io_service::work> workPtr;
-					boost::asio::io_service                        dispatcher;
-					std::thread                                    thread;
-					std::mutex                                     lock;
-					bool                                           finished;
+					ProcessorQueue<ResourceType2>           processorQueue;
+					ProcessorAsio<ResourceType2>*           processorPtr;
+					std::unique_ptr<asio::io_service::work> workPtr;
+					asio::io_service                        dispatcher;
+					std::thread                             thread;
+					std::mutex                              lock;
+					bool                                    finished;
 			};
 
 			ProcessorAsio(std::shared_ptr<ProcessorAsioImpl<ResourceType>> processorImplPtr)
 			: processorImplPtr(processorImplPtr)
 			, proxy(true) {}
-
-			template <typename... Args>
-			std::unique_ptr<ResourceType> createResource(Args... args)
-			{
-				auto resourcePtr = std::make_unique<ResourceType>(std::forward<Args>(args)...);
-
-				// TODO: implemet compile-time reflection to make this invocation optional
-				resourcePtr->setProcessor(this);
-
-				return std::move(resourcePtr);
-			}
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
 			{

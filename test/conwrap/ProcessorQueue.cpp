@@ -11,7 +11,10 @@
  */
 
 #include <chrono>
+#include <future>
 #include "Mocks.hpp"
+
+#include <iostream>
 
 
 TEST(ProcessorQueue, Getters1)
@@ -20,7 +23,6 @@ TEST(ProcessorQueue, Getters1)
 		conwrap::ProcessorQueue<Dummy> processor;
 
 		EXPECT_TRUE(processor.getResource() != nullptr);
-		EXPECT_EQ(&processor, processor.getResource()->processorPtr);
 	}
 
 	{
@@ -29,7 +31,9 @@ TEST(ProcessorQueue, Getters1)
 		conwrap::ProcessorQueue<Dummy> processor(std::move(dummyPtr));
 
 		EXPECT_EQ(dummyRawPtr, processor.getResource());
-		EXPECT_EQ(&processor, processor.getResource()->processorPtr);
+		EXPECT_NE(nullptr, processor.getResource()->processorPtr);
+
+		std::cout << "Q1 processor=" << &processor << " processor.getResource()->processorPtr=" << processor.getResource()->processorPtr << "\n\r";
 	}
 }
 
@@ -127,22 +131,32 @@ TEST(ProcessorQueue, Flush2)
 }
 
 
+// TODO: refactor to avoid time-based syncing
 TEST(ProcessorQueue, Flush3)
 {
 	conwrap::ProcessorQueue<Dummy> processor;
 
+	auto ready = std::promise<void>();
+
 	processor.process([&](auto context)
 	{
-		// simulating some action
-		std::chrono::milliseconds wait{5};
-		std::this_thread::sleep_for(wait);
-
 		context.getProcessor()->process([&]
 		{
 			// simulating some action
-			std::chrono::milliseconds wait{10};
+			std::cout << "Second handler start\n\r";
+			std::chrono::milliseconds wait{5};
 			std::this_thread::sleep_for(wait);
+			std::cout << "Second handler end\n\r";
 		});
+
+		// waiting for all tasks to be submitted
+		ready.get_future().wait();
+
+		// simulating some action
+		std::cout << "First handler start\n\r";
+		std::chrono::milliseconds wait{5};
+		std::this_thread::sleep_for(wait);
+		std::cout << "First handler end\n\r";
 	});
 
 	auto asyncCall = std::async(
@@ -150,19 +164,28 @@ TEST(ProcessorQueue, Flush3)
 	    [&]
 	    {
 			// this delay will make sure that following handler is submitted AFTER the flush call
-			std::chrono::milliseconds wait{10};
+			std::chrono::milliseconds wait{5};
 			std::this_thread::sleep_for(wait);
 
 			processor.process([&]
 			{
-				// simulating some action
-				std::chrono::milliseconds wait{10};
+				// simulating some action; it needs to be longer than #1 & #2 so flush has a chance to complete
+				std::cout << "Third handler start\n\r";
+				std::chrono::milliseconds wait{5};
 				std::this_thread::sleep_for(wait);
+				std::cout << "Third handler end\n\r";
 			});
+
+			// all tasks were submitted; start processing
+			ready.set_value();
 	    }
 	);
+
+	std::cout << "HELLO before flush\n\r";
 	processor.flush();
+	std::cout << "HELLO after flush\n\r";
 	asyncCall.wait();
+	std::cout << "HELLO done\n\r";
 }
 
 
@@ -215,4 +238,18 @@ TEST(ProcessorQueue, Process3)
 		ptr = context.getProcessor();
 	}).wait();
 	EXPECT_NE(&processor, ptr);
+}
+
+
+TEST(ProcessorQueue, Process4)
+{
+	std::atomic<bool>              wasCalled;
+	conwrap::ProcessorQueue<Dummy> processor;
+
+	wasCalled = false;
+	processor.getResource()->processorPtr->process([&](auto context)
+	{
+		wasCalled = true;
+	}).wait();
+	EXPECT_TRUE(wasCalled);
 }
