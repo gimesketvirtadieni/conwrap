@@ -83,7 +83,7 @@ conwrap::ProcessorQueue<Dummy> processor();
 processor.process([capturedPtr = objectPtr.get()](auto context)
 {
 	// here pointer to the object can be used including for passing to any sub-sequent task
-	// waiting for this task to complete is not safe enough because it may do like following:
+	// waiting for this particular task to complete does not solve this problem, so fluch must be used
 
 	// getting processor
 	auto processorPtr = context.getProcessor();
