@@ -83,7 +83,7 @@ conwrap::ProcessorQueue<Dummy> processor();
 processor.process([capturedPtr = objectPtr.get()]
 {
 	// here pointer to the object can be used including for passing to any sub-sequent task
-	// note that waiting for this particular task to complete is not safe enough because it may pass capturedPtr sub-sequent tasks
+	// waiting for this task to complete is not safe enough because it may pass capturedPtr to sub-sequent tasks
 });
 
 // without this flush operation capturedPtr becomes a dangling pointer after object is deleted
