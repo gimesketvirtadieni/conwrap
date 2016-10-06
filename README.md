@@ -80,10 +80,20 @@ auto objectPtr = std::make_unique<SomeClass>();
 conwrap::ProcessorQueue<Dummy> processor();
 
 // submitting an asynchronous task that will invoke syncMethod
-processor.process([capturedPtr = objectPtr.get()]
+processor.process([capturedPtr = objectPtr.get()](auto context)
 {
 	// here pointer to the object can be used including for passing to any sub-sequent task
-	// waiting for this task to complete is not safe enough because it may pass capturedPtr to sub-sequent tasks
+	// waiting for this task to complete is not safe enough because it may do like following:
+
+	// getting processor
+	auto processorPtr = context.getProcessor();
+
+	// creating a new sub-sequent task
+	processorPtr.process([=]
+
+		// bummer
+		capturedPtr->doSomething();
+	);
 });
 
 // without this flush operation capturedPtr becomes a dangling pointer after object is deleted
