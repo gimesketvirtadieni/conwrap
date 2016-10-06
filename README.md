@@ -60,7 +60,45 @@ Now why submitting a new task from a running tasks spoils all the elegance? With
 - If you want to flush then one just need to submit an empty task and wait when it’s complete; it would mean all the tasks before empty one were processed.
 
 Neither termination nor queue flush works as described above if tasks may submit a new task. Indeed:
-- Once termination task is submitted, there might be pending tasks in the queue, which will submit a new task so termination task will not be the last one.
+- Once termination task is submitted, there might be pending tasks in the queue, and if it submitts a new task so termination task will not be the last one.
 - Once flush task is submitted, pending task may submit a new task, which will be executed after flush task completes; this contradicts to flush semantic.
 
 Wouldn’t it be nice to have it all: asynchronous wrapper turning synchronous code into asynchronous tasks (just like Herb presented) with possibility to submit a new task from running task, with possibility to destroy processing safely at any time, with possibility to flush pending tasks to make sure there are no dangling pointers… Well, this is what this library does for you ;)
+
+
+##How it works
+
+The goal of this library is the same as for std::async – to run arbitrary code asynchronously, however semantic is different. std::async spawns a new thread every time it is called. This approach is not suitable for many cases because OS thread creation is a heavy operation; besides this approach does not ensure sequential invocation of submitted tasks. Concurrent Wrapper uses a single thread for all submitted tasks, which are processed sequentially. Basically it is an implementation of “multiple providers / single consumer” pattern.
+
+The fact that a task being executed may submit new tasks causes extra complexity. For example, a task may still be executed when processor’s destructor is called hence processor is unavailable for accepting a new task. This is resolved by Concurrent Wrapper with a use of a proxy processor object which is passed for tasks to be used for issuing a new tasks.
+
+One important feature of Concurrent Processor is the possibility to flush task execution queue. Below there is an example demonstrating why this feature is crucial:
+```c++
+// creating an object on the heap
+auto objectPtr = std::make_unique<SomeClass>();
+
+conwrap::ProcessorQueue<Dummy> processor();
+
+// submitting an asynchronous task that will invoke syncMethod
+processor.process([capturedPtr = objectPtr.get()]
+{
+	// here pointer to the object can be used including for passing to any sub-sequent task
+	// note that waiting for this particular task to complete is not safe enough because it may pass capturedPtr sub-sequent tasks
+});
+
+// without this flush operation capturedPtr becomes a dangling pointer after object is deleted
+processor.flush();
+
+// deleting object
+objectPtr.reset();
+```
+
+
+In the similar way, Concurrent Processor ensures there is no dangling pointers left when its destructor is called by waiting for all pending tasks to complete. This is a different semantic compared to Boost.Asio, which requires stop method to be called and leaves unfinished handlers.
+
+So far, conwrap::ProcessorQueue was used to demonstrate Concurrent Wrapper's functionality. There is a similar class available called conwrap::ProcessorAsio. This class provides possibility to use Boos.Asio for processing arbitrary code asynchronously. This is very useful in case of asynchronous TCP/UDP servers based on Boost.Asio. Basically this class provides possibility to combine boost handlers with arbitrary code submitted for execution in the task-based processing fashion. Really cool thing about conwrap::ProcessorAsio is that it has the same semantic as conwrap::ProcessorQueue which means you can flush Boost.Asio handlers and delete processor object safely.
+
+
+##Usage
+
+... 
