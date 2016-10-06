@@ -72,7 +72,7 @@ The goal of this library is the same as for std::async – to run arbitrary code
 
 The fact that a task being executed may submit new tasks causes extra complexity. For example, a task may still be executed when processor’s destructor is called hence processor is unavailable for accepting a new task. This is resolved by Concurrent Wrapper with a use of a proxy processor object which is passed for tasks to be used for issuing a new tasks.
 
-One important feature of Concurrent Processor is the possibility to flush task execution queue. Below there is an example demonstrating why this feature is crucial:
+One important feature of Concurrent Wrapper is the possibility to flush task execution queue. Below there is an example demonstrating why this feature is crucial:
 ```c++
 // creating an object on the heap
 auto objectPtr = std::make_unique<SomeClass>();
@@ -94,7 +94,7 @@ objectPtr.reset();
 ```
 
 
-In the similar way, Concurrent Processor ensures there is no dangling pointers left when its destructor is called by waiting for all pending tasks to complete. This is a different semantic compared to Boost.Asio, which requires stop method to be called and leaves unfinished handlers.
+In the similar way, Concurrent Wrapper ensures there is no dangling pointers left when its destructor is called by waiting for all pending tasks to complete. This is a different semantic compared to Boost.Asio, which requires stop method to be called and leaves unfinished handlers.
 
 So far, conwrap::ProcessorQueue was used to demonstrate Concurrent Wrapper's functionality. There is a similar class available called conwrap::ProcessorAsio. This class provides possibility to use Boos.Asio for processing arbitrary code asynchronously. This is very useful in case of asynchronous TCP/UDP servers based on Boost.Asio. Basically this class provides possibility to combine boost handlers with arbitrary code submitted for execution in the task-based processing fashion. Really cool thing about conwrap::ProcessorAsio is that it has the same semantic as conwrap::ProcessorQueue which means you can flush Boost.Asio handlers and delete processor object safely.
 
