@@ -83,7 +83,7 @@ conwrap::ProcessorQueue<Dummy> processor();
 processor.process([capturedPtr = objectPtr.get()](auto context)
 {
 	// here pointer to the object can be used including for passing to any sub-sequent task
-	// waiting for this particular task to complete does not solve this problem, so fluch must be used
+	// waiting for this particular task to complete does not solve the problem, so flush must be used
 
 	// getting processor
 	auto processorPtr = context.getProcessor();
@@ -104,7 +104,7 @@ objectPtr.reset();
 ```
 
 
-In the similar way, Concurrent Wrapper ensures there is no dangling pointers left when its destructor is called by waiting for all pending tasks to complete. This is a different semantic compared to Boost.Asio, which requires stop method to be called and leaves unfinished handlers.
+In the similar way, Concurrent Wrapper ensures there is no dangling pointers left when its destructor is called. This is achieved by waiting for all pending tasks to complete. It is a different semantic compared to Boost.Asio, which requires stop method to be called and leaves unfinished handlers.
 
 So far, conwrap::ProcessorQueue was used to demonstrate Concurrent Wrapper's functionality. There is a similar class available called conwrap::ProcessorAsio. This class provides possibility to use Boos.Asio for processing arbitrary code asynchronously. This is very useful in case of asynchronous TCP/UDP server based on Boost.Asio. Basically this class provides possibility to combine boost handlers with arbitrary code submitted for execution as a task. Really cool thing about conwrap::ProcessorAsio is that it has the same semantic as conwrap::ProcessorQueue which means you can flush Boost.Asio handlers and delete processor object safely.
 
