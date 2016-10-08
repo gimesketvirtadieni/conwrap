@@ -21,6 +21,7 @@
 
 struct Dummy
 {
+	// TODO: this is a temporary fix before reflection is implemented
 	void setProcessor(conwrap::Processor<Dummy>*) {}
 };
 
@@ -93,9 +94,9 @@ class Server
 	protected:
 		void onData(const std::error_code error, const std::size_t receivedSize)
 		{
-			// if there is data to send back to the client
 			if (!error)
 			{
+				// if there is data to send back to the client
 				if (receivedSize > 0)
 				{
 					socketPtr->send(asio::buffer(buffer, receivedSize));
@@ -158,17 +159,17 @@ int main(int argc, char *argv[])
 		// now server runs on a separate thread; any other logic can be done here
 		for (int i = 0; i < 3; i++)
 		{
+			// submitting a task in a regular way
+			processorAsio.process([]() -> int
+			{
+				std::cout << "Hello from asio task\n\r";
+
+				// this is just to demonstrate that now asio can be used with tasks that return value
+				return 1234;
+			});
+
 			for (int j = 0; j < 3; j++)
 			{
-				// submitting a task in a regular way
-				processorAsio.process([]() -> int
-				{
-					std::cout << "Hello from asio task\n\r";
-
-					// this is just to demonstrate that now asio can be used with tasks that return value
-					return 1234;
-				});
-
 				// submitting a task directly via asio io_service
 				processorAsio.getDispatcher()->post(
 					processorAsio.wrapHandler([&]
@@ -187,10 +188,14 @@ int main(int argc, char *argv[])
 		}
 
 		// without this close processor's destructor would wait forever for async receive handler
-		processorAsio.process([](auto context)
+		// posting to asio thread is not required as acceptor & socket operations are thread safe since asio 1.4.0
+		processorAsio.getDispatcher()->post([&]
 		{
-			context.getResource()->close();
+			 processorAsio.getResource()->close();
 		});
+
+		// this flush is required as posting to asio thread captures processorAsio reference
+		processorAsio.flush();
 	}
 
 	return 0;
