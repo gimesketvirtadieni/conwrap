@@ -19,8 +19,6 @@
 #include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/Processor.hpp>
 
-#include <iostream>
-
 
 namespace conwrap
 {
@@ -45,8 +43,6 @@ namespace conwrap
 			{
 				processorImplPtr->setProcessor(processorProxyPtr.get());
 				processorImplPtr->start();
-
-				std::cout << "Q2 processorProxyPtr=" << processorProxyPtr.get() << " processorImplPtr=" << processorImplPtr.get() << "\n\r";
 			}
 
 			ProcessorQueue(std::unique_ptr<ResourceType> resource)
@@ -56,8 +52,6 @@ namespace conwrap
 			{
 				processorImplPtr->setProcessor(processorProxyPtr.get());
 				processorImplPtr->start();
-
-				std::cout << "Q3 processorProxyPtr=" << processorProxyPtr.get() << " processorImplPtr=" << processorImplPtr.get() << "\n\r";
 			}
 
 			virtual ~ProcessorQueue()

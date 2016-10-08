@@ -22,8 +22,6 @@
 #include <conwrap/Processor.hpp>
 #include <conwrap/ProcessorQueue.hpp>
 
-#include <iostream>
-
 
 namespace conwrap
 {
@@ -40,8 +38,6 @@ namespace conwrap
 			{
 				processorImplPtr->setProcessor(processorProxyPtr.get());
 				processorImplPtr->start();
-
-				std::cout << "H2 processorProxyPtr=" << processorProxyPtr.get() << " processorImplPtr=" << processorImplPtr.get() << "\n\r";
 			}
 
 			template <typename... Args>
@@ -52,8 +48,6 @@ namespace conwrap
 			{
 				processorImplPtr->setProcessor(processorProxyPtr.get());
 				processorImplPtr->start();
-
-				std::cout << "H3 processorProxyPtr=" << processorProxyPtr.get() << " processorImplPtr=" << processorImplPtr.get() << "\n\r";
 			}
 
 			virtual ~ProcessorAsio()
