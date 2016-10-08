@@ -1,5 +1,19 @@
 #!/bin/bash
 
+cd contrib/googletest
+mkdir -p  build
+cd  build
+mkdir -p  googlemock
+mkdir -p  googletest
+
+cd  googlemock
+# cmake googlemock
+# make
+
+cd  ../googletest
+# cmake googlemock
+# make
+
 mkdir -p  build
 cd  build
 
