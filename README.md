@@ -71,6 +71,9 @@ Wouldn’t it be nice to have it all: asynchronous wrapper turning synchronous c
 The goal of this library is the same as for std::async – to run arbitrary code asynchronously, however semantic is different. std::async spawns a new thread every time it is called. This approach is not suitable for many cases because OS thread creation is a heavy operation; besides this approach does not ensure sequential invocation of submitted tasks. Concurrent Wrapper uses a single thread for all submitted tasks, which are processed sequentially. Basically it is an implementation of “multiple providers / single consumer” pattern.
 
 The fact that a task being executed may submit new tasks causes extra complexity. For example, a task may still be executed when processor’s destructor is called hence processor is unavailable for accepting a new task. This is resolved by Concurrent Wrapper with a use of a proxy processor object which is passed for tasks to be used for issuing a new tasks.
+```c++
+// example needed
+```
 
 One important feature of Concurrent Wrapper is the possibility to flush task execution queue. Below there is an example demonstrating why this feature is crucial:
 ```c++
@@ -79,7 +82,7 @@ auto objectPtr = std::make_unique<SomeClass>();
 
 conwrap::ProcessorQueue<Dummy> processor();
 
-// submitting an asynchronous task that will invoke syncMethod
+// submitting an asynchronous task
 processor.process([capturedPtr = objectPtr.get()](auto context)
 {
 	// here pointer to the object can be used including for passing to any sub-sequent task
