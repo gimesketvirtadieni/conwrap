@@ -10,7 +10,7 @@ class Dummy
 	public:
 		Result syncMethod(int param)
 		{
-			// do some actula work and generate result
+			// do some work and generate result
 			return Result();
 		}
 };
@@ -34,7 +34,7 @@ std::future<Result> resultFuture = std::async(
 
 However `std::async` is not a good fit for task-based processing. On the other hand Concurrent Wrapper provides functionality to invoke arbitrary code asynchronously in a task-based processing fashion:
 ```c++
-// creating a concurrent wrapper object that containg an intance of Dummy
+// creating a concurrent wrapper object that contains an intance of Dummy
 conwrap::ProcessorQueue<Dummy> processor;
 
 // submitting an asynchronous task that will invoke syncMethod
@@ -53,7 +53,7 @@ std::future<Result> resultFuture = processor.process([param = 123](auto context)
 
 If you are into C++ asynchronous code then you recall great talk by Herb Sutter: [“C++ and Beyond 2012: Herb Sutter - C++ Concurrency”](https://channel9.msdn.com/Shows/Going+Deep/C-and-Beyond-2012-Herb-Sutter-Concurrency-and-Parallelism). Otherwise I highly recommend watching it as Herb presents a pattern for a generic wrapper. This pattern can be used to turn synchronous code into asynchronous one in a so elegant way that it cannot be wrong. However there is a catch: presented design is too simplistic and omits one crucial feature: task (handler) should be able to issue a new task (handler). Why is this feature so crucial and why it ruins elegance of the presented design?
 
-If you are building an application with very simple logic of the tasks that you submit for asynchronous execution (like for example log library where a task simply outputs a message to all sinks) then mentioned feature is irrelevant. But in most cases logic presented in the tasks is more complex and requires new tasks to be issued based on certain conditions. For example if you develop a server using [Boos.Asio]( http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) then your onReceive task (handler) will submit a new task (handler) to keep receiving new data coming in.
+For a simple application with minimal logic in tasks being submitted for asynchronous execution (like for example log library where a task simply outputs a message to all sinks) mentioned feature is irrelevant. But in most cases logic presented in the tasks is more complex and requires new tasks to be issued based on certain conditions. For example if you develop a server using [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) then your onReceive task (handler) will submit a new task (handler) to keep receiving new data coming in.
 
 Now why submitting a new task from a running tasks spoils all the elegance? Without this functionality processing termination and processing flushing are straight-forward to implement:
 - To terminate processing one just need to add a new task that will tell processor to stop. This can be done safely from the processor’s destructor which will wait for that task to complete (see Herb’s talk for details).
@@ -72,7 +72,26 @@ The goal of this library is the same as for `std::async` – to run arbitrary co
 
 The fact that a task being executed may submit new tasks causes extra complexity. For example, a task may still be executed when processor’s destructor is called hence processor is unavailable for accepting a new task. This is resolved by Concurrent Wrapper with a use of a proxy processor object which is passed for tasks to be used for issuing a new tasks.
 ```c++
-// example needed
+{
+	conwrap::ProcessorQueue<Dummy> processor;
+
+	processor.process([&](auto context)
+	{
+		// simulating some action
+		std::this_thread::sleep_for(std::chrono::milliseconds{5});
+	
+		// by this moment processor's destructor has been called already
+		// despite that it is safe submit a new task because context contains a 'proxy' processor
+		context.getProcessor()->process([&]
+		{
+			// simulating some action
+			std::this_thread::sleep_for(std::chrono::milliseconds{5});
+		});
+	});
+
+// this is were processor's destructor is called
+// it will wait for all tasks to complete
+}
 ```
 
 One important feature of Concurrent Wrapper is the possibility to flush task execution queue. Below there is an example demonstrating why this feature is crucial:
@@ -111,7 +130,7 @@ In the similar way, Concurrent Wrapper ensures there is no dangling pointers lef
 
 ##Combining Concurrent Wrapper with [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html)
 
-So far, conwrap::ProcessorQueue was used to demonstrate Concurrent Wrapper's functionality. There is a similar class available called conwrap::ProcessorAsio. This class provides possibility to use [Boos.Asio]( http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) for processing arbitrary code asynchronously. This is very useful in case of asynchronous TCP/UDP server based on [Boos.Asio]( http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html). Basically this class provides possibility to combine [Boos.Asio]( http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) handlers with arbitrary code submitted for execution as a asynchronous task. Really cool thing about conwrap::ProcessorAsio is that it has the same semantic as conwrap::ProcessorQueue which means you can flush [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) handlers and delete processor object safely. Provided [example](./examples/main.cpp) in the repository demonstrate this functionality.
+So far, conwrap::ProcessorQueue was used to demonstrate Concurrent Wrapper's functionality. There is a similar class available called conwrap::ProcessorAsio. This class provides possibility to use [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) for processing arbitrary code asynchronously. This is very useful in case of asynchronous TCP/UDP server based on [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html). Basically this class provides possibility to combine [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) handlers with arbitrary code submitted for execution as a asynchronous task. Really cool thing about conwrap::ProcessorAsio is that it has the same semantic as conwrap::ProcessorQueue which means you can flush [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) handlers and delete processor object safely. Provided [example](./examples/main.cpp) in the repository demonstrates this functionality.
 
 
 ##Usage
