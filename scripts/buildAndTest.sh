@@ -7,11 +7,11 @@ mkdir -p  googlemock
 mkdir -p  googletest
 
 cd  googlemock
-cmake ../../googletest/googlemock
+cmake ../../googlemock
 make
 
 cd  ../googletest
-cmake ../../googletest/googletest
+cmake ../../googletest
 make
 
 mkdir -p  build
