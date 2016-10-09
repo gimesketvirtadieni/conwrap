@@ -80,8 +80,8 @@ The fact that a task being executed may submit new tasks causes extra complexity
 		// simulating some action
 		std::this_thread::sleep_for(std::chrono::milliseconds{5});
 	
-		// by this moment processor's destructor has been called already
-		// despite that it is safe submit a new task because context contains a 'proxy' processor
+		// by this moment processor's destructor has already been called
+		// despite that it is safe to submit a new task because context contains a 'proxy' processor
 		context.getProcessor()->process([&]
 		{
 			// simulating some action
@@ -89,8 +89,8 @@ The fact that a task being executed may submit new tasks causes extra complexity
 		});
 	});
 
-// this is were processor's destructor is called
-// it will wait for all tasks to complete
+	// this is were processor's destructor is called
+	// it will wait for all tasks to complete
 }
 ```
 
@@ -130,9 +130,9 @@ In the similar way, Concurrent Wrapper ensures there is no dangling pointers lef
 
 ##Combining Concurrent Wrapper with [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html)
 
-So far, conwrap::ProcessorQueue was used to demonstrate Concurrent Wrapper's functionality. There is a similar class available called conwrap::ProcessorAsio. This class provides possibility to use [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) for processing arbitrary code asynchronously. This is very useful in case of asynchronous TCP/UDP server based on [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html). Basically this class provides possibility to combine [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) handlers with arbitrary code submitted for execution as a asynchronous task. Really cool thing about conwrap::ProcessorAsio is that it has the same semantic as conwrap::ProcessorQueue which means you can flush [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) handlers and delete processor object safely. Provided [example](./examples/main.cpp) in the repository demonstrates this functionality.
+So far, only conwrap::ProcessorQueue was used to demonstrate Concurrent Wrapper's functionality. There is a similar class available called conwrap::ProcessorAsio. This class provides possibility to use [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) for processing arbitrary code asynchronously. This is very useful in case of asynchronous TCP/UDP server based on [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html). Basically this class provides possibility to combine [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) handlers with arbitrary code submitted for execution as a asynchronous task. Really cool thing about conwrap::ProcessorAsio is that it has the same semantic as conwrap::ProcessorQueue which means you can flush [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) handlers and delete processor object safely. Provided [example](./examples/main.cpp) in the repository demonstrates this functionality.
 
 
 ##Usage
 
-... 
+Concurrent Wrapper is a header-only library, which means you just need to drop [this directory's content](./src/include) into your project. If you need working samples, please checkout [here](./examples).
