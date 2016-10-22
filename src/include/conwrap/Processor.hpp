@@ -16,23 +16,20 @@
 #include <functional>
 #include <conwrap/HandlerContext.hpp>
 #include <conwrap/HandlerWrapper.hpp>
+#include <conwrap/ProcessorBase.hpp>
 
 
 namespace conwrap
 {
 
 	template <typename ResourceType>
-	class Processor
+	class Processor : public ProcessorBase<ResourceType>
 	{
 		public:
 			// TODO: figure out how to make this method protected
-			virtual HandlerContext<ResourceType> createHandlerContext() = 0;
-
-			virtual ResourceType* getResource() = 0;
+			virtual HandlerContext<ResourceType> createHandlerContext() override = 0;
 
 			virtual void flush() = 0;
-
-			virtual void post(HandlerWrapper) = 0;
 
 			template <typename F>
 			auto process(F fun) -> std::future<decltype(fun())>
@@ -40,7 +37,7 @@ namespace conwrap
 				auto promisePtr = std::make_shared<std::promise<decltype(fun())>>();
 
 				// posting a new handler
-				post(wrapHandler([=]
+				this->post(this->wrapHandler([=]
 				{
 					setPromiseValue(*promisePtr, fun);
 				}));
@@ -54,15 +51,13 @@ namespace conwrap
 				auto promisePtr = std::make_shared<std::promise<decltype(fun(createHandlerContext()))>>();
 
 				// posting a new handler
-				post(wrapHandler([=]
+				this->post(this->wrapHandler([=]
 				{
 					setPromiseValueWithContext(*promisePtr, fun);
 				}));
 
 				return promisePtr->get_future();
 			}
-
-			virtual HandlerWrapper wrapHandler(std::function<void()>) = 0;
 
 		protected:
 			template <typename Fut, typename Fun>
@@ -90,8 +85,6 @@ namespace conwrap
 				f(createHandlerContext());
 				p.set_value();
 			}
-
-			virtual HandlerWrapper wrapHandler(std::function<void()>, bool) = 0;
 	};
 
 }
