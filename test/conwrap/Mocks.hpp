@@ -36,7 +36,6 @@ struct Dummy {
 
 namespace conwrap
 {
-
 	class ProcessorMock : public conwrap::Processor<Dummy>
 	{
 		public:
@@ -74,5 +73,10 @@ namespace conwrap
 		private:
 			std::unique_ptr<Dummy> resourcePtr;
 	};
-
 }
+
+
+// googletest fixtures
+class ProcessorCommon : public ::testing::TestWithParam<std::shared_ptr<conwrap::Processor<Dummy>>>
+{
+};

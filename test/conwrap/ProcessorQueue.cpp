@@ -14,48 +14,34 @@
 #include <future>
 #include "Mocks.hpp"
 
-#include <iostream>
 
-
-TEST(ProcessorQueue, Getters1)
+TEST(ProcessorQueue, Constructor1)
 {
-	{
-		conwrap::ProcessorQueue<Dummy> processor;
+	auto dummyPtr    = std::make_unique<Dummy>();
+	auto dummyRawPtr = dummyPtr.get();
+	conwrap::ProcessorQueue<Dummy> processor(std::move(dummyPtr));
 
-		EXPECT_TRUE(processor.getResource() != nullptr);
-	}
-
-	{
-		auto dummyPtr    = std::make_unique<Dummy>();
-		auto dummyRawPtr = dummyPtr.get();
-		conwrap::ProcessorQueue<Dummy> processor(std::move(dummyPtr));
-
-		EXPECT_EQ(dummyRawPtr, processor.getResource());
-		EXPECT_NE(nullptr, processor.getResource()->processorPtr);
-
-		std::cout << "Q1 processor=" << &processor << " processor.getResource()->processorPtr=" << processor.getResource()->processorPtr << "\n\r";
-	}
+	EXPECT_EQ(dummyRawPtr, processor.getResource());
+	EXPECT_NE(nullptr, processor.getResource()->processorPtr);
 }
 
 
 TEST(ProcessorQueue, Destructor1)
 {
-	std::atomic<bool> called;
+	std::atomic<bool> called(false);
 
 	// processor's scope used to activate destructor before exiting test case
 	{
 		conwrap::ProcessorQueue<Dummy> processor;
 
-		called = false;
 		processor.process([&]
 		{
 			// simulating some action
-			std::chrono::milliseconds wait{10};
-			std::this_thread::sleep_for(wait);
+			std::this_thread::sleep_for(std::chrono::milliseconds{10});
 
+			// by this moment destructor has been called already
 			called = true;
 		});
-		EXPECT_FALSE(called);
 	}
 	EXPECT_TRUE(called);
 }
@@ -63,18 +49,16 @@ TEST(ProcessorQueue, Destructor1)
 
 TEST(ProcessorQueue, Destructor2)
 {
-	std::atomic<bool> called;
+	std::atomic<bool> called(false);
 
 	// processor's scope used to activate destructor before exiting test case
 	{
 		conwrap::ProcessorQueue<Dummy> processor;
 
-		called = false;
 		processor.process([&](auto context)
 		{
 			// simulating some action
-			std::chrono::milliseconds wait{10};
-			std::this_thread::sleep_for(wait);
+			std::this_thread::sleep_for(std::chrono::milliseconds{10});
 
 			// by this moment destructor has been called already
 			context.getProcessor()->process([&]
@@ -82,56 +66,13 @@ TEST(ProcessorQueue, Destructor2)
 				called = true;
 			});
 		});
-		EXPECT_FALSE(called);
 	}
 	EXPECT_TRUE(called);
 }
 
 
-TEST(ProcessorQueue, Flush1)
-{
-	std::atomic<bool>              wasCalled;
-	conwrap::ProcessorQueue<Dummy> processor;
-
-	wasCalled = false;
-	processor.process([&]
-	{
-		// simulating some action
-		std::chrono::milliseconds wait{10};
-		std::this_thread::sleep_for(wait);
-
-		// setting called atomic flag
-		wasCalled = true;
-	});
-	EXPECT_TRUE(wasCalled == false);
-	processor.flush();
-	EXPECT_TRUE(wasCalled == true);
-}
-
-
-TEST(ProcessorQueue, Flush2)
-{
-	std::thread::id id1;
-	std::thread::id id2;
-	{
-		conwrap::ProcessorQueue<Dummy> processor;
-
-		processor.process([&]
-		{
-			id1 = std::this_thread::get_id();
-		});
-		processor.flush();
-		processor.process([&]
-		{
-			id2 = std::this_thread::get_id();
-		});
-		processor.flush();
-		EXPECT_EQ(id1, id2);
-	}
-}
-
-
 // TODO: refactor to avoid time-based syncing
+/* work in progress
 TEST(ProcessorQueue, Flush3)
 {
 	conwrap::ProcessorQueue<Dummy> processor;
@@ -187,69 +128,4 @@ TEST(ProcessorQueue, Flush3)
 	asyncCall.wait();
 	std::cout << "HELLO done\n\r";
 }
-
-
-TEST(ProcessorQueue, Process1)
-{
-	std::atomic<bool>              wasCalled;
-	conwrap::ProcessorQueue<Dummy> processor;
-
-	wasCalled = false;
-	auto asyncCall = processor.process([&]
-	{
-		// simulating some action
-		std::chrono::milliseconds wait{10};
-		std::this_thread::sleep_for(wait);
-
-		// setting called atomic flag
-		wasCalled = true;
-	});
-	EXPECT_TRUE(wasCalled == false);
-	asyncCall.wait();
-	EXPECT_TRUE(wasCalled == true);
-}
-
-
-TEST(ProcessorQueue, Process2)
-{
-	std::atomic<int>               val;
-	conwrap::ProcessorQueue<Dummy> processor;
-
-	val = 123;
-	auto syncCall = processor.process([&]() -> int
-	{
-		// simulating some action
-		std::chrono::milliseconds wait{10};
-		std::this_thread::sleep_for(wait);
-
-		return val;
-	});
-	EXPECT_EQ(val, syncCall.get());
-}
-
-
-TEST(ProcessorQueue, Process3)
-{
-	std::atomic<void*>             ptr;
-	conwrap::ProcessorQueue<Dummy> processor;
-
-	processor.process([&](auto context)
-	{
-		ptr = context.getProcessor();
-	}).wait();
-	EXPECT_NE(&processor, ptr);
-}
-
-
-TEST(ProcessorQueue, Process4)
-{
-	std::atomic<bool>              wasCalled;
-	conwrap::ProcessorQueue<Dummy> processor;
-
-	wasCalled = false;
-	processor.getResource()->processorPtr->process([&](auto context)
-	{
-		wasCalled = true;
-	}).wait();
-	EXPECT_TRUE(wasCalled);
-}
+*/
