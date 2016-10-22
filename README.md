@@ -104,21 +104,18 @@ conwrap::ProcessorQueue<Dummy> processor;
 // submitting an asynchronous task
 processor.process([capturedPtr = objectPtr.get()](auto context)
 {
-	// here pointer to the object can be used including for passing to any sub-sequent task
+	// here capturedPtr can be used including passing it to any sub-sequent task
 	// waiting for this particular task to complete does not solve the problem, so flush must be used
 
-	// getting processor
-	auto processorPtr = context.getProcessor();
-
 	// creating a new sub-sequent task
-	processorPtr.process([=]
+	context.getProcessor()->process([=]
 
 		// bummer
 		capturedPtr->doSomething();
 	);
 });
 
-// without this flush operation capturedPtr becomes a dangling pointer after object is deleted
+// without this flush operation capturedPtr becomes a dangling pointer after objectPtr is deleted
 processor.flush();
 
 // deleting object
