@@ -95,18 +95,21 @@ namespace conwrap
 			}
 
 			bool remove() {
-				auto result = false;
+				auto removed = false;
 				{
 					std::lock_guard<std::mutex> lock(queueMutex);
 					if (!queue.empty()) {
 
 						// remove the first item in the queue
 						queue.pop();
-						conditionVariable.notify_all();
-						result = true;
+						removed = true;
 					}
 				}
-				return result;
+				if (removed)
+				{
+					conditionVariable.notify_all();
+				}
+				return removed;
 			}
 
 			unsigned size() const

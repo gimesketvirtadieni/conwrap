@@ -145,9 +145,11 @@ namespace conwrap
 
 							if (!thread.joinable())
 							{
-								thread = std::thread([&]
+								// it is safe to set finished flag here because worker thread is not created and start method is protected by a lock
+								finished = false;
+								thread   = std::thread([&]
 								{
-									for(finished = false; !(queue.empty() && finished);)
+									for(; !(queue.empty() && finished);)
 									{
 										// waiting for a handler
 										queue.wait();
@@ -170,6 +172,7 @@ namespace conwrap
 											(*handlerWrapperPtr)();
 
 											// setting epoch value for each newly created handler
+											// TODO: this is not thread-safe!!!
 											for (auto& h : queue)
 											{
 												if (h.getProxy() && !h.getEpoch())
