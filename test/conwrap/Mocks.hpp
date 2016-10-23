@@ -13,6 +13,7 @@
 #pragma once
 
 #include <conwrap/HandlerContext.hpp>
+#include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/Processor.hpp>
 #include <conwrap/ProcessorBase.hpp>
 #include <conwrap/ProcessorProxy.hpp>
@@ -92,11 +93,6 @@ namespace conwrap
 			ProcessorMockProxy(std::shared_ptr<internal::ProcessorMockBase> p)
 			: processorBasePtr(p) {}
 
-			virtual HandlerContext<Dummy> createHandlerContext() override
-			{
-				return HandlerContext<Dummy> (getResource(), this);
-			}
-
 			virtual Dummy* getResource() override
 			{
 				return processorBasePtr->getResource();
@@ -112,6 +108,12 @@ namespace conwrap
 				return wrapHandler(handler, false);
 			}
 
+		protected:
+			virtual HandlerContext<Dummy> createHandlerContext() override
+			{
+				return HandlerContext<Dummy> (getResource(), this);
+			}
+
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
 			{
 				return HandlerWrapper(handler, proxy);
@@ -125,12 +127,7 @@ namespace conwrap
 	{
 		public:
 			ProcessorMock()
-			: processorBasePtr(std::make_shared<internal::ProcessorMockBase>(std::move(std::make_unique<Dummy>())))
-			, processorProxyPtr(std::unique_ptr<ProcessorMockProxy>(new ProcessorMockProxy(processorBasePtr)))
-			{
-				processorBasePtr->getResource()->setProcessor(this);
-				processorBasePtr->setProcessorProxy(processorProxyPtr.get());
-			}
+			: ProcessorMock(std::move(std::make_unique<Dummy>())) {}
 
 			ProcessorMock(std::unique_ptr<Dummy> r)
 			: processorBasePtr(std::make_shared<internal::ProcessorMockBase>(std::move(r)))
@@ -138,11 +135,6 @@ namespace conwrap
 			{
 				processorBasePtr->getResource()->setProcessor(this);
 				processorBasePtr->setProcessorProxy(processorProxyPtr.get());
-			}
-
-			virtual HandlerContext<Dummy> createHandlerContext() override
-			{
-				return processorBasePtr->createHandlerContext();
 			}
 
 			inline ProcessorMockProxy* getProcessorProxy()
@@ -165,6 +157,12 @@ namespace conwrap
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler) override
 			{
 				return wrapHandler(handler, false);
+			}
+
+		protected:
+			virtual HandlerContext<Dummy> createHandlerContext() override
+			{
+				return processorBasePtr->createHandlerContext();
 			}
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override

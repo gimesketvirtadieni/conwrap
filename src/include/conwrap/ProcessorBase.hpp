@@ -25,12 +25,10 @@ namespace conwrap
 		class ProcessorBase
 		{
 			public:
-				virtual ResourceType* getResource() = 0;
-				virtual void post(HandlerWrapper) = 0;
-				virtual HandlerWrapper wrapHandler(std::function<void()>) = 0;
-
-			protected:
 				virtual HandlerContext<ResourceType> createHandlerContext() = 0;
+				virtual ResourceType*                getResource() = 0;
+				virtual void                         post(HandlerWrapper) = 0;
+				virtual HandlerWrapper               wrapHandler(std::function<void()>) = 0;
 				virtual HandlerWrapper               wrapHandler(std::function<void()>, bool) = 0;
 		};
 	}

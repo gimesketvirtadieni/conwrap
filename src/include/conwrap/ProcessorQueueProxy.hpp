@@ -37,11 +37,6 @@ namespace conwrap
 
 			virtual ~ProcessorQueueProxy() {}
 
-			virtual HandlerContext<ResourceType> createHandlerContext() override
-			{
-				return processorBasePtr->createHandlerContext();
-			}
-
 			virtual ResourceType* getResource() override
 			{
 				return processorBasePtr->getResource();
@@ -55,6 +50,12 @@ namespace conwrap
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler)
 			{
 				return wrapHandler(handler, true);
+			}
+
+		protected:
+			virtual HandlerContext<ResourceType> createHandlerContext() override
+			{
+				return processorBasePtr->createHandlerContext();
 			}
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override

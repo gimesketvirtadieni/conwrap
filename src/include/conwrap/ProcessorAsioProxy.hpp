@@ -31,11 +31,6 @@ namespace conwrap
 
 			virtual ~ProcessorAsioProxy() {}
 
-			virtual HandlerContext<ResourceType> createHandlerContext() override
-			{
-				return processorBasePtr->createHandlerContext();
-			}
-
 			asio::io_service* getDispatcher()
 			{
 				return processorBasePtr->getDispatcher();
@@ -57,6 +52,11 @@ namespace conwrap
 			}
 
 		protected:
+			virtual HandlerContext<ResourceType> createHandlerContext() override
+			{
+				return processorBasePtr->createHandlerContext();
+			}
+
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
 			{
 				return processorBasePtr->wrapHandler(handler, proxy);

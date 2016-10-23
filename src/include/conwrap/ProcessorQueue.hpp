@@ -38,14 +38,7 @@ namespace conwrap
 		public:
 			template <typename... Args>
 			ProcessorQueue(Args... args)
-			: processorBasePtr(std::make_shared<internal::ProcessorQueueBase<ResourceType>>(std::move(std::make_unique<ResourceType>(std::forward<Args>(args)...))))
-			, processorProxyPtr(std::unique_ptr<ProcessorQueueProxy<ResourceType>>(new ProcessorQueueProxy<ResourceType>(processorBasePtr)))
-			{
-				// TODO: implemet compile-time reflection to make this invocation optional
-				processorBasePtr->getResource()->setProcessor(this);
-				processorBasePtr->setProcessorProxy(processorProxyPtr.get());
-				processorBasePtr->start();
-			}
+			: ProcessorQueue(std::move(std::make_unique<ResourceType>(std::forward<Args>(args)...))) {}
 
 			ProcessorQueue(std::unique_ptr<ResourceType> resource)
 			: processorBasePtr(std::make_shared<internal::ProcessorQueueBase<ResourceType>>(std::move(resource)))
@@ -60,11 +53,6 @@ namespace conwrap
 			virtual ~ProcessorQueue()
 			{
 				processorBasePtr->stop();
-			}
-
-			virtual HandlerContext<ResourceType> createHandlerContext() override
-			{
-				return processorBasePtr->createHandlerContext();
 			}
 
 			virtual ResourceType* getResource() override
@@ -99,6 +87,11 @@ namespace conwrap
 			}
 
 		protected:
+			virtual HandlerContext<ResourceType> createHandlerContext() override
+			{
+				return processorBasePtr->createHandlerContext();
+			}
+
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
 			{
 				return processorBasePtr->wrapHandler(handler, proxy);
