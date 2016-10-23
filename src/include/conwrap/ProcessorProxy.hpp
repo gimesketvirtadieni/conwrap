@@ -22,13 +22,11 @@
 namespace conwrap
 {
 	template <typename ResourceType>
-	class Processor : public internal::ProcessorBase<ResourceType>
+	class ProcessorProxy : public internal::ProcessorBase<ResourceType>
 	{
 		public:
 			// TODO: figure out how to make this method protected
 			virtual HandlerContext<ResourceType> createHandlerContext() override = 0;
-
-			virtual void flush() = 0;
 
 			template <typename F>
 			auto process(F fun) -> std::future<decltype(fun())>

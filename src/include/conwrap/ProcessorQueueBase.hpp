@@ -14,6 +14,7 @@
 
 #include <memory>
 #include <thread>
+#include <conwrap/ConcurrentQueue.hpp>
 #include <conwrap/HandlerContext.hpp>
 #include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/Processor.hpp>
@@ -23,7 +24,7 @@ namespace conwrap
 {
 	// forward declaration
 	template <typename ResourceType>
-	class ProcessorQueue;
+	class ProcessorQueueProxy;
 
 	namespace internal
 	{
@@ -31,7 +32,6 @@ namespace conwrap
 		class ProcessorQueueBase : public ProcessorBase<ResourceType>
 		{
 			public:
-				template <typename... Args>
 				ProcessorQueueBase(std::unique_ptr<ResourceType> r)
 				: resourcePtr(std::move(r))
 				, epoch(1) {}
@@ -57,7 +57,7 @@ namespace conwrap
 
 				virtual HandlerContext<ResourceType> createHandlerContext() override
 				{
-					return HandlerContext<ResourceType> (getResource(), processorPtr);
+					return HandlerContext<ResourceType> (getResource(), processorProxyPtr);
 				}
 
 				inline auto getEpoch()
@@ -75,12 +75,9 @@ namespace conwrap
 					queue.push(handlerWrapper);
 				}
 
-				void setProcessor(ProcessorQueue<ResourceType>* p)
+				inline void setProcessorProxy(ProcessorQueueProxy<ResourceType>* p)
 				{
-					processorPtr = p;
-
-					// TODO: implemet compile-time reflection to make this invocation optional
-					resourcePtr->setProcessor(processorPtr);
+					processorProxyPtr = p;
 				}
 
 				void start()
@@ -165,13 +162,13 @@ namespace conwrap
 				}
 
 			private:
-				std::unique_ptr<ResourceType>   resourcePtr;
-				ProcessorQueue<ResourceType>*   processorPtr;
-				ConcurrentQueue<HandlerWrapper> queue;
-				std::thread                     thread;
-				std::mutex                      lock;
-				bool                            finished;
-				unsigned long long              epoch;
+				std::unique_ptr<ResourceType>      resourcePtr;
+				ProcessorQueueProxy<ResourceType>* processorProxyPtr;
+				ConcurrentQueue<HandlerWrapper>    queue;
+				std::thread                        thread;
+				std::mutex                         lock;
+				bool                               finished;
+				unsigned long long                 epoch;
 		};
 	}
 }

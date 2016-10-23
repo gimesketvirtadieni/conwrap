@@ -14,8 +14,6 @@
 #include <future>
 #include "Mocks.hpp"
 
-#include <iostream>
-
 
 TEST_P(ProcessorCommon, Getters1)
 {
@@ -29,17 +27,48 @@ TEST_P(ProcessorCommon, Flush1)
 {
 	auto              processorPtr(GetParam());
 	std::atomic<bool> wasCalled(false);
+	void*             resourcePtr(nullptr);
+	void*             processorProxyPtr(nullptr);
 
-	processorPtr->process([&]
+	processorPtr->process([&](auto context)
 	{
-		wasCalled = true;
+		wasCalled         = true;
+		resourcePtr       = context.getResource();
+		processorProxyPtr = context.getProcessorProxy();
 	});
 	processorPtr->flush();
 	EXPECT_TRUE(wasCalled == true);
+	EXPECT_EQ(processorPtr->getResource(), resourcePtr);
+	// TODO: implement getProcessorProxy via fixture
+	//EXPECT_EQ(processorPtr->getProcessorProxy(), processorProxyPtr);
 }
 
 
 TEST_P(ProcessorCommon, Flush2)
+{
+	auto              processorPtr(GetParam());
+	std::atomic<bool> wasCalled(false);
+	void*             resourcePtr(nullptr);
+	void*             processorProxyPtr(nullptr);
+
+	processorPtr->process([&](auto context)
+	{
+		context.getProcessorProxy()->process([&](auto context)
+		{
+			wasCalled         = true;
+			resourcePtr       = context.getResource();
+			processorProxyPtr = context.getProcessorProxy();
+		});
+	}).wait();
+	processorPtr->flush();
+	EXPECT_TRUE(wasCalled == true);
+	EXPECT_EQ(processorPtr->getResource(), resourcePtr);
+	// TODO: implement getProcessorProxy via fixture
+	//EXPECT_EQ(processorPtr->getProcessorProxy(), processorProxyPtr);
+}
+
+
+TEST_P(ProcessorCommon, Flush3)
 {
 	auto            processorPtr(GetParam());
 	std::thread::id id1;
@@ -92,7 +121,7 @@ TEST_P(ProcessorCommon, Process3)
 
 	processorPtr->process([&](auto context)
 	{
-		ptr = context.getProcessor();
+		ptr = context.getProcessorProxy();
 	}).wait();
 	EXPECT_NE(processorPtr.get(), ptr);
 }
@@ -112,6 +141,7 @@ TEST_P(ProcessorCommon, Process4)
 
 
 INSTANTIATE_TEST_CASE_P(ProcessorInstantiation, ProcessorCommon, ::testing::Values(
+	std::make_shared<conwrap::ProcessorMock>(),
 	std::make_shared<conwrap::ProcessorQueue<Dummy>>(),
 	std::make_shared<conwrap::ProcessorAsio<Dummy>>()
 ));

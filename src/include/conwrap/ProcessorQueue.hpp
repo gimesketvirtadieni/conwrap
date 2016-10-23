@@ -17,46 +17,49 @@
 #include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/Processor.hpp>
 #include <conwrap/ProcessorQueueBase.hpp>
+#include <conwrap/ProcessorQueueProxy.hpp>
 
 
 namespace conwrap
 {
-	// forward declaration
-	template <typename ResourceType>
-	class ProcessorAsio;
+	namespace internal
+	{
+		// forward declaration
+		template <typename ResourceType>
+		class ProcessorAsioBase;
+	}
 
 	template <typename ResourceType>
 	class ProcessorQueue : public Processor<ResourceType>
 	{
 		// friend declaration
-		template <typename> friend class ProcessorAsio;
+		template <typename> friend class internal::ProcessorAsioBase;
 
 		public:
 			template <typename... Args>
 			ProcessorQueue(Args... args)
 			: processorBasePtr(std::make_shared<internal::ProcessorQueueBase<ResourceType>>(std::move(std::make_unique<ResourceType>(std::forward<Args>(args)...))))
-			, processorProxyPtr(std::unique_ptr<ProcessorQueue<ResourceType>>(new ProcessorQueue<ResourceType>(processorBasePtr)))
-			, proxy(false)
+			, processorProxyPtr(std::unique_ptr<ProcessorQueueProxy<ResourceType>>(new ProcessorQueueProxy<ResourceType>(processorBasePtr)))
 			{
-				processorBasePtr->setProcessor(processorProxyPtr.get());
+				// TODO: implemet compile-time reflection to make this invocation optional
+				processorBasePtr->getResource()->setProcessor(this);
+				processorBasePtr->setProcessorProxy(processorProxyPtr.get());
 				processorBasePtr->start();
 			}
 
 			ProcessorQueue(std::unique_ptr<ResourceType> resource)
 			: processorBasePtr(std::make_shared<internal::ProcessorQueueBase<ResourceType>>(std::move(resource)))
-			, processorProxyPtr(std::unique_ptr<ProcessorQueue<ResourceType>>(new ProcessorQueue<ResourceType>(processorBasePtr)))
-			, proxy(false)
+			, processorProxyPtr(std::unique_ptr<ProcessorQueueProxy<ResourceType>>(new ProcessorQueueProxy<ResourceType>(processorBasePtr)))
 			{
-				processorBasePtr->setProcessor(processorProxyPtr.get());
+				// TODO: implemet compile-time reflection to make this invocation optional
+				processorBasePtr->getResource()->setProcessor(this);
+				processorBasePtr->setProcessorProxy(processorProxyPtr.get());
 				processorBasePtr->start();
 			}
 
 			virtual ~ProcessorQueue()
 			{
-				if (!proxy)
-				{
-					processorBasePtr->stop();
-				}
+				processorBasePtr->stop();
 			}
 
 			virtual HandlerContext<ResourceType> createHandlerContext() override
@@ -92,14 +95,10 @@ namespace conwrap
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler)
 			{
-				return wrapHandler(handler, proxy);
+				return wrapHandler(handler, false);
 			}
 
 		protected:
-			ProcessorQueue(std::shared_ptr<internal::ProcessorQueueBase<ResourceType>> processorBasePtr)
-			: processorBasePtr(processorBasePtr)
-			, proxy(true) {}
-
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
 			{
 				return processorBasePtr->wrapHandler(handler, proxy);
@@ -107,8 +106,7 @@ namespace conwrap
 
 		private:
 			std::shared_ptr<internal::ProcessorQueueBase<ResourceType>> processorBasePtr;
-			std::unique_ptr<ProcessorQueue<ResourceType>>               processorProxyPtr;
-			bool                                                        proxy;
+			std::unique_ptr<ProcessorQueueProxy<ResourceType>>          processorProxyPtr;
 	};
 
 }
