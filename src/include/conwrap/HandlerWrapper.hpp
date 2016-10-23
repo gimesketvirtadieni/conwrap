@@ -14,12 +14,9 @@
 
 #include <functional>
 
-#include <iostream>
-
 
 namespace conwrap
 {
-
 	class HandlerWrapper
 	{
 		public:
