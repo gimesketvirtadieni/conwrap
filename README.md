@@ -82,7 +82,7 @@ The fact that a task being executed may submit new tasks causes extra complexity
 	
 		// by this moment processor's destructor has already been called
 		// despite that it is safe to submit a new task because context contains a 'proxy' processor
-		context.getProcessor()->process([&]
+		context.getProcessorProxy()->process([&]
 		{
 			// simulating some action
 			std::this_thread::sleep_for(std::chrono::milliseconds{5});
@@ -108,7 +108,7 @@ processor.process([capturedPtr = objectPtr.get()](auto context)
 	// waiting for this particular task to complete does not solve the problem, so flush must be used
 
 	// creating a new sub-sequent task
-	context.getProcessor()->process([=]
+	context.getProcessorProxy()->process([=]
 
 		// bummer
 		capturedPtr->doSomething();
