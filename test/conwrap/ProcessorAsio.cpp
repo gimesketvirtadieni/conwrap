@@ -60,7 +60,7 @@ TEST(ProcessorAsio, Destructor2)
 			std::this_thread::sleep_for(std::chrono::milliseconds{10});
 
 			// by this moment destructor has been called already
-			context.getProcessor()->process([&]
+			context.getProcessorProxy()->process([&]
 			{
 				called = true;
 			});

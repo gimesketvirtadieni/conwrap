@@ -17,25 +17,23 @@
 
 namespace conwrap
 {
-
 	// forward declaration
 	template <typename ResourceType>
-	class Processor;
-
+	class ProcessorProxy;
 
 	template <typename ResourceType>
 	class HandlerContext
 	{
 		public:
-			HandlerContext(ResourceType* r = nullptr, Processor<ResourceType>* p = nullptr)
+			HandlerContext(ResourceType* r = nullptr, ProcessorProxy<ResourceType>* p = nullptr)
 			: resourcePtr(r)
-			, processorPtr(p) {}
+			, processorProxyPtr(p) {}
 
 			virtual ~HandlerContext() {}
 
-			inline Processor<ResourceType>* getProcessor()
+			inline ProcessorProxy<ResourceType>* getProcessorProxy()
 			{
-				return processorPtr;
+				return processorProxyPtr;
 			}
 
 			inline ResourceType* getResource()
@@ -44,8 +42,7 @@ namespace conwrap
 			}
 
 		private:
-			ResourceType*            resourcePtr;
-			Processor<ResourceType>* processorPtr;
+			ResourceType*                 resourcePtr;
+			ProcessorProxy<ResourceType>* processorProxyPtr;
 	};
-
 }
