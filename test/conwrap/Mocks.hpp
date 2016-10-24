@@ -162,7 +162,7 @@ namespace conwrap
 		protected:
 			virtual HandlerContext<Dummy> createContext() override
 			{
-				return processorBasePtr->createHandlerContext();
+				return processorBasePtr->createContext();
 			}
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
