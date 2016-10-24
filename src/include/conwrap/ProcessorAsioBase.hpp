@@ -40,7 +40,7 @@ namespace conwrap
 
 				virtual ~ProcessorAsioBase() {}
 
-				virtual HandlerContext<ResourceType> createHandlerContext() override
+				virtual HandlerContext<ResourceType> createContext() override
 				{
 					return HandlerContext<ResourceType> (getResource(), processorProxyPtr);
 				}

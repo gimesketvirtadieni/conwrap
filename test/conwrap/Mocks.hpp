@@ -51,7 +51,7 @@ namespace conwrap
 				ProcessorMockBase(std::unique_ptr<Dummy> r)
 				: resourcePtr(std::move(r)) {}
 
-				virtual HandlerContext<Dummy> createHandlerContext() override
+				virtual HandlerContext<Dummy> createContext() override
 				{
 					return HandlerContext<Dummy> (getResource(), processorProxyPtr);
 				}
@@ -109,7 +109,7 @@ namespace conwrap
 			}
 
 		protected:
-			virtual HandlerContext<Dummy> createHandlerContext() override
+			virtual HandlerContext<Dummy> createContext() override
 			{
 				return HandlerContext<Dummy> (getResource(), this);
 			}
@@ -160,7 +160,7 @@ namespace conwrap
 			}
 
 		protected:
-			virtual HandlerContext<Dummy> createHandlerContext() override
+			virtual HandlerContext<Dummy> createContext() override
 			{
 				return processorBasePtr->createHandlerContext();
 			}

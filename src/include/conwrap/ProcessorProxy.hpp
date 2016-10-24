@@ -28,7 +28,7 @@ namespace conwrap
 	{
 		public:
 			// TODO: figure out how to make this method protected
-			virtual HandlerContext<ResourceType> createHandlerContext() override = 0;
+			virtual HandlerContext<ResourceType> createContext() override = 0;
 
 			template <typename F>
 			auto process(F fun) -> TaskProxy<decltype(fun())>

@@ -78,7 +78,7 @@ namespace conwrap
 			}
 
 		protected:
-			virtual HandlerContext<ResourceType> createHandlerContext() override
+			virtual HandlerContext<ResourceType> createContext() override
 			{
 				return processorBasePtr->createHandlerContext();
 			}
