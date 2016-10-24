@@ -77,7 +77,7 @@ class Server
 				*socketPtr,
 				[=](const std::error_code error)
 				{
-					// this wrapping is needed to pass handler from asio thread to the processor thread
+					// wrapping is needed to pass handler from asio's thread to the processor's thread
 					processorPtr->wrapHandler([=]
 					{
 						// start receiving data
@@ -106,7 +106,7 @@ class Server
 					asio::buffer(buffer, BUFFER_SIZE),
 					[=](const std::error_code error, const std::size_t receivedSize)
 					{
-						// this wrapping is needed to pass handler from asio thread to the processor thread
+						// wrapping is needed to pass handler from asio's thread to the processor's thread
 						processorPtr->wrapHandler([=]
 						{
 							onData(error, receivedSize);
