@@ -13,7 +13,6 @@
 #pragma once
 
 #include <condition_variable>
-#include <exception>
 #include <queue>
 #include <mutex>
 
@@ -62,6 +61,22 @@ namespace conwrap
 				return queue.c.end();
 			}
 
+			auto get()
+			{
+				ResourceType1* resultPtr = nullptr;
+				{
+					std::unique_lock<std::mutex> lock(queueMutex);
+					conditionVariable.wait(lock, [&]
+					{
+						return !queue.empty();
+					});
+
+					// now queue is not empty
+					resultPtr = &queue.front();
+				}
+				return resultPtr;
+			}
+
 			void flush()
 			{
 				{
@@ -71,18 +86,6 @@ namespace conwrap
 						return queue.empty();
 					});
 				}
-			}
-
-			ResourceType1* get()
-			{
-				ResourceType1* resultPtr = nullptr;
-				{
-					std::lock_guard<std::mutex> lock(queueMutex);
-					if (!queue.empty()) {
-						resultPtr = &queue.front();
-					}
-				}
-				return resultPtr;
 			}
 
 			void push(ResourceType1 item)
@@ -116,17 +119,6 @@ namespace conwrap
 			{
 				std::lock_guard<std::mutex> lock(queueMutex);
 				return queue.size();
-			}
-
-			void wait()
-			{
-				{
-					std::unique_lock<std::mutex> lock(queueMutex);
-					conditionVariable.wait(lock, [&]
-					{
-						return !queue.empty();
-					});
-				}
 			}
 
 		protected:

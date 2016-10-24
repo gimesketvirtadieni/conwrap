@@ -65,10 +65,10 @@ namespace conwrap
 				// figuring out current epoch
 				auto currentEpoch = this->process([=]() -> auto
 				{
-					return processorBasePtr->getEpoch();
-				}).get();
+					return processorBasePtr->getNextEpoch();
+				}).getResult();
 
-				// waiting for any 'child' handlers to be processed
+				// waiting for all 'child' handlers to be processed
 				while (processorBasePtr->childExists(currentEpoch))
 				{
 					// TODO: insert flush handler after the last child instead of adding at the end of the queue

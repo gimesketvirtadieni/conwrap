@@ -60,7 +60,7 @@ namespace conwrap
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
 			{
-				return processorBasePtr->wrapHandler(handler, true);
+				return processorBasePtr->wrapHandler(handler, proxy);
 			}
 
 		private:

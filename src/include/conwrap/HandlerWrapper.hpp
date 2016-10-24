@@ -20,10 +20,10 @@ namespace conwrap
 	class HandlerWrapper
 	{
 		public:
-			HandlerWrapper(std::function<void()> h, bool p)
+			HandlerWrapper(std::function<void()> h, bool p, unsigned long long e = 0)
 			: handler(h)
 			, proxy(p)
-			, epoch(0) {}
+			, epoch(e) {}
 
 			virtual ~HandlerWrapper() {}
 
@@ -47,15 +47,9 @@ namespace conwrap
 				handler();
 			}
 
-			inline void setEpoch(auto e)
-			{
-				epoch = e;
-			}
-
 		private:
 			std::function<void()> handler;
 			bool                  proxy;
 			unsigned long long    epoch;
 	};
-
 }

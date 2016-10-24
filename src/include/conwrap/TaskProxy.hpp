@@ -18,37 +18,18 @@
 namespace conwrap
 {
 	template <typename ResultType>
-	class Task
+	class TaskProxy
 	{
 		public:
-			Task(std::shared_future<ResultType> f)
+			TaskProxy(std::shared_future<ResultType> f)
 			: result(f) {}
 
-			Task(const Task& rhs)
+			TaskProxy(const TaskProxy& other)
 			{
-				result = rhs.result;
+				result = other.result;
 			}
 
-			virtual ~Task() {}
-
-			Task& operator= (const Task& rhs)
-			{
-				if (&rhs != this)
-				{
-					result = rhs.result;
-				}
-				return *this;
-			}
-
-			virtual ResultType getResult()
-			{
-				return result.get();
-			}
-
-			virtual void wait()
-			{
-				result.wait();
-			}
+			virtual ~TaskProxy() {}
 
 		private:
 			std::shared_future<ResultType> result;
