@@ -12,7 +12,6 @@
 
 #include <asio.hpp>
 #include <chrono>
-#include <conwrap/HandlerContext.hpp>
 #include <conwrap/ProcessorAsio.hpp>
 #include <conwrap/ProcessorQueue.hpp>
 #include <functional>
@@ -172,6 +171,8 @@ int main(int argc, char *argv[])
 			{
 				// submitting a task directly via asio io_service
 				processorAsio.getDispatcher()->post(
+
+					// a task submitted directly via asio io_service must be wrapped as following
 					processorAsio.wrapHandler([&]
 					{
 						processorAsio.getResource()->ping();
@@ -188,13 +189,13 @@ int main(int argc, char *argv[])
 		}
 
 		// without this close processor's destructor would wait forever for async receive handler
-		// posting to asio thread is not required as acceptor & socket operations are thread safe since asio 1.4.0
+		// sync socket operations are thread safe since asio 1.4.0 so posting to asio thread is optional
 		processorAsio.getDispatcher()->post([&]
 		{
 			 processorAsio.getResource()->close();
 		});
 
-		// this flush is required as posting to asio thread captures processorAsio reference
+		// this flush is required as handler posted to asio captured processorAsio reference
 		processorAsio.flush();
 	}
 
