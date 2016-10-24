@@ -46,9 +46,9 @@ namespace conwrap
 			}
 
 			template <typename F>
-			auto process(F fun) -> Task<decltype(fun(createHandlerContext()))>
+			auto process(F fun) -> Task<decltype(fun(createContext()))>
 			{
-				auto promisePtr = std::make_shared<std::promise<decltype(fun(createHandlerContext()))>>();
+				auto promisePtr = std::make_shared<std::promise<decltype(fun(createContext()))>>();
 
 				// posting a new handler
 				this->post(this->wrapHandler([=]
@@ -56,7 +56,7 @@ namespace conwrap
 					setPromiseValueWithContext(*promisePtr, fun);
 				}));
 
-				return Task<decltype(fun(createHandlerContext()))>(std::shared_future<decltype(fun(createHandlerContext()))>(promisePtr->get_future()));
+				return Task<decltype(fun(createContext()))>(std::shared_future<decltype(fun(createContext()))>(promisePtr->get_future()));
 			}
 
 		protected:
@@ -76,13 +76,13 @@ namespace conwrap
 			template <typename Fut, typename Fun>
 			void setPromiseValueWithContext(std::promise<Fut>& p, Fun& f)
 			{
-				p.set_value(f(createHandlerContext()));
+				p.set_value(f(createContext()));
 			}
 
 			template <typename Fun>
 			void setPromiseValueWithContext(std::promise<void>& p, Fun& f)
 			{
-				f(createHandlerContext());
+				f(createContext());
 				p.set_value();
 			}
 	};

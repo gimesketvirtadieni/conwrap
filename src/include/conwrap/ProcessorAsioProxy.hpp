@@ -54,7 +54,7 @@ namespace conwrap
 		protected:
 			virtual HandlerContext<ResourceType> createContext() override
 			{
-				return processorBasePtr->createHandlerContext();
+				return processorBasePtr->createContext();
 			}
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
