@@ -34,7 +34,7 @@ namespace conwrap
 			public:
 				ProcessorQueueBase(std::unique_ptr<ResourceType> r)
 				: resourcePtr(std::move(r))
-				, epoch(1) {}
+				, nextEpoch(1) {}
 
 				virtual ~ProcessorQueueBase() {}
 
@@ -60,9 +60,9 @@ namespace conwrap
 					return HandlerContext<ResourceType> (getResource(), processorProxyPtr);
 				}
 
-				inline auto getEpoch()
+				inline auto getNextEpoch()
 				{
-					return epoch;
+					return nextEpoch;
 				}
 
 				virtual ResourceType* getResource() override
@@ -87,41 +87,20 @@ namespace conwrap
 
 						if (!thread.joinable())
 						{
-							// it is safe to set finished flag here because worker thread is not created and start method is protected by a lock
+							// it is safe to set finished flag on consumer's thread because worker's thread is not created and start method is protected by a lock
 							finished = false;
 							thread   = std::thread([&]
 							{
 								for(; !(queue.empty() && finished);)
 								{
 									// waiting for a handler
-									queue.wait();
-
-									// executing handler
-									if (auto handlerWrapperPtr = queue.get())
+									if (auto handlerPtr = queue.get())
 									{
-										// TODO: work in progress
-										// if this handler was submitted via non-proxy interface
-										if (!handlerWrapperPtr->getProxy())
-										{
-											handlerWrapperPtr->setEpoch(epoch);
-
-											// increasing epoch counter if this handler was submitted via non-proxy interface
-											// TODO: MAX case must be handled
-											epoch++;
-										}
+										// setting current epoch to be used for submitted tasks via processor proxy
+										currentEpoch = handlerPtr->getEpoch();
 
 										// executing handler
-										(*handlerWrapperPtr)();
-
-										// setting epoch value for each newly created handler
-										// TODO: this is not thread-safe!!!
-										for (auto& h : queue)
-										{
-											if (h.getProxy() && !h.getEpoch())
-											{
-												h.setEpoch(handlerWrapperPtr->getEpoch());
-											}
-										}
+										(*handlerPtr)();
 									}
 
 									// removing executed item
@@ -141,7 +120,7 @@ namespace conwrap
 						{
 							post(wrapHandler([&]
 							{
-								// no need to protect with a lock because this assigment will be done on consumer's thread
+								// no need to protect with a lock because this assigment will be done on worker's thread
 								finished = true;
 							}));
 
@@ -158,7 +137,8 @@ namespace conwrap
 
 				virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
 				{
-					return HandlerWrapper(handler, proxy);
+					// TODO: MAX case must be handled
+					return HandlerWrapper(handler, proxy, (proxy ? currentEpoch : nextEpoch++));
 				}
 
 			private:
@@ -168,7 +148,8 @@ namespace conwrap
 				std::thread                        thread;
 				std::mutex                         lock;
 				bool                               finished;
-				unsigned long long                 epoch;
+				unsigned long long                 nextEpoch;
+				unsigned long long                 currentEpoch;
 		};
 	}
 }

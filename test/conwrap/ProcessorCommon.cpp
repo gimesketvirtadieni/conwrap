@@ -110,7 +110,7 @@ TEST_P(ProcessorCommon, Process2)
 	{
 		return val;
 	});
-	EXPECT_EQ(val, syncCall.get());
+	EXPECT_EQ(val, syncCall.getResult());
 }
 
 

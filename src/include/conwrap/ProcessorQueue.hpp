@@ -38,14 +38,7 @@ namespace conwrap
 		public:
 			template <typename... Args>
 			ProcessorQueue(Args... args)
-			: processorBasePtr(std::make_shared<internal::ProcessorQueueBase<ResourceType>>(std::move(std::make_unique<ResourceType>(std::forward<Args>(args)...))))
-			, processorProxyPtr(std::unique_ptr<ProcessorQueueProxy<ResourceType>>(new ProcessorQueueProxy<ResourceType>(processorBasePtr)))
-			{
-				// TODO: implemet compile-time reflection to make this invocation optional
-				processorBasePtr->getResource()->setProcessor(this);
-				processorBasePtr->setProcessorProxy(processorProxyPtr.get());
-				processorBasePtr->start();
-			}
+			: ProcessorQueue(std::move(std::make_unique<ResourceType>(std::forward<Args>(args)...))) {}
 
 			ProcessorQueue(std::unique_ptr<ResourceType> resource)
 			: processorBasePtr(std::make_shared<internal::ProcessorQueueBase<ResourceType>>(std::move(resource)))
@@ -62,11 +55,6 @@ namespace conwrap
 				processorBasePtr->stop();
 			}
 
-			virtual HandlerContext<ResourceType> createHandlerContext() override
-			{
-				return processorBasePtr->createHandlerContext();
-			}
-
 			virtual ResourceType* getResource() override
 			{
 				return processorBasePtr->getResource();
@@ -77,10 +65,10 @@ namespace conwrap
 				// figuring out current epoch
 				auto currentEpoch = this->process([=]() -> auto
 				{
-					return processorBasePtr->getEpoch();
-				}).get();
+					return processorBasePtr->getNextEpoch();
+				}).getResult();
 
-				// waiting for any 'child' handlers to be processed
+				// waiting for all 'child' handlers to be processed
 				while (processorBasePtr->childExists(currentEpoch))
 				{
 					// TODO: insert flush handler after the last child instead of adding at the end of the queue
@@ -99,6 +87,11 @@ namespace conwrap
 			}
 
 		protected:
+			virtual HandlerContext<ResourceType> createHandlerContext() override
+			{
+				return processorBasePtr->createHandlerContext();
+			}
+
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
 			{
 				return processorBasePtr->wrapHandler(handler, proxy);

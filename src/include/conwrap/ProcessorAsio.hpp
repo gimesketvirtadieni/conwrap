@@ -31,14 +31,7 @@ namespace conwrap
 		public:
 			template <typename... Args>
 			ProcessorAsio(Args... args)
-			: processorBasePtr(std::make_shared<internal::ProcessorAsioBase<ResourceType>>(std::move(std::make_unique<ResourceType>(std::forward<Args>(args)...))))
-			, processorProxyPtr(std::unique_ptr<ProcessorAsioProxy<ResourceType>>(new ProcessorAsioProxy<ResourceType>(processorBasePtr)))
-			{
-				// TODO: implemet compile-time reflection to make this invocation optional
-				processorBasePtr->getResource()->setProcessor(this);
-				processorBasePtr->setProcessorProxy(processorProxyPtr.get());
-				processorBasePtr->start();
-			}
+			: ProcessorAsio(std::move(std::make_unique<ResourceType>(std::forward<Args>(args)...))) {}
 
 			ProcessorAsio(std::unique_ptr<ResourceType> resource)
 			: processorBasePtr(std::make_shared<internal::ProcessorAsioBase<ResourceType>>(std::move(resource)))
@@ -53,11 +46,6 @@ namespace conwrap
 			virtual ~ProcessorAsio()
 			{
 				processorBasePtr->stop();
-			}
-
-			virtual HandlerContext<ResourceType> createHandlerContext() override
-			{
-				return processorBasePtr->createHandlerContext();
 			}
 
 			asio::io_service* getDispatcher()
@@ -90,6 +78,11 @@ namespace conwrap
 			}
 
 		protected:
+			virtual HandlerContext<ResourceType> createHandlerContext() override
+			{
+				return processorBasePtr->createHandlerContext();
+			}
+
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
 			{
 				return processorBasePtr->wrapHandler(handler, proxy);

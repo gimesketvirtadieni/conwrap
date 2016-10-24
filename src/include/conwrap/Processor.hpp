@@ -17,6 +17,7 @@
 #include <conwrap/HandlerContext.hpp>
 #include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/ProcessorBase.hpp>
+#include <conwrap/Task.hpp>
 
 
 namespace conwrap
@@ -31,7 +32,7 @@ namespace conwrap
 			virtual void flush() = 0;
 
 			template <typename F>
-			auto process(F fun) -> std::future<decltype(fun())>
+			auto process(F fun) -> Task<decltype(fun())>
 			{
 				auto promisePtr = std::make_shared<std::promise<decltype(fun())>>();
 
@@ -41,11 +42,11 @@ namespace conwrap
 					setPromiseValue(*promisePtr, fun);
 				}));
 
-				return promisePtr->get_future();
+				return Task<decltype(fun())>(std::shared_future<decltype(fun())>(promisePtr->get_future()));
 			}
 
 			template <typename F>
-			auto process(F fun) -> std::future<decltype(fun(createHandlerContext()))>
+			auto process(F fun) -> Task<decltype(fun(createHandlerContext()))>
 			{
 				auto promisePtr = std::make_shared<std::promise<decltype(fun(createHandlerContext()))>>();
 
@@ -55,7 +56,7 @@ namespace conwrap
 					setPromiseValueWithContext(*promisePtr, fun);
 				}));
 
-				return promisePtr->get_future();
+				return Task<decltype(fun(createHandlerContext()))>(std::shared_future<decltype(fun(createHandlerContext()))>(promisePtr->get_future()));
 			}
 
 		protected:
@@ -85,5 +86,4 @@ namespace conwrap
 				p.set_value();
 			}
 	};
-
 }

@@ -17,10 +17,12 @@
 #include <conwrap/HandlerContext.hpp>
 #include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/ProcessorBase.hpp>
+#include <conwrap/TaskProxy.hpp>
 
 
 namespace conwrap
 {
+	// TODO: ProcessorProxy should be avoided by generalizing Processor template
 	template <typename ResourceType>
 	class ProcessorProxy : public internal::ProcessorBase<ResourceType>
 	{
@@ -29,7 +31,7 @@ namespace conwrap
 			virtual HandlerContext<ResourceType> createHandlerContext() override = 0;
 
 			template <typename F>
-			auto process(F fun) -> std::future<decltype(fun())>
+			auto process(F fun) -> TaskProxy<decltype(fun())>
 			{
 				auto promisePtr = std::make_shared<std::promise<decltype(fun())>>();
 
@@ -39,11 +41,11 @@ namespace conwrap
 					setPromiseValue(*promisePtr, fun);
 				}));
 
-				return promisePtr->get_future();
+				return TaskProxy<decltype(fun())>(std::shared_future<decltype(fun())>(promisePtr->get_future()));
 			}
 
 			template <typename F>
-			auto process(F fun) -> std::future<decltype(fun(createHandlerContext()))>
+			auto process(F fun) -> TaskProxy<decltype(fun(createHandlerContext()))>
 			{
 				auto promisePtr = std::make_shared<std::promise<decltype(fun(createHandlerContext()))>>();
 
@@ -53,7 +55,7 @@ namespace conwrap
 					setPromiseValueWithContext(*promisePtr, fun);
 				}));
 
-				return promisePtr->get_future();
+				return TaskProxy<decltype(fun(createHandlerContext()))>(std::shared_future<decltype(fun(createHandlerContext()))>(promisePtr->get_future()));
 			}
 
 		protected:

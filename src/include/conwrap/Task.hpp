@@ -12,44 +12,45 @@
 
 #pragma once
 
-#include <functional>
+#include <future>
 
 
 namespace conwrap
 {
-	class HandlerWrapper
+	template <typename ResultType>
+	class Task
 	{
 		public:
-			HandlerWrapper(std::function<void()> h, bool p, unsigned long long e = 0)
-			: handler(h)
-			, proxy(p)
-			, epoch(e) {}
+			Task(std::shared_future<ResultType> f)
+			: result(f) {}
 
-			virtual ~HandlerWrapper() {}
-
-			inline auto getEpoch()
+			Task(const Task& rhs)
 			{
-				return epoch;
+				result = rhs.result;
 			}
 
-			inline auto getHandler()
+			virtual ~Task() {}
+
+			Task& operator= (const Task& rhs)
 			{
-				return handler;
+				if (&rhs != this)
+				{
+					result = rhs.result;
+				}
+				return *this;
 			}
 
-			inline auto getProxy()
+			virtual ResultType getResult()
 			{
-				return proxy;
+				return result.get();
 			}
 
-			inline auto operator()()
+			virtual void wait()
 			{
-				handler();
+				result.wait();
 			}
 
 		private:
-			std::function<void()> handler;
-			bool                  proxy;
-			unsigned long long    epoch;
+			std::shared_future<ResultType> result;
 	};
 }
