@@ -96,36 +96,36 @@ The fact that a task being executed may submit new tasks causes extra complexity
 
 One important feature of Concurrent Wrapper is the possibility to flush task execution queue. Below there is an example demonstrating why this feature is crucial:
 ```c++
-// creating an object on the heap
-auto objectPtr = std::make_unique<SomeClass>();
-
+// creating a concurrent processor
 conwrap::ProcessorQueue<Dummy> processor;
-
-// submitting an asynchronous task
-processor.process([capturedPtr = objectPtr.get()](auto context)
 {
-	// here pointer to the object can be used including for passing to any sub-sequent task
-	// waiting for this particular task to complete does not solve the problem, so flush must be used
+	// creating an arbitrary object 
+	auto someObjectPtr = std::make_unique<SomeClass>();
 
-	// getting processor
-	auto processorPtr = context.getProcessor();
+	// submitting an asynchronous task
+	processor.process([capturedPtr = someObjectPtr.get()](auto context)
+	{
+		// here pointer to the object can be used including for passing to any sub-sequent task
+		// waiting for this particular task to complete does not solve the problem, so flush must be used
 
-	// creating a new sub-sequent task
-	processorPtr.process([=]
+		// getting processor
+		auto processorPtr = context.getProcessor();
 
-		// bummer
-		capturedPtr->doSomething();
-	);
-});
+		// creating a new sub-sequent task
+		processorPtr.process([=]
 
-// without this flush operation capturedPtr becomes a dangling pointer after object is deleted
-processor.flush();
+			// bummer
+			capturedPtr->doSomething();
+		);
+	});
 
-// deleting object
-objectPtr.reset();
+	// without this flush operation capturedPtr becomes a dangling pointer after someObjectPtr is deleted
+	processor.flush();
+
+}  // someObjectPtr is destroyed here
 ```
 
-In the similar way, Concurrent Wrapper ensures there is no dangling pointers left when its destructor is called. This is achieved by waiting for all pending tasks to complete. It is a different semantic compared to [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html), which requires stop method to be called and leaves unfinished handlers.
+In a similar way, Concurrent Wrapper ensures there is no dangling pointers left when it's destroyed. This is achieved by waiting for all pending tasks to complete by its destructor. It is a different semantic compared to [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) `io_service` class, which requires stop method to be called and leaves unfinished handlers.
 
 
 ##Combining Concurrent Wrapper with [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html)
