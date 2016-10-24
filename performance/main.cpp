@@ -1,18 +1,19 @@
-#include <iostream>
-#include <sstream>
-#include <fstream>
-#include <ctime>
-#include <cstdio>
-#include <iomanip>
-#include <vector>
 #include <algorithm>
-#include <numeric>
-#include <chrono>
 #include <cassert>
-
+#include <chrono>
+#include <conwrap/ConcurrentQueue.hpp>
+#include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/Processor.hpp>
 #include <conwrap/ProcessorQueue.hpp>
 #include <conwrap/ProcessorAsio.hpp>
+#include <cstdio>
+#include <ctime>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <numeric>
+#include <sstream>
+#include <vector>
 
 
 struct Dummy {
@@ -29,9 +30,18 @@ struct Dummy {
 };
 
 
+void generate_baseline(conwrap::ConcurrentQueue<conwrap::HandlerWrapper>* queuePtr)
+{
+	for (int i = 0; i < 1000000; i++)
+	{
+		queuePtr->push(conwrap::HandlerWrapper([] {}, false));
+	}
+}
+
+
 void generate(conwrap::Processor<Dummy>* processorPtr)
 {
-	for (int i = 0; i < 10000; i++)
+	for (int i = 0; i < 1000000; i++)
 	{
 		processorPtr->process([] {});
 	}
@@ -39,22 +49,41 @@ void generate(conwrap::Processor<Dummy>* processorPtr)
 
 
 int main(int argc, char** argv) {
+	auto queuePtr          = std::make_unique<conwrap::ConcurrentQueue<conwrap::HandlerWrapper>>();
 	auto processorQueuePtr = std::make_unique<conwrap::ProcessorQueue<Dummy>>();
 	auto processorAsioPtr  = std::make_unique<conwrap::ProcessorAsio<Dummy>>();
 
+	std::thread thread([&]
+	{
+		// executing handlers
+		for (int i = 0; i < 1000000; i++)
+		{
+			if (auto handlerPtr = queuePtr->get())
+			{
+				(*handlerPtr)();
+			}
+		}
+	});
 	auto start_time = std::chrono::high_resolution_clock::now();
+	generate_baseline(queuePtr.get());
+	thread.join();
+	auto end_time = std::chrono::high_resolution_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::duration<uint64_t, std::milli>>(end_time - start_time);
+	std::cout << "concurrentQueue duration=" << duration.count() << " millisec.\n\r";
+
+	start_time = std::chrono::high_resolution_clock::now();
 	generate(processorQueuePtr.get());
 	processorQueuePtr->flush();
-	auto end_time = std::chrono::high_resolution_clock::now();
-	uint64_t duration = std::chrono::duration_cast<std::chrono::duration<uint64_t,std::ratio<1, 1000000>>>(end_time - start_time).count();
-	std::cout << "processorQueue duration=" << duration << std::endl;
+	end_time = std::chrono::high_resolution_clock::now();
+	duration = std::chrono::duration_cast<std::chrono::duration<uint64_t, std::milli>>(end_time - start_time);
+	std::cout << "processorQueue duration=" << duration.count() << " millisec.\n\r";
 
 	start_time = std::chrono::high_resolution_clock::now();
 	generate(processorAsioPtr.get());
 	processorAsioPtr->flush();
 	end_time = std::chrono::high_resolution_clock::now();
-	duration = std::chrono::duration_cast<std::chrono::duration<uint64_t,std::ratio<1, 1000000>>>(end_time - start_time).count();
-	std::cout << "processorAsio duration=" << duration << std::endl;
+	duration = std::chrono::duration_cast<std::chrono::duration<uint64_t, std::milli>>(end_time - start_time);
+	std::cout << "processorAsio duration=" << duration.count() << " millisec.\n\r";
 
 	return 0;
 }
