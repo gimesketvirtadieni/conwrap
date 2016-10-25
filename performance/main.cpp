@@ -21,12 +21,12 @@ struct Dummy {
 
 	virtual ~Dummy() {}
 
-	void setProcessor(conwrap::Processor<Dummy>* p)
+	void setProcessor(conwrap::Processor<Dummy, conwrap::Task>* p)
 	{
 		processorPtr = p;
 	}
 
-	conwrap::Processor<Dummy>* processorPtr;
+	conwrap::Processor<Dummy, conwrap::Task>* processorPtr;
 };
 
 
@@ -34,12 +34,22 @@ void generate_baseline(conwrap::ConcurrentQueue<conwrap::HandlerWrapper>* queueP
 {
 	for (int i = 0; i < 1000000; i++)
 	{
-		queuePtr->push(conwrap::HandlerWrapper([] {}, false));
+		auto promisePtr = std::make_shared<std::promise<void>>();
+		auto fun        = [] {};
+
+		queuePtr->push(conwrap::HandlerWrapper([=]
+		{
+			fun();
+			promisePtr->set_value();
+		}, false));
+
+		// even though this shared future is not used, it is left here keep logic alike to processor
+		std::shared_future<void>(promisePtr->get_future());
 	}
 }
 
 
-void generate(conwrap::Processor<Dummy>* processorPtr)
+void generate(conwrap::Processor<Dummy, conwrap::Task>* processorPtr)
 {
 	for (int i = 0; i < 1000000; i++)
 	{
@@ -61,6 +71,7 @@ int main(int argc, char** argv) {
 			if (auto handlerPtr = queuePtr->get())
 			{
 				(*handlerPtr)();
+				queuePtr->remove();
 			}
 		}
 	});
