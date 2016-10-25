@@ -16,74 +16,16 @@
 #include <functional>
 #include <conwrap/HandlerContext.hpp>
 #include <conwrap/HandlerWrapper.hpp>
-#include <conwrap/ProcessorBase.hpp>
-#include <conwrap/Task.hpp>
+#include <conwrap/ProcessorProxy.hpp>
+#include <conwrap/TaskProxy.hpp>
 
 
 namespace conwrap
 {
-	template <typename ResourceType>
-	class Processor : public internal::ProcessorBase<ResourceType>
+	template <typename ResourceType, template<typename ResourceType> class ResultType>
+	class Processor : public ProcessorProxy<ResourceType, ResultType>
 	{
 		public:
-			// TODO: figure out how to make this method protected
-			virtual HandlerContext<ResourceType> createContext() override = 0;
-
 			virtual void flush() = 0;
-
-			template <typename F>
-			auto process(F fun) -> Task<decltype(fun())>
-			{
-				auto promisePtr = std::make_shared<std::promise<decltype(fun())>>();
-
-				// posting a new handler
-				this->post(this->wrapHandler([=]
-				{
-					setPromiseValue(*promisePtr, fun);
-				}));
-
-				return Task<decltype(fun())>(std::shared_future<decltype(fun())>(promisePtr->get_future()));
-			}
-
-			template <typename F>
-			auto process(F fun) -> Task<decltype(fun(createContext()))>
-			{
-				auto promisePtr = std::make_shared<std::promise<decltype(fun(createContext()))>>();
-
-				// posting a new handler
-				this->post(this->wrapHandler([=]
-				{
-					setPromiseValueWithContext(*promisePtr, fun);
-				}));
-
-				return Task<decltype(fun(createContext()))>(std::shared_future<decltype(fun(createContext()))>(promisePtr->get_future()));
-			}
-
-		protected:
-			template <typename Fut, typename Fun>
-			void setPromiseValue(std::promise<Fut>& p, Fun& f)
-			{
-				p.set_value(f());
-			}
-
-			template <typename Fun>
-			void setPromiseValue(std::promise<void>& p, Fun& f)
-			{
-				f();
-				p.set_value();
-			}
-
-			template <typename Fut, typename Fun>
-			void setPromiseValueWithContext(std::promise<Fut>& p, Fun& f)
-			{
-				p.set_value(f(createContext()));
-			}
-
-			template <typename Fun>
-			void setPromiseValueWithContext(std::promise<void>& p, Fun& f)
-			{
-				f(createContext());
-				p.set_value();
-			}
 	};
 }

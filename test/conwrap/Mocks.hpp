@@ -15,13 +15,20 @@
 #include <conwrap/HandlerContext.hpp>
 #include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/Processor.hpp>
-#include <conwrap/ProcessorBase.hpp>
 #include <conwrap/ProcessorProxy.hpp>
 #include <conwrap/ProcessorQueue.hpp>
 #include <conwrap/ProcessorAsio.hpp>
+#include <conwrap/Task.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <memory>
+
+
+namespace conwrap
+{
+	class ProcessorMock;
+	class ProcessorMockProxy;
+}
 
 
 struct Dummy {
@@ -29,12 +36,15 @@ struct Dummy {
 
 	virtual ~Dummy() {}
 
-	void setProcessor(conwrap::Processor<Dummy>* p)
+	void setProcessor(conwrap::Processor<Dummy, conwrap::Task>* p)
 	{
 		processorPtr = p;
 	}
 
-	conwrap::Processor<Dummy>* processorPtr;
+	// TODO: temporary fix
+	void setProcessor(conwrap::ProcessorMockProxy* p) {}
+
+	conwrap::Processor<Dummy, conwrap::Task>* processorPtr;
 };
 
 
@@ -42,19 +52,21 @@ namespace conwrap
 {
 	namespace internal
 	{
-		class ProcessorMockBase : public ProcessorBase<Dummy>
+		class ProcessorMockImpl : public Processor<Dummy, Task>
 		{
 			public:
-				ProcessorMockBase()
+				ProcessorMockImpl()
 				: resourcePtr(std::make_unique<Dummy>()) {}
 
-				ProcessorMockBase(std::unique_ptr<Dummy> r)
+				ProcessorMockImpl(std::unique_ptr<Dummy> r)
 				: resourcePtr(std::move(r)) {}
 
 				virtual HandlerContext<Dummy> createContext() override
 				{
 					return HandlerContext<Dummy> (getResource(), processorProxyPtr);
 				}
+
+				virtual void flush() override {}
 
 				virtual Dummy* getResource() override
 				{
@@ -66,7 +78,7 @@ namespace conwrap
 					handlerWrapper();
 				}
 
-				inline void setProcessorProxy(ProcessorProxy<Dummy>* p)
+				inline void setProcessorProxy(ProcessorProxy<Dummy, TaskProxy>* p)
 				{
 					processorProxyPtr = p;
 				}
@@ -82,20 +94,20 @@ namespace conwrap
 				}
 
 			private:
-				std::unique_ptr<Dummy> resourcePtr;
-				ProcessorProxy<Dummy>* processorProxyPtr;
+				std::unique_ptr<Dummy>            resourcePtr;
+				ProcessorProxy<Dummy, TaskProxy>* processorProxyPtr;
 		};
 	}
 
-	class ProcessorMockProxy : public ProcessorProxy<Dummy>
+	class ProcessorMockProxy : public ProcessorProxy<Dummy, TaskProxy>
 	{
 		public:
-			ProcessorMockProxy(std::shared_ptr<internal::ProcessorMockBase> p)
-			: processorBasePtr(p) {}
+			ProcessorMockProxy(std::shared_ptr<internal::ProcessorMockImpl> p)
+			: processorImplPtr(p) {}
 
 			virtual Dummy* getResource() override
 			{
-				return processorBasePtr->getResource();
+				return processorImplPtr->getResource();
 			}
 
 			virtual void post(HandlerWrapper handlerWrapper) override
@@ -120,21 +132,21 @@ namespace conwrap
 			}
 
 		private:
-			std::shared_ptr<internal::ProcessorMockBase> processorBasePtr;
+			std::shared_ptr<internal::ProcessorMockImpl> processorImplPtr;
 	};
 
-	class ProcessorMock : public Processor<Dummy>
+	class ProcessorMock : public Processor<Dummy, conwrap::Task>
 	{
 		public:
 			ProcessorMock()
 			: ProcessorMock(std::move(std::make_unique<Dummy>())) {}
 
 			ProcessorMock(std::unique_ptr<Dummy> r)
-			: processorBasePtr(std::make_shared<internal::ProcessorMockBase>(std::move(r)))
-			, processorProxyPtr(std::unique_ptr<ProcessorMockProxy>(new ProcessorMockProxy(processorBasePtr)))
+			: processorImplPtr(std::make_shared<internal::ProcessorMockImpl>(std::move(r)))
+			, processorProxyPtr(std::unique_ptr<ProcessorMockProxy>(new ProcessorMockProxy(processorImplPtr)))
 			{
-				processorBasePtr->getResource()->setProcessor(this);
-				processorBasePtr->setProcessorProxy(processorProxyPtr.get());
+				processorImplPtr->getResource()->setProcessor(this);
+				processorImplPtr->setProcessorProxy(processorProxyPtr.get());
 			}
 
 			inline ProcessorMockProxy* getProcessorProxy()
@@ -144,7 +156,7 @@ namespace conwrap
 
 			virtual Dummy* getResource() override
 			{
-				return processorBasePtr->getResource();
+				return processorImplPtr->getResource();
 			}
 
 			virtual void flush() override {}
@@ -162,7 +174,7 @@ namespace conwrap
 		protected:
 			virtual HandlerContext<Dummy> createContext() override
 			{
-				return processorBasePtr->createContext();
+				return processorImplPtr->createContext();
 			}
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
@@ -171,13 +183,13 @@ namespace conwrap
 			}
 
 		private:
-			std::shared_ptr<internal::ProcessorMockBase> processorBasePtr;
+			std::shared_ptr<internal::ProcessorMockImpl> processorImplPtr;
 			std::unique_ptr<ProcessorMockProxy>          processorProxyPtr;
 	};
 }
 
 
 // googletest fixtures
-class ProcessorCommon : public ::testing::TestWithParam<std::shared_ptr<conwrap::Processor<Dummy>>>
+class ProcessorCommon : public ::testing::TestWithParam<std::shared_ptr<conwrap::Processor<Dummy, conwrap::Task>>>
 {
 };

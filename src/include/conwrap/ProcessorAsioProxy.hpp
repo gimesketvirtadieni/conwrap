@@ -17,33 +17,35 @@
 #include <memory>
 #include <conwrap/HandlerContext.hpp>
 #include <conwrap/HandlerWrapper.hpp>
+#include <conwrap/ProcessorAsioImpl.hpp>
 #include <conwrap/ProcessorProxy.hpp>
+#include <conwrap/TaskProxy.hpp>
 
 
 namespace conwrap
 {
 	template <typename ResourceType>
-	class ProcessorAsioProxy : public ProcessorProxy<ResourceType>
+	class ProcessorAsioProxy : public ProcessorProxy<ResourceType, TaskProxy>
 	{
 		public:
-			ProcessorAsioProxy(std::shared_ptr<internal::ProcessorAsioBase<ResourceType>> p)
-			: processorBasePtr(p) {}
+			ProcessorAsioProxy(std::shared_ptr<internal::ProcessorAsioImpl<ResourceType>> p)
+			: processorImplPtr(p) {}
 
 			virtual ~ProcessorAsioProxy() {}
 
 			asio::io_service* getDispatcher()
 			{
-				return processorBasePtr->getDispatcher();
+				return processorImplPtr->getDispatcher();
 			}
 
 			virtual ResourceType* getResource() override
 			{
-				return processorBasePtr->getResource();
+				return processorImplPtr->getResource();
 			}
 
 			virtual void post(HandlerWrapper handlerWrapper) override
 			{
-				processorBasePtr->post(handlerWrapper);
+				processorImplPtr->post(handlerWrapper);
 			}
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler)
@@ -54,16 +56,16 @@ namespace conwrap
 		protected:
 			virtual HandlerContext<ResourceType> createContext() override
 			{
-				return processorBasePtr->createContext();
+				return processorImplPtr->createContext();
 			}
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
 			{
-				return processorBasePtr->wrapHandler(handler, proxy);
+				return processorImplPtr->wrapHandler(handler, proxy);
 			}
 
 		private:
-			std::shared_ptr<internal::ProcessorAsioBase<ResourceType>> processorBasePtr;
+			std::shared_ptr<internal::ProcessorAsioImpl<ResourceType>> processorImplPtr;
 	};
 
 }

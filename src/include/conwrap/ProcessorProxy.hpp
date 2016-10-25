@@ -16,22 +16,24 @@
 #include <functional>
 #include <conwrap/HandlerContext.hpp>
 #include <conwrap/HandlerWrapper.hpp>
-#include <conwrap/ProcessorBase.hpp>
-#include <conwrap/TaskProxy.hpp>
 
 
 namespace conwrap
 {
-	// TODO: ProcessorProxy should be avoided by generalizing Processor template
-	template <typename ResourceType>
-	class ProcessorProxy : public internal::ProcessorBase<ResourceType>
+	template <typename ResourceType, template<typename ResourceType> class ResultType>
+	class ProcessorProxy
 	{
 		public:
+			virtual ResourceType*                getResource() = 0;
+			virtual void                         post(HandlerWrapper) = 0;
+			virtual HandlerWrapper               wrapHandler(std::function<void()>) = 0;
+			virtual HandlerWrapper               wrapHandler(std::function<void()>, bool) = 0;
+
 			// TODO: figure out how to make this method protected
-			virtual HandlerContext<ResourceType> createContext() override = 0;
+			virtual HandlerContext<ResourceType> createContext() = 0;
 
 			template <typename F>
-			auto process(F fun) -> TaskProxy<decltype(fun())>
+			auto process(F fun) -> ResultType<decltype(fun())>
 			{
 				auto promisePtr = std::make_shared<std::promise<decltype(fun())>>();
 
@@ -41,11 +43,11 @@ namespace conwrap
 					setPromiseValue(*promisePtr, fun);
 				}));
 
-				return TaskProxy<decltype(fun())>(std::shared_future<decltype(fun())>(promisePtr->get_future()));
+				return ResultType<decltype(fun())>(std::shared_future<decltype(fun())>(promisePtr->get_future()));
 			}
 
 			template <typename F>
-			auto process(F fun) -> TaskProxy<decltype(fun(createContext()))>
+			auto process(F fun) -> ResultType<decltype(fun(createContext()))>
 			{
 				auto promisePtr = std::make_shared<std::promise<decltype(fun(createContext()))>>();
 
@@ -55,7 +57,7 @@ namespace conwrap
 					setPromiseValueWithContext(*promisePtr, fun);
 				}));
 
-				return TaskProxy<decltype(fun(createContext()))>(std::shared_future<decltype(fun(createContext()))>(promisePtr->get_future()));
+				return ResultType<decltype(fun(createContext()))>(std::shared_future<decltype(fun(createContext()))>(promisePtr->get_future()));
 			}
 
 		protected:
@@ -85,5 +87,4 @@ namespace conwrap
 				p.set_value();
 			}
 	};
-
 }

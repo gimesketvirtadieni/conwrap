@@ -13,20 +13,21 @@
 #pragma once
 
 #include <asio.hpp>
-#include <functional>
-#include <memory>
 #include <conwrap/HandlerContext.hpp>
 #include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/Processor.hpp>
-#include <conwrap/ProcessorAsioBase.hpp>
+#include <conwrap/ProcessorAsioImpl.hpp>
 #include <conwrap/ProcessorAsioProxy.hpp>
 #include <conwrap/ProcessorQueue.hpp>
+#include <conwrap/Task.hpp>
+#include <functional>
+#include <memory>
 
 
 namespace conwrap
 {
 	template <typename ResourceType>
-	class ProcessorAsio : public Processor<ResourceType>
+	class ProcessorAsio : public Processor<ResourceType, Task>
 	{
 		public:
 			template <typename... Args>
@@ -34,42 +35,38 @@ namespace conwrap
 			: ProcessorAsio(std::move(std::make_unique<ResourceType>(std::forward<Args>(args)...))) {}
 
 			ProcessorAsio(std::unique_ptr<ResourceType> resource)
-			: processorBasePtr(std::make_shared<internal::ProcessorAsioBase<ResourceType>>(std::move(resource)))
-			, processorProxyPtr(std::unique_ptr<ProcessorAsioProxy<ResourceType>>(new ProcessorAsioProxy<ResourceType>(processorBasePtr)))
+			: processorImplPtr(std::make_shared<internal::ProcessorAsioImpl<ResourceType>>(std::move(resource)))
+			, processorProxyPtr(std::unique_ptr<ProcessorAsioProxy<ResourceType>>(new ProcessorAsioProxy<ResourceType>(processorImplPtr)))
 			{
 				// TODO: implemet compile-time reflection to make this invocation optional
-				processorBasePtr->getResource()->setProcessor(this);
-				processorBasePtr->setProcessorProxy(processorProxyPtr.get());
-				processorBasePtr->start();
+				processorImplPtr->getResource()->setProcessor(this);
+				processorImplPtr->setProcessorProxy(processorProxyPtr.get());
+				processorImplPtr->start();
 			}
 
 			virtual ~ProcessorAsio()
 			{
-				processorBasePtr->stop();
+				processorImplPtr->stop();
 			}
 
 			asio::io_service* getDispatcher()
 			{
-				return processorBasePtr->getDispatcher();
+				return processorImplPtr->getDispatcher();
 			}
 
 			virtual ResourceType* getResource() override
 			{
-				return processorBasePtr->getResource();
+				return processorImplPtr->getResource();
 			}
 
 			virtual void flush() override
 			{
-				// restarting dispatcher which will make sure all handlers are processed
-				processorBasePtr->restartDispatcher();
-
-				// making sure the main loop started after the restart
-				this->process([] {}).wait();
+				processorImplPtr->flush();
 			}
 
 			virtual void post(HandlerWrapper handlerWrapper) override
 			{
-				processorBasePtr->post(handlerWrapper);
+				processorImplPtr->post(handlerWrapper);
 			}
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler)
@@ -80,16 +77,16 @@ namespace conwrap
 		protected:
 			virtual HandlerContext<ResourceType> createContext() override
 			{
-				return processorBasePtr->createContext();
+				return processorImplPtr->createContext();
 			}
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
 			{
-				return processorBasePtr->wrapHandler(handler, proxy);
+				return processorImplPtr->wrapHandler(handler, proxy);
 			}
 
 		private:
-			std::shared_ptr<internal::ProcessorAsioBase<ResourceType>> processorBasePtr;
+			std::shared_ptr<internal::ProcessorAsioImpl<ResourceType>> processorImplPtr;
 			std::unique_ptr<ProcessorAsioProxy<ResourceType>>          processorProxyPtr;
 	};
 

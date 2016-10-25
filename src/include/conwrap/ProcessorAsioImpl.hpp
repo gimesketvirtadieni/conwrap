@@ -15,8 +15,9 @@
 #include <asio.hpp>
 #include <conwrap/HandlerContext.hpp>
 #include <conwrap/HandlerWrapper.hpp>
-#include <conwrap/ProcessorBase.hpp>
+#include <conwrap/Processor.hpp>
 #include <conwrap/ProcessorQueue.hpp>
+#include <conwrap/Task.hpp>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -32,17 +33,26 @@ namespace conwrap
 	namespace internal
 	{
 		template <typename ResourceType>
-		class ProcessorAsioBase : public ProcessorBase<ResourceType>
+		class ProcessorAsioImpl : public Processor<ResourceType, Task>
 		{
 			public:
-				ProcessorAsioBase(std::unique_ptr<ResourceType> r)
+				ProcessorAsioImpl(std::unique_ptr<ResourceType> r)
 				: processorQueue(std::move(r)) {}
 
-				virtual ~ProcessorAsioBase() {}
+				virtual ~ProcessorAsioImpl() {}
 
 				virtual HandlerContext<ResourceType> createContext() override
 				{
 					return HandlerContext<ResourceType> (getResource(), processorProxyPtr);
+				}
+
+				virtual void flush() override
+				{
+					// restarting dispatcher which will make sure all handlers are processed
+					restartDispatcher();
+
+					// making sure the main loop started after the restart
+					this->process([] {}).wait();
 				}
 
 				asio::io_service* getDispatcher()

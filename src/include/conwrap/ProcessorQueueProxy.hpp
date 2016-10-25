@@ -12,11 +12,13 @@
 
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <conwrap/HandlerContext.hpp>
 #include <conwrap/HandlerWrapper.hpp>
-#include <conwrap/ProcessorQueueBase.hpp>
+#include <conwrap/ProcessorQueueImpl.hpp>
 #include <conwrap/ProcessorProxy.hpp>
+#include <conwrap/TaskProxy.hpp>
 
 
 namespace conwrap
@@ -26,25 +28,25 @@ namespace conwrap
 	class ProcessorAsio;
 
 	template <typename ResourceType>
-	class ProcessorQueueProxy : public ProcessorProxy<ResourceType>
+	class ProcessorQueueProxy : public ProcessorProxy<ResourceType, TaskProxy>
 	{
 		// friend declaration
 		template <typename> friend class ProcessorAsio;
 
 		public:
-			ProcessorQueueProxy(std::shared_ptr<internal::ProcessorQueueBase<ResourceType>> processorBasePtr)
-			: processorBasePtr(processorBasePtr) {}
+			ProcessorQueueProxy(std::shared_ptr<internal::ProcessorQueueImpl<ResourceType>> p)
+			: processorImplPtr(p) {}
 
 			virtual ~ProcessorQueueProxy() {}
 
 			virtual ResourceType* getResource() override
 			{
-				return processorBasePtr->getResource();
+				return processorImplPtr->getResource();
 			}
 
 			virtual void post(HandlerWrapper handlerWrapper) override
 			{
-				processorBasePtr->post(handlerWrapper);
+				processorImplPtr->post(handlerWrapper);
 			}
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler)
@@ -55,16 +57,16 @@ namespace conwrap
 		protected:
 			virtual HandlerContext<ResourceType> createContext() override
 			{
-				return processorBasePtr->createContext();
+				return processorImplPtr->createContext();
 			}
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
 			{
-				return processorBasePtr->wrapHandler(handler, proxy);
+				return processorImplPtr->wrapHandler(handler, proxy);
 			}
 
 		private:
-			std::shared_ptr<internal::ProcessorQueueBase<ResourceType>> processorBasePtr;
+			std::shared_ptr<internal::ProcessorQueueImpl<ResourceType>> processorImplPtr;
 	};
 
 }

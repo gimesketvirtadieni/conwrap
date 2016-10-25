@@ -12,12 +12,13 @@
 
 #pragma once
 
-#include <memory>
-#include <thread>
 #include <conwrap/ConcurrentQueue.hpp>
 #include <conwrap/HandlerContext.hpp>
 #include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/Processor.hpp>
+#include <conwrap/Task.hpp>
+#include <memory>
+#include <thread>
 
 
 namespace conwrap
@@ -29,14 +30,14 @@ namespace conwrap
 	namespace internal
 	{
 		template <typename ResourceType>
-		class ProcessorQueueBase : public ProcessorBase<ResourceType>
+		class ProcessorQueueImpl : public Processor<ResourceType, Task>
 		{
 			public:
-				ProcessorQueueBase(std::unique_ptr<ResourceType> r)
+				ProcessorQueueImpl(std::unique_ptr<ResourceType> r)
 				: resourcePtr(std::move(r))
 				, nextEpoch(1) {}
 
-				virtual ~ProcessorQueueBase() {}
+				virtual ~ProcessorQueueImpl() {}
 
 				bool childExists(unsigned long long currentEpoch)
 				{
@@ -51,13 +52,28 @@ namespace conwrap
 							break;
 						}
 					}
-
 					return found;
 				}
 
 				virtual HandlerContext<ResourceType> createContext() override
 				{
 					return HandlerContext<ResourceType> (getResource(), processorProxyPtr);
+				}
+
+				virtual void flush() override
+				{
+					// figuring out current epoch
+					auto currentEpoch = this->process([&]() -> auto
+					{
+						return getNextEpoch();
+					}).getResult();
+
+					// waiting for all 'child' handlers to be processed
+					while (childExists(currentEpoch))
+					{
+						// TODO: insert flush handler after the last child instead of adding at the end of the queue
+						this->process([=] {}).wait();
+					}
 				}
 
 				inline auto getNextEpoch()
@@ -101,10 +117,10 @@ namespace conwrap
 
 										// executing handler
 										(*handlerPtr)();
-									}
 
-									// removing executed item
-									queue.remove();
+										// removing executed item
+										queue.remove();
+									}
 								}
 							});
 						}
