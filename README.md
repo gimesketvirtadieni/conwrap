@@ -81,7 +81,7 @@ The fact that a task being executed may submit new tasks causes extra complexity
 		std::this_thread::sleep_for(std::chrono::milliseconds{5});
 	
 		// by this moment processor's destructor has already been called
-		// despite that it is safe to submit a new task because context contains a 'proxy' processor
+		// despite that it is safe to submit a new task because context contains processor's 'proxy'
 		context.getProcessorProxy()->process([&]
 		{
 			// simulating some action
@@ -114,7 +114,7 @@ conwrap::ProcessorQueue<Dummy> processor;
 		);
 	});
 
-	// without this flush operation capturedPtr becomes a dangling pointer after someObjectPtr is deleted
+	// capturedPtr becomes a dangling pointer without this flush after someObjectPtr is deleted
 	processor.flush();
 
 }  // someObjectPtr is destroyed here
@@ -125,7 +125,7 @@ In a similar way, Concurrent Wrapper ensures there is no dangling pointers left 
 
 ##Combining Concurrent Wrapper with [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html)
 
-So far, only `conwrap::ProcessorQueue` was used to demonstrate Concurrent Wrapper's functionality. There is a similar class available called `conwrap::ProcessorAsio`. This class provides possibility to use [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) for processing arbitrary code asynchronously. This is very useful in case of asynchronous TCP/UDP server based on [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html). Basically this class provides possibility to combine [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) handlers with arbitrary code submitted for execution as an asynchronous task. Really cool thing about `conwrap::ProcessorAsio` is that it has the same semantic as `conwrap::ProcessorQueue` which means you can flush [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) handlers and delete processor object safely. Provided [example](./examples/main.cpp) in the repository demonstrates this functionality. Provided example also shows the way to combine [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) handlers with arbitrary tasks.
+So far, only `conwrap::ProcessorQueue` was used to demonstrate Concurrent Wrapper's functionality. There is a similar class available called `conwrap::ProcessorAsio`. This class provides possibility to use [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) for processing arbitrary code asynchronously. This is very useful in case of asynchronous TCP/UDP server based on [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html). Basically this class provides possibility to combine [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) handlers with arbitrary code submitted for execution as an asynchronous task. Really cool thing about `conwrap::ProcessorAsio` is that it has the same semantic as `conwrap::ProcessorQueue` which means you can flush [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) handlers and delete processor object safely. Provided [examples](./examples/main.cpp) in the repository demonstrate this functionality along with possibility to combine [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) handlers with arbitrary tasks.
 
 Under the hood, `conwrap::ProcessorAsio` is implemented by using one more thread. In fact all `conwrap::ProcessorAsio` does is pushing tasks from its thread to `conwrap::ProcessorQueue`’s thread where they get processed. Required synchronisation is done by the library so from client perspective is looks like `conwrap::ProcessorAsio` and `conwrap::ProcessorQueue` provides the same semantic. Due to the fact that tasks are transferred via extra thread, there is a related performance penalty if `conwrap::ProcessorAsio` is used; so it should be used only if client needs to combine [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) native handlers with arbitrary asynchronous tasks.
 
