@@ -19,9 +19,9 @@
 namespace conwrap
 {
 	// forward declaration
-	template <typename ResourceType, template<typename ResourceType> class ResultType>
+	template <typename ResourceType, template<typename ResourceType, typename ResultType> class TaskType>
 	class Processor;
-	template <typename ResourceType, template<typename ResourceType> class ResultType>
+	template <typename ResourceType, template<typename ResourceType, typename ResultType> class TaskType>
 	class ProcessorProxy;
 
 	template <typename ResourceType>

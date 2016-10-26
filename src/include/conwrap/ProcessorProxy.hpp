@@ -20,7 +20,7 @@
 
 namespace conwrap
 {
-	template <typename ResourceType, template<typename ResourceType> class ResultType>
+	template <typename ResourceType, template<typename ResourceType, typename ResultType> class TaskType>
 	class ProcessorProxy
 	{
 		public:
@@ -33,7 +33,7 @@ namespace conwrap
 			virtual HandlerContext<ResourceType> createContext() = 0;
 
 			template <typename F>
-			auto process(F fun) -> ResultType<decltype(fun())>
+			auto process(F fun) -> TaskType<ResourceType, decltype(fun())>
 			{
 				auto promisePtr = std::make_shared<std::promise<decltype(fun())>>();
 
@@ -43,11 +43,11 @@ namespace conwrap
 					setPromiseValue(*promisePtr, fun);
 				}));
 
-				return ResultType<decltype(fun())>(std::shared_future<decltype(fun())>(promisePtr->get_future()));
+				return TaskType<ResourceType, decltype(fun())>(this, std::shared_future<decltype(fun())>(promisePtr->get_future()));
 			}
 
 			template <typename F>
-			auto process(F fun) -> ResultType<decltype(fun(createContext()))>
+			auto process(F fun) -> TaskType<ResourceType, decltype(fun(createContext()))>
 			{
 				auto promisePtr = std::make_shared<std::promise<decltype(fun(createContext()))>>();
 
@@ -57,7 +57,7 @@ namespace conwrap
 					setPromiseValueWithContext(*promisePtr, fun);
 				}));
 
-				return ResultType<decltype(fun(createContext()))>(std::shared_future<decltype(fun(createContext()))>(promisePtr->get_future()));
+				return TaskType<ResourceType, decltype(fun(createContext()))>(this, std::shared_future<decltype(fun(createContext()))>(promisePtr->get_future()));
 			}
 
 		protected:

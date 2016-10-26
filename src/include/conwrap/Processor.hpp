@@ -22,8 +22,8 @@
 
 namespace conwrap
 {
-	template <typename ResourceType, template<typename ResourceType> class ResultType>
-	class Processor : public ProcessorProxy<ResourceType, ResultType>
+	template <typename ResourceType, template<typename ResourceType, typename ResultType> class TaskType>
+	class Processor : public ProcessorProxy<ResourceType, TaskType>
 	{
 		public:
 			virtual void flush() = 0;

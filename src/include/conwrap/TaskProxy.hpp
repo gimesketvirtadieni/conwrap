@@ -17,21 +17,38 @@
 
 namespace conwrap
 {
-	template <typename ResultType>
+	// forward declaration
+	template <typename ResourceType, template <typename ResourceType, typename ResultType> class TaskType>
+	class ProcessorProxy;
+
+	template <typename ResourceType, typename ResultType>
 	class TaskProxy
 	{
 		public:
-			TaskProxy(std::shared_future<ResultType> f)
-			: result(f) {}
+			TaskProxy(ProcessorProxy<ResourceType, TaskProxy>* p, std::shared_future<ResultType> f)
+			: processorProxyPtr(p)
+			, result(f) {}
 
-			TaskProxy(const TaskProxy& other)
+			TaskProxy(const TaskProxy& rhs)
 			{
-				result = other.result;
+				processorProxyPtr = rhs.processorProxyPtr;
+				result            = rhs.result;
 			}
 
 			virtual ~TaskProxy() {}
 
+			TaskProxy& operator= (const TaskProxy& rhs)
+			{
+				if (&rhs != this)
+				{
+					processorProxyPtr = rhs.processorProxyPtr;
+					result            = rhs.result;
+				}
+				return *this;
+			}
+
 		private:
-			std::shared_future<ResultType> result;
+			ProcessorProxy<ResourceType, TaskProxy>* processorProxyPtr;
+			std::shared_future<ResultType>           result;
 	};
 }

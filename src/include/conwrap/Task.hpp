@@ -17,16 +17,26 @@
 
 namespace conwrap
 {
-	template <typename ResultType>
+	// forward declaration
+	template <typename ResourceType, template <typename ResourceType, typename ResultType> class TaskType>
+	class ProcessorProxy;
+
+	template <typename ResourceType, typename ResultType>
 	class Task
 	{
+		private:
+			ProcessorProxy<ResourceType, Task>* processorProxyPtr;
+			std::shared_future<ResultType>      result;
+
 		public:
-			Task(std::shared_future<ResultType> f)
-			: result(f) {}
+			Task(ProcessorProxy<ResourceType, Task>* p, std::shared_future<ResultType> f)
+			: processorProxyPtr(p)
+			, result(f) {}
 
 			Task(const Task& rhs)
 			{
-				result = rhs.result;
+				processorProxyPtr = rhs.processorProxyPtr;
+				result            = rhs.result;
 			}
 
 			virtual ~Task() {}
@@ -35,7 +45,8 @@ namespace conwrap
 			{
 				if (&rhs != this)
 				{
-					result = rhs.result;
+					processorProxyPtr = rhs.processorProxyPtr;
+					result            = rhs.result;
 				}
 				return *this;
 			}
@@ -45,12 +56,19 @@ namespace conwrap
 				return result.get();
 			}
 
+			// TODO: this is work in progress
+			template <typename F>
+			auto then(F fun) -> Task<ResourceType, decltype(fun(result.get()))>
+			{
+				return processorProxyPtr->process([r = result, f = fun]() -> decltype(fun(result.get()))
+				{
+					return f(r.get());
+				});
+			}
+
 			virtual void wait()
 			{
 				result.wait();
 			}
-
-		private:
-			std::shared_future<ResultType> result;
 	};
 }

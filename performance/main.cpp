@@ -63,6 +63,10 @@ int main(int argc, char** argv) {
 	auto processorQueuePtr = std::make_unique<conwrap::ProcessorQueue<Dummy>>();
 	auto processorAsioPtr  = std::make_unique<conwrap::ProcessorAsio<Dummy>>();
 
+	// TODO: this is work in progress
+	//auto task = processorQueuePtr->process([]() -> int { std::cout << "HELLO1\n\r"; return 123;});
+	//task.then([](int aaa) -> bool {std::cout << "HELLO2 " << aaa << "\n\r"; return true;});
+
 	std::thread thread([&]
 	{
 		// executing handlers
