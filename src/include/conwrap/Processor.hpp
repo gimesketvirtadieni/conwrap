@@ -12,12 +12,7 @@
 
 #pragma once
 
-#include <future>
-#include <functional>
-#include <conwrap/HandlerContext.hpp>
-#include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/ProcessorProxy.hpp>
-#include <conwrap/TaskProxy.hpp>
 
 
 namespace conwrap
