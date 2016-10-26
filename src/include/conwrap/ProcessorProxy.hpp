@@ -23,10 +23,14 @@ namespace conwrap
 	template <typename ResourceType, template<typename ResourceType, typename ResultType> class TaskType>
 	class ProcessorProxy
 	{
-		public:
-			// TODO: figure out how to make this method protected
-			virtual HandlerContext<ResourceType> createContext() = 0;
+		// this 'weird' struct is a workaround to get decltype work for protected method
+		private:
+			struct s
+			{
+				static HandlerContext<ResourceType> createContext() {};
+			};
 
+		public:
 			virtual ResourceType* getResource() = 0;
 
 			virtual void post(HandlerWrapper) = 0;
@@ -46,9 +50,9 @@ namespace conwrap
 			}
 
 			template <typename F>
-			auto process(F fun) -> TaskType<ResourceType, decltype(fun(createContext()))>
+			auto process(F fun) -> TaskType<ResourceType, decltype(fun(s::createContext()))>
 			{
-				auto promisePtr = std::make_shared<std::promise<decltype(fun(createContext()))>>();
+				auto promisePtr = std::make_shared<std::promise<decltype(fun(s::createContext()))>>();
 
 				// posting a new handler
 				this->post(this->wrapHandler([=]
@@ -56,12 +60,14 @@ namespace conwrap
 					setPromiseValueWithContext(*promisePtr, fun);
 				}));
 
-				return TaskType<ResourceType, decltype(fun(createContext()))>(this, std::shared_future<decltype(fun(createContext()))>(promisePtr->get_future()));
+				return TaskType<ResourceType, decltype(fun(s::createContext()))>(this, std::shared_future<decltype(fun(s::createContext()))>(promisePtr->get_future()));
 			}
 
 			virtual HandlerWrapper wrapHandler(std::function<void()>) = 0;
 
 		protected:
+			virtual HandlerContext<ResourceType> createContext() = 0;
+
 			template <typename Fut, typename Fun>
 			void setPromiseValue(std::promise<Fut>& p, Fun& f)
 			{
