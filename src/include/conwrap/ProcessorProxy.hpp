@@ -24,13 +24,12 @@ namespace conwrap
 	class ProcessorProxy
 	{
 		public:
-			virtual ResourceType*                getResource() = 0;
-			virtual void                         post(HandlerWrapper) = 0;
-			virtual HandlerWrapper               wrapHandler(std::function<void()>) = 0;
-			virtual HandlerWrapper               wrapHandler(std::function<void()>, bool) = 0;
-
 			// TODO: figure out how to make this method protected
 			virtual HandlerContext<ResourceType> createContext() = 0;
+
+			virtual ResourceType* getResource() = 0;
+
+			virtual void post(HandlerWrapper) = 0;
 
 			template <typename F>
 			auto process(F fun) -> TaskType<ResourceType, decltype(fun())>
@@ -60,6 +59,8 @@ namespace conwrap
 				return TaskType<ResourceType, decltype(fun(createContext()))>(this, std::shared_future<decltype(fun(createContext()))>(promisePtr->get_future()));
 			}
 
+			virtual HandlerWrapper wrapHandler(std::function<void()>) = 0;
+
 		protected:
 			template <typename Fut, typename Fun>
 			void setPromiseValue(std::promise<Fut>& p, Fun& f)
@@ -86,5 +87,7 @@ namespace conwrap
 				f(createContext());
 				p.set_value();
 			}
+
+			virtual HandlerWrapper wrapHandler(std::function<void()>, bool) = 0;
 	};
 }
