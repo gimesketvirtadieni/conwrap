@@ -151,6 +151,41 @@ int main(int argc, char *argv[])
 		std::cout << "Back to main\n\r";
 	}
 
+	// example demonstrating composition of tasks
+	{
+		conwrap::ProcessorQueue<Dummy> processorQueue;
+
+		processorQueue.process([]() -> int
+		{
+			std::cout << "Hello from the 1'st task\n\r";
+			return 123;
+		}).then([](auto context) -> bool
+		{
+			std::cout << "Hello from the 2'nd task (result from previous task is " << context.getResult() << ")\n\r";
+
+			context.getProcessorProxy()->process([]() -> int
+			{
+				std::cout << "Hello from the 2.1'st task\n\r";
+				return 1234;
+			}).then([](auto context) -> bool
+			{
+				std::cout << "Hello from the 2.2'nd task (result from previous task is " << context.getResult() << ")\n\r";
+				return true;
+			}).then([](auto context)
+			{
+				std::cout << "Hello from the 2.3'rd task (result from previous task is " << context.getResult() << ")\n\r";
+			});
+
+			return false;
+		}).then([](auto context)
+		{
+			std::cout << "Hello from the 3'rd task (result from previous task is " << context.getResult() << ")\n\r";
+		});
+		processorQueue.flush();
+		std::cout << "Back to main\n\r";
+	}
+
+	// example demonstrating combining task processing with Asio server
 	{
 		conwrap::ProcessorAsio<Server> processorAsio(1234);
 		std::cout << "Echo server is listening on 1234 port (press ^C to terminate)\n\r";
@@ -165,7 +200,7 @@ int main(int argc, char *argv[])
 
 				// this is just to demonstrate that now asio can be used with tasks that return value
 				return 1234;
-			});
+			}).getResult();
 
 			for (int j = 0; j < 3; j++)
 			{
