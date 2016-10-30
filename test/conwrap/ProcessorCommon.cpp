@@ -140,6 +140,28 @@ TEST_P(ProcessorCommon, Process4)
 }
 
 
+TEST_P(ProcessorCommon, Process5)
+{
+	auto  processorPtr(GetParam());
+	Dummy dummy;
+	{
+		testing::InSequence dummySequence;
+
+		EXPECT_CALL(dummy, method1())
+			.Times(1);
+		EXPECT_CALL(dummy, method2())
+			.Times(1);
+	}
+
+	processorPtr->process([&]
+	{
+		dummy.method1();
+	}).then([&]
+	{
+		dummy.method2();
+	}).wait();
+}
+
 INSTANTIATE_TEST_CASE_P(ProcessorInstantiation, ProcessorCommon, ::testing::Values(
 	std::make_shared<conwrap::ProcessorMock>(),
 	std::make_shared<conwrap::ProcessorQueue<Dummy>>(),

@@ -47,6 +47,9 @@ struct Dummy {
 	void setProcessor(conwrap::ProcessorMockProxy* p) {}
 
 	conwrap::Processor<Dummy>* processorPtr;
+
+	MOCK_METHOD0(method1, void());
+	MOCK_METHOD0(method2, void());
 };
 
 
