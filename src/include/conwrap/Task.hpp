@@ -13,25 +13,33 @@
 #pragma once
 
 #include <future>
+#include <conwrap/ContinuationContext.hpp>
+#include <conwrap/HandlerContext.hpp>
 
 
 namespace conwrap
 {
 	// forward declaration
-	template <typename ResourceType, template <typename ResourceType, typename ResultType> class TaskType>
+	template <typename ResourceType>
+	class Processor;
+	template <typename ResourceType>
 	class ProcessorProxy;
 
 	template <typename ResourceType, typename ResultType>
 	class Task
 	{
+		// this 'weird' struct is a workaround to get decltype work for protected method
 		private:
-			ProcessorProxy<ResourceType, Task>* processorProxyPtr;
-			std::shared_future<ResultType>      result;
+			struct s
+			{
+				static ContinuationContext<ResourceType, ResultType> cc();
+			};
 
 		public:
-			Task(ProcessorProxy<ResourceType, Task>* p, std::shared_future<ResultType> f)
-			: processorProxyPtr(p)
-			, result(f) {}
+			Task(Processor<ResourceType>* p, ProcessorProxy<ResourceType>* pp, std::shared_future<ResultType> r)
+			: processorPtr(p)
+			, processorProxyPtr(pp)
+			, result(r) {}
 
 			Task(const Task& rhs)
 			{
@@ -51,24 +59,43 @@ namespace conwrap
 				return *this;
 			}
 
-			virtual ResultType getResult()
+			inline ResultType getResult()
 			{
 				return result.get();
 			}
 
-			// TODO: this is work in progress
 			template <typename F>
-			auto then(F fun) -> Task<ResourceType, decltype(fun(result.get()))>
+			auto then(F fun) -> Task<ResourceType, decltype(fun())>
 			{
-				return processorProxyPtr->process([r = result, f = fun]() -> decltype(fun(result.get()))
+				return processorPtr->process([=]() -> decltype(fun())
 				{
-					return f(r.get());
+					return fun();
 				});
 			}
 
-			virtual void wait()
+			template <typename F>
+			auto then(F fun) -> Task<ResourceType, decltype(fun(s::cc()))>
+			{
+				return processorPtr->process([f = fun, c = createContext()]() -> decltype(fun(s::cc()))
+				{
+					return f(c);
+				});
+			}
+
+			inline void wait()
 			{
 				result.wait();
 			}
+
+		protected:
+			inline ContinuationContext<ResourceType, ResultType> createContext()
+			{
+				return ContinuationContext<ResourceType, ResultType>(processorProxyPtr, result);
+			}
+
+		private:
+			Processor<ResourceType>*       processorPtr;
+			ProcessorProxy<ResourceType>*  processorProxyPtr;
+			std::shared_future<ResultType> result;
 	};
 }

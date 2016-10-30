@@ -17,6 +17,8 @@
 #include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/Processor.hpp>
 #include <conwrap/Task.hpp>
+#include <conwrap/TaskProvider.hpp>
+#include <conwrap/TaskProxy.hpp>
 #include <memory>
 #include <thread>
 
@@ -25,40 +27,25 @@ namespace conwrap
 {
 	// forward declaration
 	template <typename ResourceType>
+	class ProcessorQueue;
+	template <typename ResourceType>
 	class ProcessorQueueProxy;
 
 	namespace internal
 	{
 		template <typename ResourceType>
-		class ProcessorQueueImpl : public Processor<ResourceType, Task>
+		class ProcessorQueueImpl : public Processor<ResourceType>
 		{
+			// friend declaration
+			template <typename> friend class conwrap::ProcessorQueue;
+			template <typename> friend class conwrap::ProcessorQueueProxy;
+
 			public:
 				ProcessorQueueImpl(std::unique_ptr<ResourceType> r)
 				: resourcePtr(std::move(r))
 				, nextEpoch(1) {}
 
 				virtual ~ProcessorQueueImpl() {}
-
-				bool childExists(unsigned long long currentEpoch)
-				{
-					auto found = false;
-
-					for (auto& h : queue)
-					{
-						auto epoch = h.getEpoch();
-						if (h.getProxy() && epoch && epoch < currentEpoch)
-						{
-							found = true;
-							break;
-						}
-					}
-					return found;
-				}
-
-				virtual HandlerContext<ResourceType> createContext() override
-				{
-					return HandlerContext<ResourceType> (getResource(), processorProxyPtr);
-				}
 
 				virtual void flush() override
 				{
@@ -76,14 +63,41 @@ namespace conwrap
 					}
 				}
 
+				virtual ResourceType* getResource() override
+				{
+					return resourcePtr.get();
+				}
+
+			protected:
+				bool childExists(unsigned long long currentEpoch)
+				{
+					auto found = false;
+
+					for (auto& h : queue)
+					{
+						auto epoch = h.getEpoch();
+						if (h.getProxy() && epoch && epoch < currentEpoch)
+						{
+							found = true;
+							break;
+						}
+					}
+					return found;
+				}
+
 				inline auto getNextEpoch()
 				{
 					return nextEpoch;
 				}
 
-				virtual ResourceType* getResource() override
+				virtual TaskProvider<ResourceType, Task>* getTaskProvider() override
 				{
-					return resourcePtr.get();
+					return taskProviderPtr.get();
+				}
+
+				inline TaskProvider<ResourceType, TaskProxy>* getTaskProxyProvider()
+				{
+					return taskProxyProviderPtr.get();
 				}
 
 				virtual void post(HandlerWrapper handlerWrapper) override
@@ -91,9 +105,14 @@ namespace conwrap
 					queue.push(handlerWrapper);
 				}
 
-				inline void setProcessorProxy(ProcessorQueueProxy<ResourceType>* p)
+				inline void setTaskProvider(TaskProvider<ResourceType, Task> t)
 				{
-					processorProxyPtr = p;
+					taskProviderPtr = std::make_unique<TaskProvider<ResourceType, Task>>(t);
+				}
+
+				inline void setTaskProxyProvider(TaskProvider<ResourceType, TaskProxy> t)
+				{
+					taskProxyProviderPtr = std::make_unique<TaskProvider<ResourceType, TaskProxy>>(t);
 				}
 
 				void start()
@@ -158,14 +177,15 @@ namespace conwrap
 				}
 
 			private:
-				std::unique_ptr<ResourceType>      resourcePtr;
-				ProcessorQueueProxy<ResourceType>* processorProxyPtr;
-				ConcurrentQueue<HandlerWrapper>    queue;
-				std::thread                        thread;
-				std::mutex                         lock;
-				bool                               finished;
-				unsigned long long                 nextEpoch;
-				unsigned long long                 currentEpoch;
+				std::unique_ptr<ResourceType>                          resourcePtr;
+				std::unique_ptr<TaskProvider<ResourceType, Task>>      taskProviderPtr;
+				std::unique_ptr<TaskProvider<ResourceType, TaskProxy>> taskProxyProviderPtr;
+				ConcurrentQueue<HandlerWrapper>                        queue;
+				std::thread                                            thread;
+				std::mutex                                             lock;
+				bool                                                   finished;
+				unsigned long long                                     nextEpoch;
+				unsigned long long                                     currentEpoch;
 		};
 	}
 }

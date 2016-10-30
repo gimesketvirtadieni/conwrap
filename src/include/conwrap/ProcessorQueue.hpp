@@ -18,6 +18,7 @@
 #include <conwrap/ProcessorQueueImpl.hpp>
 #include <conwrap/ProcessorQueueProxy.hpp>
 #include <conwrap/Task.hpp>
+#include <conwrap/TaskProvider.hpp>
 #include <memory>
 
 
@@ -31,7 +32,7 @@ namespace conwrap
 	}
 
 	template <typename ResourceType>
-	class ProcessorQueue : public Processor<ResourceType, Task>
+	class ProcessorQueue : public Processor<ResourceType>
 	{
 		// friend declaration
 		template <typename> friend class internal::ProcessorAsioImpl;
@@ -47,7 +48,12 @@ namespace conwrap
 			{
 				// TODO: implemet compile-time reflection to make this invocation optional
 				processorImplPtr->getResource()->setProcessor(this);
-				processorImplPtr->setProcessorProxy(processorProxyPtr.get());
+
+				// creating task providers
+				processorImplPtr->setTaskProvider(TaskProvider<ResourceType, Task>(this, processorProxyPtr.get()));
+				processorImplPtr->setTaskProxyProvider(TaskProvider<ResourceType, TaskProxy>(this, processorProxyPtr.get()));
+
+				// starting processing
 				processorImplPtr->start();
 			}
 
@@ -66,20 +72,20 @@ namespace conwrap
 				processorImplPtr->flush();
 			}
 
+		protected:
+			virtual TaskProvider<ResourceType, Task>* getTaskProvider() override
+			{
+				return processorImplPtr->getTaskProvider();
+			}
+
 			virtual void post(HandlerWrapper handlerWrapper) override
 			{
 				processorImplPtr->post(handlerWrapper);
 			}
 
-			virtual HandlerWrapper wrapHandler(std::function<void()> handler)
+			virtual HandlerWrapper wrapHandler(std::function<void()> handler) override
 			{
 				return wrapHandler(handler, false);
-			}
-
-		protected:
-			virtual HandlerContext<ResourceType> createContext() override
-			{
-				return processorImplPtr->createContext();
 			}
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override

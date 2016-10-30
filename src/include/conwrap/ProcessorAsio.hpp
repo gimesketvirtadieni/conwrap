@@ -20,6 +20,7 @@
 #include <conwrap/ProcessorAsioProxy.hpp>
 #include <conwrap/ProcessorQueue.hpp>
 #include <conwrap/Task.hpp>
+#include <conwrap/TaskProvider.hpp>
 #include <functional>
 #include <memory>
 
@@ -27,7 +28,7 @@
 namespace conwrap
 {
 	template <typename ResourceType>
-	class ProcessorAsio : public Processor<ResourceType, Task>
+	class ProcessorAsio : public Processor<ResourceType>
 	{
 		public:
 			template <typename... Args>
@@ -40,7 +41,12 @@ namespace conwrap
 			{
 				// TODO: implemet compile-time reflection to make this invocation optional
 				processorImplPtr->getResource()->setProcessor(this);
-				processorImplPtr->setProcessorProxy(processorProxyPtr.get());
+
+				// creating task providers
+				processorImplPtr->setTaskProvider(TaskProvider<ResourceType, Task>(this, processorProxyPtr.get()));
+				processorImplPtr->setTaskProxyProvider(TaskProvider<ResourceType, TaskProxy>(this, processorProxyPtr.get()));
+
+				// starting processing
 				processorImplPtr->start();
 			}
 
@@ -75,9 +81,9 @@ namespace conwrap
 			}
 
 		protected:
-			virtual HandlerContext<ResourceType> createContext() override
+			virtual TaskProvider<ResourceType, Task>* getTaskProvider() override
 			{
-				return processorImplPtr->createContext();
+				return processorImplPtr->getTaskProvider();
 			}
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
@@ -89,5 +95,4 @@ namespace conwrap
 			std::shared_ptr<internal::ProcessorAsioImpl<ResourceType>> processorImplPtr;
 			std::unique_ptr<ProcessorAsioProxy<ResourceType>>          processorProxyPtr;
 	};
-
 }

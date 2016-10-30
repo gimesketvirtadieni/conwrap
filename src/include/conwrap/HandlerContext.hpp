@@ -12,40 +12,35 @@
 
 #pragma once
 
-#include <conwrap/TaskProxy.hpp>
 #include <functional>
 
 
 namespace conwrap
 {
 	// forward declaration
-	template <typename ResourceType, template<typename ResourceType, typename ResultType> class TaskType>
-	class Processor;
-	template <typename ResourceType, template<typename ResourceType, typename ResultType> class TaskType>
+	template <typename ResourceType>
 	class ProcessorProxy;
 
 	template <typename ResourceType>
 	class HandlerContext
 	{
 		public:
-			HandlerContext(ResourceType* r = nullptr, ProcessorProxy<ResourceType, TaskProxy>* p = nullptr)
-			: resourcePtr(r)
-			, processorProxyPtr(p) {}
+			HandlerContext(ProcessorProxy<ResourceType>* p = nullptr)
+			: processorProxyPtr(p) {}
 
 			virtual ~HandlerContext() {}
 
-			inline ProcessorProxy<ResourceType, TaskProxy>* getProcessorProxy()
+			inline ProcessorProxy<ResourceType>* getProcessorProxy()
 			{
 				return processorProxyPtr;
 			}
 
 			inline ResourceType* getResource()
 			{
-				return resourcePtr;
+				return processorProxyPtr->getResource();
 			}
 
 		private:
-			ResourceType*                            resourcePtr;
-			ProcessorProxy<ResourceType, TaskProxy>* processorProxyPtr;
+			ProcessorProxy<ResourceType>* processorProxyPtr;
 	};
 }

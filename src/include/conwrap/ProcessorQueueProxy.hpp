@@ -19,6 +19,7 @@
 #include <conwrap/ProcessorQueueImpl.hpp>
 #include <conwrap/ProcessorProxy.hpp>
 #include <conwrap/TaskProxy.hpp>
+#include <conwrap/TaskProvider.hpp>
 
 
 namespace conwrap
@@ -28,7 +29,7 @@ namespace conwrap
 	class ProcessorAsio;
 
 	template <typename ResourceType>
-	class ProcessorQueueProxy : public ProcessorProxy<ResourceType, TaskProxy>
+	class ProcessorQueueProxy : public ProcessorProxy<ResourceType>
 	{
 		// friend declaration
 		template <typename> friend class ProcessorAsio;
@@ -44,20 +45,20 @@ namespace conwrap
 				return processorImplPtr->getResource();
 			}
 
+		protected:
+			virtual TaskProvider<ResourceType, TaskProxy>* getTaskProvider() override
+			{
+				return processorImplPtr->getTaskProxyProvider();
+			}
+
 			virtual void post(HandlerWrapper handlerWrapper) override
 			{
 				processorImplPtr->post(handlerWrapper);
 			}
 
-			virtual HandlerWrapper wrapHandler(std::function<void()> handler)
+			virtual HandlerWrapper wrapHandler(std::function<void()> handler) override
 			{
 				return wrapHandler(handler, true);
-			}
-
-		protected:
-			virtual HandlerContext<ResourceType> createContext() override
-			{
-				return processorImplPtr->createContext();
 			}
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override

@@ -19,13 +19,14 @@
 #include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/ProcessorAsioImpl.hpp>
 #include <conwrap/ProcessorProxy.hpp>
+#include <conwrap/TaskProvider.hpp>
 #include <conwrap/TaskProxy.hpp>
 
 
 namespace conwrap
 {
 	template <typename ResourceType>
-	class ProcessorAsioProxy : public ProcessorProxy<ResourceType, TaskProxy>
+	class ProcessorAsioProxy : public ProcessorProxy<ResourceType>
 	{
 		public:
 			ProcessorAsioProxy(std::shared_ptr<internal::ProcessorAsioImpl<ResourceType>> p)
@@ -54,9 +55,9 @@ namespace conwrap
 			}
 
 		protected:
-			virtual HandlerContext<ResourceType> createContext() override
+			virtual TaskProvider<ResourceType, TaskProxy>* getTaskProvider() override
 			{
-				return processorImplPtr->createContext();
+				return processorImplPtr->getTaskProxyProvider();
 			}
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override

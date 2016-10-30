@@ -18,19 +18,30 @@
 namespace conwrap
 {
 	// forward declaration
-	template <typename ResourceType, template <typename ResourceType, typename ResultType> class TaskType>
+	template <typename ResourceType>
+	class Processor;
+	template <typename ResourceType>
 	class ProcessorProxy;
 
 	template <typename ResourceType, typename ResultType>
 	class TaskProxy
 	{
+		// this 'weird' struct is a workaround to get decltype work for protected method
+		private:
+			struct s
+			{
+				static ContinuationContext<ResourceType, ResultType> cc();
+			};
+
 		public:
-			TaskProxy(ProcessorProxy<ResourceType, TaskProxy>* p, std::shared_future<ResultType> f)
-			: processorProxyPtr(p)
-			, result(f) {}
+			TaskProxy(Processor<ResourceType>* p, ProcessorProxy<ResourceType>* pp, std::shared_future<ResultType> r)
+			: processorPtr(p)
+			, processorProxyPtr(pp)
+			, result(r) {}
 
 			TaskProxy(const TaskProxy& rhs)
 			{
+				processorPtr      = rhs.processorPtr;
 				processorProxyPtr = rhs.processorProxyPtr;
 				result            = rhs.result;
 			}
@@ -41,14 +52,49 @@ namespace conwrap
 			{
 				if (&rhs != this)
 				{
+					processorPtr      = rhs.processorPtr;
 					processorProxyPtr = rhs.processorProxyPtr;
 					result            = rhs.result;
 				}
 				return *this;
 			}
 
+			// TODO: this is a copy-paste from Task code, proper re-use should be implemented
+			inline ResultType getResult()
+			{
+				return result.get();
+			}
+
+			// TODO: this is a copy-paste from Task code, proper re-use should be implemented
+			template <typename F>
+			auto then(F fun) -> Task<ResourceType, decltype(fun())>
+			{
+				return processorPtr->process([=]() -> decltype(fun())
+				{
+					return fun();
+				});
+			}
+
+			// TODO: this is a copy-paste from Task code, proper re-use should be implemented
+			template <typename F>
+			auto then(F fun) -> Task<ResourceType, decltype(fun(s::cc()))>
+			{
+				return processorPtr->process([f = fun, c = createContext()]() -> decltype(fun(s::cc()))
+				{
+					return f(c);
+				});
+			}
+
+		protected:
+			// TODO: this is a copy-paste from Task code, proper re-use should be implemented
+			inline ContinuationContext<ResourceType, ResultType> createContext()
+			{
+				return ContinuationContext<ResourceType, ResultType>(processorProxyPtr, result);
+			}
+
 		private:
-			ProcessorProxy<ResourceType, TaskProxy>* processorProxyPtr;
-			std::shared_future<ResultType>           result;
+			Processor<ResourceType>*       processorPtr;
+			ProcessorProxy<ResourceType>*  processorProxyPtr;
+			std::shared_future<ResultType> result;
 	};
 }
