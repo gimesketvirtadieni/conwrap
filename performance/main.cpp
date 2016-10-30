@@ -21,12 +21,12 @@ struct Dummy {
 
 	virtual ~Dummy() {}
 
-	void setProcessor(conwrap::Processor<Dummy, conwrap::Task>* p)
+	void setProcessor(conwrap::Processor<Dummy>* p)
 	{
 		processorPtr = p;
 	}
 
-	conwrap::Processor<Dummy, conwrap::Task>* processorPtr;
+	conwrap::Processor<Dummy>* processorPtr;
 };
 
 
@@ -49,7 +49,7 @@ void generate_baseline(conwrap::ConcurrentQueue<conwrap::HandlerWrapper>* queueP
 }
 
 
-void generate(conwrap::Processor<Dummy, conwrap::Task>* processorPtr)
+void generate(conwrap::Processor<Dummy>* processorPtr)
 {
 	for (int i = 0; i < 1000000; i++)
 	{
@@ -62,10 +62,6 @@ int main(int argc, char** argv) {
 	auto queuePtr          = std::make_unique<conwrap::ConcurrentQueue<conwrap::HandlerWrapper>>();
 	auto processorQueuePtr = std::make_unique<conwrap::ProcessorQueue<Dummy>>();
 	auto processorAsioPtr  = std::make_unique<conwrap::ProcessorAsio<Dummy>>();
-
-	// TODO: this is work in progress
-	//auto task = processorQueuePtr->process([]() -> int { std::cout << "HELLO1\n\r"; return 123;});
-	//task.then([](int aaa) -> bool {std::cout << "HELLO2 " << aaa << "\n\r"; return true;});
 
 	std::thread thread([&]
 	{
