@@ -60,16 +60,10 @@ namespace conwrap
 			}
 
 			// TODO: this is a copy-paste from Task code, proper re-use should be implemented
-			inline ResultType getResult()
-			{
-				return result.get();
-			}
-
-			// TODO: this is a copy-paste from Task code, proper re-use should be implemented
 			template <typename F>
-			auto then(F fun) -> Task<ResourceType, decltype(fun())>
+			auto then(F fun) -> TaskProxy<ResourceType, decltype(fun())>
 			{
-				return processorPtr->process([=]() -> decltype(fun())
+				return processorProxyPtr->process([=]() -> decltype(fun())
 				{
 					return fun();
 				});
@@ -77,9 +71,9 @@ namespace conwrap
 
 			// TODO: this is a copy-paste from Task code, proper re-use should be implemented
 			template <typename F>
-			auto then(F fun) -> Task<ResourceType, decltype(fun(s::cc()))>
+			auto then(F fun) -> TaskProxy<ResourceType, decltype(fun(s::cc()))>
 			{
-				return processorPtr->process([f = fun, c = createContext()]() -> decltype(fun(s::cc()))
+				return processorProxyPtr->process([f = fun, c = createContext()]() -> decltype(fun(s::cc()))
 				{
 					return f(c);
 				});
