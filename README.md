@@ -32,7 +32,7 @@ std::future<Result> resultFuture = std::async(
 );
 ```
 
-However `std::async` is not a good fit for task-based processing. On the other hand Concurrent Wrapper provides functionality to invoke arbitrary code asynchronously in a task-based processing fashion:
+However `std::async` is not a good fit for task-based processing, because it spaws a new thread for every submitted task, which is not efficient for short-living tasks. On the other hand Concurrent Wrapper provides functionality to invoke arbitrary code asynchronously in a task-based processing fashion by using a single thread for processing all submitted tasks:
 ```c++
 // creating a concurrent wrapper object that contains an intance of Dummy
 conwrap::ProcessorQueue<Dummy> processor;
@@ -128,6 +128,31 @@ In a similar way, Concurrent Wrapper ensures there is no dangling pointers left 
 So far, only `conwrap::ProcessorQueue` was used to demonstrate Concurrent Wrapper's functionality. There is a similar class available called `conwrap::ProcessorAsio`. This class provides possibility to use [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) for processing arbitrary code asynchronously. This is very useful in case of asynchronous TCP/UDP server based on [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html). Basically this class provides possibility to combine [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) handlers with arbitrary code submitted for execution as an asynchronous task. Really cool thing about `conwrap::ProcessorAsio` is that it has the same semantic as `conwrap::ProcessorQueue` which means you can flush [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) handlers and delete processor object safely. Provided [examples](./examples/main.cpp) in the repository demonstrate this functionality along with possibility to combine [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) handlers with arbitrary tasks.
 
 Under the hood, `conwrap::ProcessorAsio` is implemented by using one more thread. In fact all `conwrap::ProcessorAsio` does is pushing tasks from its thread to `conwrap::ProcessorQueue`’s thread where they get processed. Required synchronisation is done by the library so from client perspective is looks like `conwrap::ProcessorAsio` and `conwrap::ProcessorQueue` provides the same semantic. Due to the fact that tasks are transferred via extra thread, there is a related performance penalty if `conwrap::ProcessorAsio` is used; so it should be used only if client needs to combine [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) native handlers with arbitrary asynchronous tasks.
+
+
+##Composing tasks by using `.then(...)`
+
+One more great feature of this library is that tasks are composable! In other words when an arbitrary code is submitted for processing, the library returns a Task object which can be used for submitting a new piece of code (continuation) for asynchronious processing:
+```c++
+{
+	// creating a concurrent processor
+	conwrap::ProcessorQueue<Dummy> processor;
+
+	processor.process([&]() -> int
+	{
+		return 1234;
+	}).then([&](auto context) -> bool
+	{
+		// context.getResult() provides result of the 'parent' task which is int{1234} 
+		auto result = context.getResult();
+		return true;
+	}).then([&](auto context)
+	{
+		// context.getResult() provides result of the 'parent' task which is bool{true} 
+		auto result = context.getResult();
+	});
+}
+```
 
 
 ##Usage
