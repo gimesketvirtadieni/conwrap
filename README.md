@@ -132,7 +132,7 @@ Under the hood, `conwrap::ProcessorAsio` is implemented by using one more thread
 
 ##Composing tasks by using `.then(...)`
 
-One more great feature of this library is that tasks are composable! In other words when an arbitrary code is submitted for processing, the library returns a Task object which can be used for submitting a new piece of code (continuation) for asynchronious processing:
+One more great feature of this library is that tasks are composable! In other words when an arbitrary code is submitted for processing, the library returns a `conwrap::Task` object which can be used for submitting a new piece of code (continuation) for asynchronious processing:
 ```c++
 {
 	// creating a concurrent processor
@@ -143,16 +143,40 @@ One more great feature of this library is that tasks are composable! In other wo
 		return 1234;
 	}).then([&](auto context) -> bool
 	{
-		// context.getResult() provides result of the 'parent' task which is int{1234} 
+		// context.getResult() provides result of the 'previous' task which is int{1234} 
 		auto result = context.getResult();
 		return true;
 	}).then([&](auto context)
 	{
-		// context.getResult() provides result of the 'parent' task which is bool{true} 
+		// context.getResult() provides result of the 'previous' task which is bool{true} 
 		auto result = context.getResult();
 	});
 }
 ```
+
+Moreover, a submitted task can obtain `conwrap::ProcessorProxy` from provided context and issue new 'child' tasks which are also composable!
+```c++
+{
+	// creating a concurrent processor
+	conwrap::ProcessorQueue<Dummy> processor;
+
+	processor.process([&]
+	{
+	}).then([&](auto context)
+	{
+		context.getProcessorProxy()->process([&]() -> int
+		{
+			return 1234;
+		}).then([&](auto context)
+		{
+			// context.getResult() provides result of the 'previous' task which is int{1234} 
+			auto result = context.getResult();
+		});
+	});
+}
+```
+
+Combining tasks and using ‘child’ tasks allow creating complex hierarchy of sequence tasks. As explained previously all of them will be executed in the right order on a single thread.
 
 
 ##Usage
