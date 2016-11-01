@@ -11,7 +11,7 @@
  */
 
 #include <chrono>
-#include <future>
+#include <thread>
 #include "Mocks.hpp"
 
 
@@ -32,6 +32,9 @@ TEST_P(ProcessorCommon, Flush1)
 
 	processorPtr->process([&](auto context)
 	{
+		// simulating some action
+		std::this_thread::sleep_for(std::chrono::milliseconds{10});
+
 		wasCalled         = true;
 		resourcePtr       = context.getResource();
 		processorProxyPtr = context.getProcessorProxy();
@@ -53,13 +56,19 @@ TEST_P(ProcessorCommon, Flush2)
 
 	processorPtr->process([&](auto context)
 	{
+		// simulating some action
+		std::this_thread::sleep_for(std::chrono::milliseconds{10});
+
 		context.getProcessorProxy()->process([&](auto context)
 		{
+			// simulating some action
+			std::this_thread::sleep_for(std::chrono::milliseconds{10});
+
 			wasCalled         = true;
 			resourcePtr       = context.getResource();
 			processorProxyPtr = context.getProcessorProxy();
 		});
-	}).wait();
+	});
 	processorPtr->flush();
 	EXPECT_TRUE(wasCalled == true);
 	EXPECT_EQ(processorPtr->getResource(), resourcePtr);
@@ -92,12 +101,11 @@ TEST_P(ProcessorCommon, Process1)
 	auto              processorPtr(GetParam());
 	std::atomic<bool> wasCalled(false);
 
-	auto asyncCall = processorPtr->process([&]
+	processorPtr->process([&]
 	{
 		wasCalled = true;
-	});
-	asyncCall.wait();
-	EXPECT_TRUE(wasCalled == true);
+	}).wait();
+	EXPECT_EQ(wasCalled, true);
 }
 
 
@@ -106,11 +114,11 @@ TEST_P(ProcessorCommon, Process2)
 	auto             processorPtr(GetParam());
 	std::atomic<int> val(123);
 
-	auto syncCall = processorPtr->process([&]() -> int
+	auto result = processorPtr->process([&]() -> int
 	{
 		return val;
-	});
-	EXPECT_EQ(val, syncCall.getResult());
+	}).getResult();
+	EXPECT_EQ(val, result);
 }
 
 
@@ -161,6 +169,94 @@ TEST_P(ProcessorCommon, Process5)
 		dummy.method2();
 	}).wait();
 }
+
+
+TEST_P(ProcessorCommon, Process6)
+{
+	auto  processorPtr(GetParam());
+	Dummy dummy;
+	{
+		testing::InSequence dummySequence;
+
+		EXPECT_CALL(dummy, method1())
+			.Times(1);
+		EXPECT_CALL(dummy, method2())
+			.Times(1);
+	}
+
+	processorPtr->process([&](auto context)
+	{
+		// simulating some action
+		std::this_thread::sleep_for(std::chrono::milliseconds{10});
+
+		context.getProcessorProxy()->process([&]
+		{
+			// simulating some action
+			std::this_thread::sleep_for(std::chrono::milliseconds{10});
+		});
+	}).then([&](auto context)
+	{
+		context.getProcessorProxy()->process([&]
+		{
+			// simulating some action
+			std::this_thread::sleep_for(std::chrono::milliseconds{10});
+
+			dummy.method1();
+		}).then([&]
+		{
+			// simulating some action
+			std::this_thread::sleep_for(std::chrono::milliseconds{10});
+
+			dummy.method2();
+		});
+	});
+	processorPtr->flush();
+}
+
+
+TEST_P(ProcessorCommon, Process7)
+{
+	auto             processorPtr(GetParam());
+	std::atomic<int> result(0);
+
+	processorPtr->process([&]() -> int
+	{
+		return 1234;
+	}).then([&](auto context)
+	{
+		result = context.getResult();
+	}).wait();
+	EXPECT_EQ(result, 1234);
+}
+
+
+TEST_P(ProcessorCommon, Process8)
+{
+	auto             processorPtr(GetParam());
+	std::atomic<int> result(0);
+
+	processorPtr->process([&]
+	{
+		// simulating some action
+		std::this_thread::sleep_for(std::chrono::milliseconds{10});
+	}).then([&](auto context)
+	{
+		// simulating some action
+		std::this_thread::sleep_for(std::chrono::milliseconds{10});
+
+		context.getProcessorProxy()->process([&]() -> int
+		{
+			result = 1234;
+			return 1234;
+		}).then([&](auto context)
+		{
+			result = context.getResult();
+		});
+	});
+	processorPtr->flush();
+	EXPECT_EQ(result, 1234);
+}
+
 
 INSTANTIATE_TEST_CASE_P(ProcessorInstantiation, ProcessorCommon, ::testing::Values(
 	std::make_shared<conwrap::ProcessorMock>(),

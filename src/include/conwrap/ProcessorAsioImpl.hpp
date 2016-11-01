@@ -52,10 +52,29 @@ namespace conwrap
 				virtual void flush() override
 				{
 					// restarting dispatcher which will make sure all handlers are processed
-					restartDispatcher();
+					{
+						std::lock_guard<std::mutex> guard(threadLock);
 
-					// making sure the main loop started after the restart
-					this->process([] {}).wait();
+						if (thread.joinable())
+						{
+							// reseting work object will make dispatcher exit as soon as there is no handler to process
+							this->process([&]
+							{
+								workPtr.reset();
+							}).wait();
+
+							// waiting for the main loop to restart
+							{
+								std::unique_lock<std::mutex> lock(workLock);
+								conditionVariable.wait(lock, [&]
+								{
+									return (workPtr != nullptr);
+								});
+							}
+
+
+						}
+					}
 				}
 
 				inline asio::io_service* getDispatcher()
@@ -108,7 +127,7 @@ namespace conwrap
 				void start()
 				{
 					{
-						std::lock_guard<std::mutex> guard(lock);
+						std::lock_guard<std::mutex> guard(threadLock);
 
 						if (!thread.joinable())
 						{
@@ -118,7 +137,11 @@ namespace conwrap
 								for (finished = false; !finished;)
 								{
 									// creating work object to make sure dispatcher performs until work object is deleted
-									workPtr = std::make_unique<asio::io_service::work>(dispatcher);
+									{
+										std::lock_guard<std::mutex> lock(workLock);
+										workPtr = std::make_unique<asio::io_service::work>(dispatcher);
+									}
+									conditionVariable.notify_all();
 
 									// the main processing loop
 									while (processPending() > 0)
@@ -135,36 +158,19 @@ namespace conwrap
 				void stop()
 				{
 					{
-						std::lock_guard<std::mutex> guard(lock);
+						std::lock_guard<std::mutex> guard(threadLock);
 
 						if (thread.joinable())
 						{
 							// deleting work object and setting finsihed flag
-							post(wrapHandler([&]
+							this->process([&]
 							{
-								workPtr.reset();
 								finished = true;
-							}));
+								workPtr.reset();
+							});
 
 							// waiting for the thread to finish
 							thread.join();
-						}
-					}
-				}
-
-				void restartDispatcher()
-				{
-					{
-						std::lock_guard<std::mutex> guard(lock);
-
-						if (thread.joinable())
-						{
-							// reseting work object will make dispatcher exit as soon as there is no handler to process
-							post(this->wrapHandler([&]
-							{
-								workPtr.reset();
-							}));
-
 						}
 					}
 				}
@@ -184,10 +190,12 @@ namespace conwrap
 				std::unique_ptr<TaskProvider<ResourceType, Task>>      taskProviderPtr;
 				std::unique_ptr<TaskProvider<ResourceType, TaskProxy>> taskProxyProviderPtr;
 				ProcessorQueue<ResourceType>                           processorQueue;
-				std::unique_ptr<asio::io_service::work>                workPtr;
 				asio::io_service                                       dispatcher;
+				std::unique_ptr<asio::io_service::work>                workPtr;
+				std::mutex                                             workLock;
+				std::condition_variable                                conditionVariable;
 				std::thread                                            thread;
-				std::mutex                                             lock;
+				std::mutex                                             threadLock;
 				bool                                                   finished;
 		};
 	}

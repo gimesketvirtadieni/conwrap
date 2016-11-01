@@ -122,11 +122,9 @@ namespace conwrap
 
 						if (!thread.joinable())
 						{
-							// it is safe to set finished flag on consumer's thread because worker's thread is not created and start method is protected by a lock
-							finished = false;
-							thread   = std::thread([&]
+							thread = std::thread([&]
 							{
-								for(; !(queue.empty() && finished);)
+								for(finished = false; !(queue.empty() && finished);)
 								{
 									// waiting for a handler
 									if (auto handlerPtr = queue.get())
@@ -153,11 +151,10 @@ namespace conwrap
 
 						if (thread.joinable())
 						{
-							post(wrapHandler([&]
+							this->process([&]
 							{
-								// no need to protect with a lock because this assigment will be done on worker's thread
 								finished = true;
-							}));
+							});
 
 							// waiting until consumer finsihes all pending handlers
 							thread.join();
