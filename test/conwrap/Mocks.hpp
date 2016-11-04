@@ -110,7 +110,7 @@ namespace conwrap
 
 				virtual conwrap::HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
 				{
-					return conwrap::HandlerWrapper(handler, proxy);
+					return conwrap::HandlerWrapper(handler, proxy, 0);
 				}
 
 			private:
@@ -149,7 +149,7 @@ namespace conwrap
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
 			{
-				return HandlerWrapper(handler, proxy);
+				return HandlerWrapper(handler, proxy, 0);
 			}
 
 		private:
@@ -196,7 +196,7 @@ namespace conwrap
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
 			{
-				return HandlerWrapper(handler, proxy);
+				return HandlerWrapper(handler, proxy, 0);
 			}
 
 		private:

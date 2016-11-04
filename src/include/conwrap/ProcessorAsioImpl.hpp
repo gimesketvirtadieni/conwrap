@@ -182,7 +182,7 @@ namespace conwrap
 						{
 							handler();
 						}, proxy));
-					}, proxy);
+					}, proxy, 0);
 				}
 
 			private:

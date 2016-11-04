@@ -20,7 +20,7 @@ namespace conwrap
 	class HandlerWrapper
 	{
 		public:
-			HandlerWrapper(std::function<void()> h, bool p, unsigned long long e = 0)
+			HandlerWrapper(std::function<void()> h, bool p, unsigned long long e)
 			: handler(h)
 			, proxy(p)
 			, epoch(e) {}

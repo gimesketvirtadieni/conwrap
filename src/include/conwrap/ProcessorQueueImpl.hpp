@@ -48,7 +48,7 @@ namespace conwrap
 
 				virtual void flush() override
 				{
-					// figuring out current epoch
+					// figuring out next epoch value
 					auto currentEpoch = this->process([&]() -> auto
 					{
 						return getNextEpoch();
