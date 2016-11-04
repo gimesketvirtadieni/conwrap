@@ -126,17 +126,16 @@ namespace conwrap
 								for(finished = false; !(queue.empty() && finished);)
 								{
 									// waiting for a handler
-									if (auto handlerPtr = queue.get())
-									{
-										// setting current epoch to be used for submitted tasks via processor proxy
-										currentEpoch = handlerPtr->getEpoch();
+									auto handler = queue.front();
 
-										// executing handler
-										(*handlerPtr)();
+									// setting current epoch to be used for submitted tasks via processor proxy
+									currentEpoch = handler.getEpoch();
 
-										// removing executed item
-										queue.remove();
-									}
+									// executing handler
+									handler();
+
+									// removing executed item
+									queue.pop();
 								}
 							});
 						}

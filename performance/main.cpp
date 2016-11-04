@@ -41,7 +41,7 @@ void generate_baseline(conwrap::ConcurrentQueue<conwrap::HandlerWrapper>* queueP
 		{
 			fun();
 			promisePtr->set_value();
-		}, false));
+		}, false, 0));
 
 		// even though this shared future is not used, it is left here keep logic alike to processor
 		std::shared_future<void>(promisePtr->get_future());
@@ -68,11 +68,9 @@ int main(int argc, char** argv) {
 		// executing handlers
 		for (int i = 0; i < 1000000; i++)
 		{
-			if (auto handlerPtr = queuePtr->get())
-			{
-				(*handlerPtr)();
-				queuePtr->remove();
-			}
+			auto handler = queuePtr->front();
+			handler();
+			queuePtr->pop();
 		}
 	});
 	auto start_time = std::chrono::high_resolution_clock::now();

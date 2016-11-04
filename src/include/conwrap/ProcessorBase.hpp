@@ -66,13 +66,13 @@ namespace conwrap
 		protected:
 			virtual Provider<ResourceType, TaskType>* getProvider() = 0;
 
+			virtual void post(HandlerWrapper) = 0;
+
 			template <typename Fut, typename Fun>
 			void setPromiseValue(std::promise<Fut>& p, Fun& f)
 			{
 				p.set_value(f());
 			}
-
-			virtual void post(HandlerWrapper) = 0;
 
 			template <typename Fun>
 			void setPromiseValue(std::promise<void>& p, Fun& f)

@@ -19,7 +19,6 @@
 
 namespace conwrap
 {
-
 	template<typename ResourceType1, typename Container1 = std::deque<ResourceType1>>
 	class ConcurrentQueue
 	{
@@ -47,7 +46,7 @@ namespace conwrap
 
 			bool empty() const
 			{
-				std::lock_guard<std::mutex> lock(queueMutex);
+				std::lock_guard<std::mutex> lock(queueLock);
 				return queue.empty();
 			}
 
@@ -61,63 +60,42 @@ namespace conwrap
 				return queue.c.end();
 			}
 
-			auto get()
+			auto front()
 			{
-				ResourceType1* resultPtr = nullptr;
+				// making sure queue is not empty
+				std::unique_lock<std::mutex> lock(queueLock);
+				conditionVariable.wait(lock, [&]
 				{
-					std::unique_lock<std::mutex> lock(queueMutex);
-					conditionVariable.wait(lock, [&]
-					{
-						return !queue.empty();
-					});
+					return !queue.empty();
+				});
 
-					// now queue is not empty
-					resultPtr = &queue.front();
-				}
-				return resultPtr;
+				return queue.front();
 			}
 
-			void flush()
+			void pop()
 			{
+				// making sure queue is not empty
+				std::unique_lock<std::mutex> lock(queueLock);
+				conditionVariable.wait(lock, [&]
 				{
-					std::unique_lock<std::mutex> lock(queueMutex);
-					conditionVariable.wait(lock, [&]
-					{
-						return queue.empty();
-					});
-				}
+					return !queue.empty();
+				});
+
+				queue.pop();
 			}
 
 			void push(ResourceType1 item)
 			{
 				{
-					std::lock_guard<std::mutex> lock(queueMutex);
+					std::lock_guard<std::mutex> lock(queueLock);
 					queue.push(std::move(item));
 				}
 				conditionVariable.notify_all();
 			}
 
-			bool remove() {
-				auto removed = false;
-				{
-					std::lock_guard<std::mutex> lock(queueMutex);
-					if (!queue.empty()) {
-
-						// remove the first item in the queue
-						queue.pop();
-						removed = true;
-					}
-				}
-				if (removed)
-				{
-					conditionVariable.notify_all();
-				}
-				return removed;
-			}
-
 			unsigned size() const
 			{
-				std::lock_guard<std::mutex> lock(queueMutex);
+				std::lock_guard<std::mutex> lock(queueLock);
 				return queue.size();
 			}
 
@@ -131,7 +109,7 @@ namespace conwrap
 
 		private:
 			IterableQueue<ResourceType1, Container1> queue;
-			mutable std::mutex                       queueMutex;
+			mutable std::mutex                       queueLock;
 			std::condition_variable                  conditionVariable;
 	};
 }
