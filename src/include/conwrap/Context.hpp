@@ -22,13 +22,13 @@ namespace conwrap
 	class ProcessorProxy;
 
 	template <typename ResourceType>
-	class HandlerContext
+	class Context
 	{
 		public:
-			HandlerContext(ProcessorProxy<ResourceType>* p = nullptr)
+			Context(ProcessorProxy<ResourceType>* p = nullptr)
 			: processorProxyPtr(p) {}
 
-			virtual ~HandlerContext() {}
+			virtual ~Context() {}
 
 			inline ProcessorProxy<ResourceType>* getProcessorProxy()
 			{

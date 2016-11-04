@@ -14,7 +14,7 @@
 
 #include <future>
 #include <functional>
-#include <conwrap/HandlerContext.hpp>
+#include <conwrap/Context.hpp>
 #include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/Provider.hpp>
 #include <conwrap/Task.hpp>
@@ -29,7 +29,7 @@ namespace conwrap
 		private:
 			struct s
 			{
-				static HandlerContext<ResourceType> createContext();
+				static Context<ResourceType> createContext();
 			};
 
 		public:

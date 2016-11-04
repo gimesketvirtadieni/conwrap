@@ -13,7 +13,6 @@
 #pragma once
 
 #include <conwrap/ConcurrentQueue.hpp>
-#include <conwrap/HandlerContext.hpp>
 #include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/Processor.hpp>
 #include <conwrap/Provider.hpp>

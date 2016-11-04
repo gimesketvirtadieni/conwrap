@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include <conwrap/HandlerContext.hpp>
+#include <conwrap/Context.hpp>
 #include <future>
 
 
@@ -34,9 +34,9 @@ namespace conwrap
 
 			virtual ~Provider() {}
 
-			inline HandlerContext<ResourceType> createContext()
+			inline Context<ResourceType> createContext()
 			{
-				return HandlerContext<ResourceType>(getProcessorProxy());
+				return Context<ResourceType>(getProcessorProxy());
 			}
 
 			template <typename ResultType>

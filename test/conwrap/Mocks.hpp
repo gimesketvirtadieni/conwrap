@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include <conwrap/HandlerContext.hpp>
+#include <conwrap/Context.hpp>
 #include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/Processor.hpp>
 #include <conwrap/ProcessorProxy.hpp>

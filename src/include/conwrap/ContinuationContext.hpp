@@ -13,17 +13,17 @@
 #pragma once
 
 #include <future>
-#include <conwrap/HandlerContext.hpp>
+#include <conwrap/Context.hpp>
 
 
 namespace conwrap
 {
 	template <typename ResourceType, typename ResultType>
-	class ContinuationContext : public HandlerContext<ResourceType>
+	class ContinuationContext : public Context<ResourceType>
 	{
 		public:
 			ContinuationContext(ProcessorProxy<ResourceType>* p, std::shared_future<ResultType> r)
-			: HandlerContext<ResourceType>(p)
+			: Context<ResourceType>(p)
 			, result(r) {}
 
 			virtual ResultType getResult()

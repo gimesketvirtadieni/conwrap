@@ -14,7 +14,6 @@
 
 #include <functional>
 #include <memory>
-#include <conwrap/HandlerContext.hpp>
 #include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/ProcessorQueueImpl.hpp>
 #include <conwrap/ProcessorProxy.hpp>

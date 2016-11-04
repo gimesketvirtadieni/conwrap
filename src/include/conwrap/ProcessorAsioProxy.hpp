@@ -15,7 +15,6 @@
 #include <asio.hpp>
 #include <functional>
 #include <memory>
-#include <conwrap/HandlerContext.hpp>
 #include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/ProcessorAsioImpl.hpp>
 #include <conwrap/ProcessorProxy.hpp>
