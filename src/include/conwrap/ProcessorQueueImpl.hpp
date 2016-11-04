@@ -117,7 +117,7 @@ namespace conwrap
 				void start()
 				{
 					{
-						std::lock_guard<std::mutex> guard(lock);
+						std::lock_guard<std::mutex> guard(threadLock);
 
 						if (!thread.joinable())
 						{
@@ -145,7 +145,7 @@ namespace conwrap
 				void stop()
 				{
 					{
-						std::lock_guard<std::mutex> guard(lock);
+						std::lock_guard<std::mutex> guard(threadLock);
 
 						if (thread.joinable())
 						{
@@ -177,7 +177,7 @@ namespace conwrap
 				std::unique_ptr<Provider<ResourceType, TaskProxy>> providerProxyPtr;
 				ConcurrentQueue<HandlerWrapper>                    queue;
 				std::thread                                        thread;
-				std::mutex                                         lock;
+				std::mutex                                         threadLock;
 				bool                                               finished;
 				unsigned long long                                 nextEpoch;
 				unsigned long long                                 currentEpoch;
