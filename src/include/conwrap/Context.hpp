@@ -25,7 +25,7 @@ namespace conwrap
 	class Context
 	{
 		public:
-			Context(ProcessorProxy<ResourceType>* p = nullptr)
+			Context(ProcessorProxy<ResourceType>* p)
 			: processorProxyPtr(p) {}
 
 			virtual ~Context() {}

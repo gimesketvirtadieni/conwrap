@@ -26,6 +26,8 @@ namespace conwrap
 			: Context<ResourceType>(p)
 			, result(r) {}
 
+			virtual ~ContinuationContext() {}
+
 			virtual ResultType getResult()
 			{
 				return result.get();
