@@ -25,14 +25,14 @@ namespace conwrap
 	class ProcessorProxy;
 
 	template <typename ResourceType, template<typename ResourceType, typename ResultType> class TaskType>
-	class TaskProvider
+	class Provider
 	{
 		public:
-			TaskProvider(Processor<ResourceType>* p, ProcessorProxy<ResourceType>* pp)
+			Provider(Processor<ResourceType>* p, ProcessorProxy<ResourceType>* pp)
 			: processorPtr(p)
 			, processorProxyPtr(pp) {}
 
-			virtual ~TaskProvider() {}
+			virtual ~Provider() {}
 
 			inline HandlerContext<ResourceType> createContext()
 			{

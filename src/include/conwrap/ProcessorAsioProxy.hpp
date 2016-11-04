@@ -19,7 +19,7 @@
 #include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/ProcessorAsioImpl.hpp>
 #include <conwrap/ProcessorProxy.hpp>
-#include <conwrap/TaskProvider.hpp>
+#include <conwrap/Provider.hpp>
 #include <conwrap/TaskProxy.hpp>
 
 
@@ -55,9 +55,9 @@ namespace conwrap
 			}
 
 		protected:
-			virtual TaskProvider<ResourceType, TaskProxy>* getTaskProvider() override
+			virtual Provider<ResourceType, TaskProxy>* getProvider() override
 			{
-				return processorImplPtr->getTaskProxyProvider();
+				return processorImplPtr->getProviderProxy();
 			}
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override

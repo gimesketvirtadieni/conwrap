@@ -19,8 +19,8 @@
 #include <conwrap/ProcessorAsioImpl.hpp>
 #include <conwrap/ProcessorAsioProxy.hpp>
 #include <conwrap/ProcessorQueue.hpp>
+#include <conwrap/Provider.hpp>
 #include <conwrap/Task.hpp>
-#include <conwrap/TaskProvider.hpp>
 #include <functional>
 #include <memory>
 
@@ -43,8 +43,8 @@ namespace conwrap
 				processorImplPtr->getResource()->setProcessor(this);
 
 				// creating task providers
-				processorImplPtr->setTaskProvider(TaskProvider<ResourceType, Task>(this, processorProxyPtr.get()));
-				processorImplPtr->setTaskProxyProvider(TaskProvider<ResourceType, TaskProxy>(this, processorProxyPtr.get()));
+				processorImplPtr->setProvider(Provider<ResourceType, Task>(this, processorProxyPtr.get()));
+				processorImplPtr->setProviderProxy(Provider<ResourceType, TaskProxy>(this, processorProxyPtr.get()));
 
 				// starting processing
 				processorImplPtr->start();
@@ -81,9 +81,9 @@ namespace conwrap
 			}
 
 		protected:
-			virtual TaskProvider<ResourceType, Task>* getTaskProvider() override
+			virtual Provider<ResourceType, Task>* getProvider() override
 			{
-				return processorImplPtr->getTaskProvider();
+				return processorImplPtr->getProvider();
 			}
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override

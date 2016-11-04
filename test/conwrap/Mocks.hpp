@@ -18,8 +18,8 @@
 #include <conwrap/ProcessorProxy.hpp>
 #include <conwrap/ProcessorQueue.hpp>
 #include <conwrap/ProcessorAsio.hpp>
+#include <conwrap/Provider.hpp>
 #include <conwrap/Task.hpp>
-#include <conwrap/TaskProvider.hpp>
 #include <conwrap/TaskProxy.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -78,14 +78,14 @@ namespace conwrap
 				}
 
 			protected:
-				virtual TaskProvider<Dummy, Task>* getTaskProvider() override
+				virtual Provider<Dummy, Task>* getProvider() override
 				{
-					return taskProviderPtr.get();
+					return providerPtr.get();
 				}
 
-				inline TaskProvider<Dummy, TaskProxy>* getTaskProxyProvider()
+				inline Provider<Dummy, TaskProxy>* getProviderProxy()
 				{
-					return taskProxyProviderPtr.get();
+					return providerProxyPtr.get();
 				}
 
 				virtual void post(HandlerWrapper handlerWrapper) override
@@ -93,14 +93,14 @@ namespace conwrap
 					handlerWrapper();
 				}
 
-				inline void setTaskProvider(TaskProvider<Dummy, Task> t)
+				inline void setProvider(Provider<Dummy, Task> t)
 				{
-					taskProviderPtr = std::make_unique<TaskProvider<Dummy, Task>>(t);
+					providerPtr = std::make_unique<Provider<Dummy, Task>>(t);
 				}
 
-				inline void setTaskProxyProvider(TaskProvider<Dummy, TaskProxy> t)
+				inline void setProviderProxy(Provider<Dummy, TaskProxy> t)
 				{
-					taskProxyProviderPtr = std::make_unique<TaskProvider<Dummy, TaskProxy>>(t);
+					providerProxyPtr = std::make_unique<Provider<Dummy, TaskProxy>>(t);
 				}
 
 				virtual conwrap::HandlerWrapper wrapHandler(std::function<void()> handler) override
@@ -114,9 +114,9 @@ namespace conwrap
 				}
 
 			private:
-				std::unique_ptr<Dummy>                          resourcePtr;
-				std::unique_ptr<TaskProvider<Dummy, Task>>      taskProviderPtr;
-				std::unique_ptr<TaskProvider<Dummy, TaskProxy>> taskProxyProviderPtr;
+				std::unique_ptr<Dummy>                      resourcePtr;
+				std::unique_ptr<Provider<Dummy, Task>>      providerPtr;
+				std::unique_ptr<Provider<Dummy, TaskProxy>> providerProxyPtr;
 		};
 	}
 
@@ -142,9 +142,9 @@ namespace conwrap
 			}
 
 		protected:
-			virtual TaskProvider<Dummy, TaskProxy>* getTaskProvider() override
+			virtual Provider<Dummy, TaskProxy>* getProvider() override
 			{
-				return processorImplPtr->getTaskProxyProvider();
+				return processorImplPtr->getProviderProxy();
 			}
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
@@ -167,8 +167,8 @@ namespace conwrap
 			, processorProxyPtr(std::unique_ptr<ProcessorMockProxy>(new ProcessorMockProxy(processorImplPtr)))
 			{
 				processorImplPtr->getResource()->setProcessor(this);
-				processorImplPtr->setTaskProvider(TaskProvider<Dummy, Task>(this, processorProxyPtr.get()));
-				processorImplPtr->setTaskProxyProvider(TaskProvider<Dummy, TaskProxy>(this, processorProxyPtr.get()));
+				processorImplPtr->setProvider(Provider<Dummy, Task>(this, processorProxyPtr.get()));
+				processorImplPtr->setProviderProxy(Provider<Dummy, TaskProxy>(this, processorProxyPtr.get()));
 			}
 
 			virtual Dummy* getResource() override
@@ -189,9 +189,9 @@ namespace conwrap
 			}
 
 		protected:
-			virtual TaskProvider<Dummy, Task>* getTaskProvider() override
+			virtual Provider<Dummy, Task>* getProvider() override
 			{
-				return processorImplPtr->getTaskProvider();
+				return processorImplPtr->getProvider();
 			}
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override

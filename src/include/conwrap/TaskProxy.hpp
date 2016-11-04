@@ -13,6 +13,7 @@
 #pragma once
 
 #include <future>
+#include <conwrap/TaskBase.hpp>
 
 
 namespace conwrap
@@ -24,71 +25,12 @@ namespace conwrap
 	class ProcessorProxy;
 
 	template <typename ResourceType, typename ResultType>
-	class TaskProxy
+	class TaskProxy : public TaskBase<ResourceType, ResultType, TaskProxy>
 	{
-		// this 'weird' struct is a workaround to get decltype work for protected method
-		private:
-			struct s
-			{
-				static ContinuationContext<ResourceType, ResultType> cc();
-			};
-
 		public:
 			TaskProxy(Processor<ResourceType>* p, ProcessorProxy<ResourceType>* pp, std::shared_future<ResultType> r)
-			: processorPtr(p)
-			, processorProxyPtr(pp)
-			, result(r) {}
-
-			TaskProxy(const TaskProxy& rhs)
-			{
-				processorPtr      = rhs.processorPtr;
-				processorProxyPtr = rhs.processorProxyPtr;
-				result            = rhs.result;
-			}
+			: TaskBase<ResourceType, ResultType, TaskProxy>(pp, pp, r) {}
 
 			virtual ~TaskProxy() {}
-
-			TaskProxy& operator= (const TaskProxy& rhs)
-			{
-				if (&rhs != this)
-				{
-					processorPtr      = rhs.processorPtr;
-					processorProxyPtr = rhs.processorProxyPtr;
-					result            = rhs.result;
-				}
-				return *this;
-			}
-
-			// TODO: this is a copy-paste from Task code, proper re-use should be implemented
-			template <typename F>
-			auto then(F fun) -> TaskProxy<ResourceType, decltype(fun())>
-			{
-				return processorProxyPtr->process([=]() -> decltype(fun())
-				{
-					return fun();
-				});
-			}
-
-			// TODO: this is a copy-paste from Task code, proper re-use should be implemented
-			template <typename F>
-			auto then(F fun) -> TaskProxy<ResourceType, decltype(fun(s::cc()))>
-			{
-				return processorProxyPtr->process([f = fun, c = createContext()]() -> decltype(fun(s::cc()))
-				{
-					return f(c);
-				});
-			}
-
-		protected:
-			// TODO: this is a copy-paste from Task code, proper re-use should be implemented
-			inline ContinuationContext<ResourceType, ResultType> createContext()
-			{
-				return ContinuationContext<ResourceType, ResultType>(processorProxyPtr, result);
-			}
-
-		private:
-			Processor<ResourceType>*       processorPtr;
-			ProcessorProxy<ResourceType>*  processorProxyPtr;
-			std::shared_future<ResultType> result;
 	};
 }

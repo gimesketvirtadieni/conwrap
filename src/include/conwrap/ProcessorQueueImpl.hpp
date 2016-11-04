@@ -16,8 +16,8 @@
 #include <conwrap/HandlerContext.hpp>
 #include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/Processor.hpp>
+#include <conwrap/Provider.hpp>
 #include <conwrap/Task.hpp>
-#include <conwrap/TaskProvider.hpp>
 #include <conwrap/TaskProxy.hpp>
 #include <memory>
 #include <thread>
@@ -90,14 +90,14 @@ namespace conwrap
 					return nextEpoch;
 				}
 
-				virtual TaskProvider<ResourceType, Task>* getTaskProvider() override
+				virtual Provider<ResourceType, Task>* getProvider() override
 				{
-					return taskProviderPtr.get();
+					return providerPtr.get();
 				}
 
-				inline TaskProvider<ResourceType, TaskProxy>* getTaskProxyProvider()
+				inline Provider<ResourceType, TaskProxy>* getProviderProxy()
 				{
-					return taskProxyProviderPtr.get();
+					return providerProxyPtr.get();
 				}
 
 				virtual void post(HandlerWrapper handlerWrapper) override
@@ -105,14 +105,14 @@ namespace conwrap
 					queue.push(handlerWrapper);
 				}
 
-				inline void setTaskProvider(TaskProvider<ResourceType, Task> t)
+				inline void setProvider(Provider<ResourceType, Task> t)
 				{
-					taskProviderPtr = std::make_unique<TaskProvider<ResourceType, Task>>(t);
+					providerPtr = std::make_unique<Provider<ResourceType, Task>>(t);
 				}
 
-				inline void setTaskProxyProvider(TaskProvider<ResourceType, TaskProxy> t)
+				inline void setProviderProxy(Provider<ResourceType, TaskProxy> t)
 				{
-					taskProxyProviderPtr = std::make_unique<TaskProvider<ResourceType, TaskProxy>>(t);
+					providerProxyPtr = std::make_unique<Provider<ResourceType, TaskProxy>>(t);
 				}
 
 				void start()
@@ -174,15 +174,15 @@ namespace conwrap
 				}
 
 			private:
-				std::unique_ptr<ResourceType>                          resourcePtr;
-				std::unique_ptr<TaskProvider<ResourceType, Task>>      taskProviderPtr;
-				std::unique_ptr<TaskProvider<ResourceType, TaskProxy>> taskProxyProviderPtr;
-				ConcurrentQueue<HandlerWrapper>                        queue;
-				std::thread                                            thread;
-				std::mutex                                             lock;
-				bool                                                   finished;
-				unsigned long long                                     nextEpoch;
-				unsigned long long                                     currentEpoch;
+				std::unique_ptr<ResourceType>                      resourcePtr;
+				std::unique_ptr<Provider<ResourceType, Task>>      providerPtr;
+				std::unique_ptr<Provider<ResourceType, TaskProxy>> providerProxyPtr;
+				ConcurrentQueue<HandlerWrapper>                    queue;
+				std::thread                                        thread;
+				std::mutex                                         lock;
+				bool                                               finished;
+				unsigned long long                                 nextEpoch;
+				unsigned long long                                 currentEpoch;
 		};
 	}
 }

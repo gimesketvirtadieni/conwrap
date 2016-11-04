@@ -140,6 +140,7 @@ int main(int argc, char *argv[])
 	}
 	std::cout << "Back to main\n\r";
 
+	// example demonstrating that Asio handlers are flushable now
 	{
 		conwrap::ProcessorAsio<Dummy> processorAsio;
 
@@ -185,7 +186,7 @@ int main(int argc, char *argv[])
 		std::cout << "Back to main\n\r";
 	}
 
-	// example demonstrating combining task processing with Asio server
+	// example demonstrating combining conwrap task with asio handlers
 	{
 		conwrap::ProcessorAsio<Server> processorAsio(1234);
 		std::cout << "Echo server is listening on 1234 port (press ^C to terminate)\n\r";
@@ -223,7 +224,7 @@ int main(int argc, char *argv[])
 			std::cout << "All tasks were flushed\n\r";
 		}
 
-		// without this close processor's destructor would wait forever for async receive handler
+		// without close invocation, processor's destructor would wait forever for any handlers
 		// sync socket operations are thread safe since asio 1.4.0 so posting to asio thread is optional
 		processorAsio.getDispatcher()->post([&]
 		{

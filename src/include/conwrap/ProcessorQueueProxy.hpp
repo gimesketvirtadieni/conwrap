@@ -18,8 +18,8 @@
 #include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/ProcessorQueueImpl.hpp>
 #include <conwrap/ProcessorProxy.hpp>
+#include <conwrap/Provider.hpp>
 #include <conwrap/TaskProxy.hpp>
-#include <conwrap/TaskProvider.hpp>
 
 
 namespace conwrap
@@ -46,9 +46,9 @@ namespace conwrap
 			}
 
 		protected:
-			virtual TaskProvider<ResourceType, TaskProxy>* getTaskProvider() override
+			virtual Provider<ResourceType, TaskProxy>* getProvider() override
 			{
-				return processorImplPtr->getTaskProxyProvider();
+				return processorImplPtr->getProviderProxy();
 			}
 
 			virtual void post(HandlerWrapper handlerWrapper) override

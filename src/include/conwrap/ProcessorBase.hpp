@@ -16,8 +16,8 @@
 #include <functional>
 #include <conwrap/HandlerContext.hpp>
 #include <conwrap/HandlerWrapper.hpp>
+#include <conwrap/Provider.hpp>
 #include <conwrap/Task.hpp>
-#include <conwrap/TaskProvider.hpp>
 
 
 namespace conwrap
@@ -46,7 +46,7 @@ namespace conwrap
 					setPromiseValue(*promisePtr, fun);
 				}));
 
-				return getTaskProvider()->createTask(std::shared_future<decltype(fun())>(promisePtr->get_future()));
+				return getProvider()->createTask(std::shared_future<decltype(fun())>(promisePtr->get_future()));
 			}
 
 			template <typename F>
@@ -60,11 +60,11 @@ namespace conwrap
 					setPromiseValueWithContext(*promisePtr, fun);
 				}));
 
-				return getTaskProvider()->createTask(std::shared_future<decltype(fun(s::createContext()))>(promisePtr->get_future()));
+				return getProvider()->createTask(std::shared_future<decltype(fun(s::createContext()))>(promisePtr->get_future()));
 			}
 
 		protected:
-			virtual TaskProvider<ResourceType, TaskType>* getTaskProvider() = 0;
+			virtual Provider<ResourceType, TaskType>* getProvider() = 0;
 
 			template <typename Fut, typename Fun>
 			void setPromiseValue(std::promise<Fut>& p, Fun& f)
@@ -84,13 +84,13 @@ namespace conwrap
 			template <typename Fut, typename Fun>
 			void setPromiseValueWithContext(std::promise<Fut>& p, Fun& f)
 			{
-				p.set_value(f(getTaskProvider()->createContext()));
+				p.set_value(f(getProvider()->createContext()));
 			}
 
 			template <typename Fun>
 			void setPromiseValueWithContext(std::promise<void>& p, Fun& f)
 			{
-				f(getTaskProvider()->createContext());
+				f(getProvider()->createContext());
 				p.set_value();
 			}
 
