@@ -18,7 +18,7 @@
 namespace conwrap
 {
 	// this is just a 'big-enough' counter
-	// assuming increment rate is 1M per sec, it will expire in ~58.5 years!
+	// assuming increment rate is 1M per sec, it will expire in ~584942 years!
 	// it can be hugely increased by implementing highValue along with lowValue
 	class Epoch
 	{
