@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <conwrap/Epoch.hpp>
 #include <functional>
 
 
@@ -20,7 +21,7 @@ namespace conwrap
 	class HandlerWrapper
 	{
 		public:
-			HandlerWrapper(std::function<void()> h, bool p, unsigned long long e)
+			HandlerWrapper(std::function<void()> h, bool p, conwrap::Epoch e)
 			: handler(h)
 			, proxy(p)
 			, epoch(e) {}
@@ -50,6 +51,6 @@ namespace conwrap
 		private:
 			std::function<void()> handler;
 			bool                  proxy;
-			unsigned long long    epoch;
+			conwrap::Epoch        epoch;
 	};
 }

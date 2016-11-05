@@ -13,6 +13,7 @@
 #pragma once
 
 #include <conwrap/ConcurrentQueue.hpp>
+#include <conwrap/Epoch.hpp>
 #include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/Processor.hpp>
 #include <conwrap/Provider.hpp>
@@ -42,7 +43,8 @@ namespace conwrap
 			public:
 				ProcessorQueueImpl(std::unique_ptr<ResourceType> r)
 				: resourcePtr(std::move(r))
-				, nextEpoch(1) {}
+				, nextEpoch(1)
+				, currentEpoch(0) {}
 
 				virtual ~ProcessorQueueImpl() {}
 
@@ -68,14 +70,14 @@ namespace conwrap
 				}
 
 			protected:
-				bool childExists(unsigned long long currentEpoch)
+				bool childExists(conwrap::Epoch currentEpoch)
 				{
 					auto found = false;
 
 					for (auto& h : queue)
 					{
 						auto epoch = h.getEpoch();
-						if (h.getProxy() && epoch && epoch < currentEpoch)
+						if (h.getProxy() && 0 < epoch && epoch < currentEpoch)
 						{
 							found = true;
 							break;
@@ -179,8 +181,8 @@ namespace conwrap
 				std::thread                                        thread;
 				std::mutex                                         threadLock;
 				bool                                               finished;
-				unsigned long long                                 nextEpoch;
-				unsigned long long                                 currentEpoch;
+				conwrap::Epoch                                     nextEpoch;
+				conwrap::Epoch                                     currentEpoch;
 		};
 	}
 }
