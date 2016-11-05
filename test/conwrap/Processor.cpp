@@ -20,5 +20,5 @@ TEST(Processor, Constructor1)
 	conwrap::ProcessorMock processor(std::move(dummyPtr));
 
 	EXPECT_EQ(dummyRawPtr, processor.getResource());
-	EXPECT_NE(nullptr, processor.getResource()->processorPtr);
+	EXPECT_NE(nullptr, processor.getResource()->processorProxyPtr);
 }

@@ -140,10 +140,11 @@ TEST_P(ProcessorCommon, Process4)
 	auto              processorPtr(GetParam());
 	std::atomic<bool> wasCalled(false);
 
-	processorPtr->getResource()->processorPtr->process([&](auto context)
+	processorPtr->getResource()->processorProxyPtr->process([&](auto context)
 	{
 		wasCalled = true;
-	}).wait();
+	});
+	processorPtr->flush();
 	EXPECT_TRUE(wasCalled);
 }
 

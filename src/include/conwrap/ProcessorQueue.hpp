@@ -45,12 +45,12 @@ namespace conwrap
 			: processorImplPtr(std::make_shared<internal::ProcessorQueueImpl<ResourceType>>(std::move(resource)))
 			, processorProxyPtr(std::unique_ptr<ProcessorQueueProxy<ResourceType>>(new ProcessorQueueProxy<ResourceType>(processorImplPtr)))
 			{
-				// TODO: implemet compile-time reflection to make this invocation optional
-				processorImplPtr->getResource()->setProcessor(this);
-
 				// creating task providers
 				processorImplPtr->setProvider(Provider<ResourceType, Task>(this, processorProxyPtr.get()));
 				processorImplPtr->setProviderProxy(Provider<ResourceType, TaskProxy>(this, processorProxyPtr.get()));
+
+				// TODO: implemet compile-time reflection to make this invocation optional
+				processorImplPtr->getResource()->setProcessorProxy(processorProxyPtr.get());
 
 				// starting processing
 				processorImplPtr->start();

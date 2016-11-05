@@ -38,15 +38,15 @@ struct Dummy {
 
 	virtual ~Dummy() {}
 
-	void setProcessor(conwrap::Processor<Dummy>* p)
+	void setProcessorProxy(conwrap::ProcessorProxy<Dummy>* p)
 	{
-		processorPtr = p;
+		processorProxyPtr = p;
 	}
 
 	// TODO: temporary fix
-	void setProcessor(conwrap::ProcessorMockProxy* p) {}
+	//void setProcessorProxy(conwrap::ProcessorMockProxy* p) {}
 
-	conwrap::Processor<Dummy>* processorPtr;
+	conwrap::ProcessorProxy<Dummy>* processorProxyPtr;
 
 	MOCK_METHOD0(method1, void());
 	MOCK_METHOD0(method2, void());
@@ -166,9 +166,9 @@ namespace conwrap
 			: processorImplPtr(std::make_shared<internal::ProcessorMockImpl>(std::move(r)))
 			, processorProxyPtr(std::unique_ptr<ProcessorMockProxy>(new ProcessorMockProxy(processorImplPtr)))
 			{
-				processorImplPtr->getResource()->setProcessor(this);
 				processorImplPtr->setProvider(Provider<Dummy, Task>(this, processorProxyPtr.get()));
 				processorImplPtr->setProviderProxy(Provider<Dummy, TaskProxy>(this, processorProxyPtr.get()));
+				processorImplPtr->getResource()->setProcessorProxy(processorProxyPtr.get());
 			}
 
 			virtual Dummy* getResource() override

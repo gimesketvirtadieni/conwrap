@@ -4,6 +4,7 @@
 #include <conwrap/ConcurrentQueue.hpp>
 #include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/Processor.hpp>
+#include <conwrap/ProcessorProxy.hpp>
 #include <conwrap/ProcessorQueue.hpp>
 #include <conwrap/ProcessorAsio.hpp>
 #include <cstdio>
@@ -21,12 +22,12 @@ struct Dummy {
 
 	virtual ~Dummy() {}
 
-	void setProcessor(conwrap::Processor<Dummy>* p)
+	void setProcessorProxy(conwrap::ProcessorProxy<Dummy>* p)
 	{
-		processorPtr = p;
+		processorProxyPtr = p;
 	}
 
-	conwrap::Processor<Dummy>* processorPtr;
+	conwrap::ProcessorProxy<Dummy>* processorProxyPtr;
 };
 
 

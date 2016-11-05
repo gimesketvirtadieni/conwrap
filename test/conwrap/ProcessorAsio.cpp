@@ -22,7 +22,7 @@ TEST(ProcessorAsio, Constructor1)
 	conwrap::ProcessorAsio<Dummy> processor(std::move(dummyPtr));
 
 	EXPECT_EQ(dummyRawPtr, processor.getResource());
-	EXPECT_NE(nullptr, processor.getResource()->processorPtr);
+	EXPECT_NE(nullptr, processor.getResource()->processorProxyPtr);
 }
 
 

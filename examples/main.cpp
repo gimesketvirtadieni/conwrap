@@ -13,7 +13,10 @@
 #include <asio.hpp>
 #include <chrono>
 #include <conwrap/ProcessorAsio.hpp>
+#include <conwrap/ProcessorAsioProxy.hpp>
 #include <conwrap/ProcessorQueue.hpp>
+#include <conwrap/ProcessorQueueProxy.hpp>
+#include <conwrap/ProcessorProxy.hpp>
 #include <functional>
 #include <iostream>
 
@@ -21,7 +24,7 @@
 struct Dummy
 {
 	// TODO: this is a temporary fix before reflection is implemented
-	void setProcessor(conwrap::Processor<Dummy>*) {}
+	void setProcessorProxy(conwrap::ProcessorProxy<Dummy>*) {}
 };
 
 
@@ -52,16 +55,17 @@ class Server
 			if (socketPtr->is_open())
 			{
 				socketPtr->send(asio::buffer("ping\n\r"));
+				std::cout << "'ping' message was sent to client\n\r";
 			}
 		}
 
-		void setProcessor(conwrap::ProcessorAsio<Server>* p)
+		void setProcessorProxy(conwrap::ProcessorAsioProxy<Server>* p)
 		{
-			processorPtr = p;
+			processorProxyPtr = p;
 
 			// creating an acceptor
 			acceptorPtr = std::make_unique<asio::ip::tcp::acceptor>(
-				*processorPtr->getDispatcher(),
+				*processorProxyPtr->getDispatcher(),
 				asio::ip::tcp::endpoint(
 					asio::ip::tcp::v4(),
 					port
@@ -70,7 +74,7 @@ class Server
 
 			// creating a socket
 			socketPtr = std::make_unique<asio::ip::tcp::socket>(
-				*processorPtr->getDispatcher()
+				*processorProxyPtr->getDispatcher()
 			);
 
 			acceptorPtr->async_accept(
@@ -78,7 +82,7 @@ class Server
 				[=](const std::error_code error)
 				{
 					// wrapping is needed to pass handler from asio's thread to the processor's thread
-					processorPtr->wrapHandler([=]
+					processorProxyPtr->wrapHandler([=]
 					{
 						// start receiving data
 						onData(error, 0);
@@ -88,7 +92,7 @@ class Server
 		}
 
 		// TODO: this is a temporary fix before reflection is implemented
-		void setProcessor(conwrap::ProcessorQueue<Server>*) {}
+		void setProcessorProxy(conwrap::ProcessorQueueProxy<Server>*) {}
 
 	protected:
 		void onData(const std::error_code error, const std::size_t receivedSize)
@@ -107,7 +111,7 @@ class Server
 					[=](const std::error_code error, const std::size_t receivedSize)
 					{
 						// wrapping is needed to pass handler from asio's thread to the processor's thread
-						processorPtr->wrapHandler([=]
+						processorProxyPtr->wrapHandler([=]
 						{
 							onData(error, receivedSize);
 						})();
@@ -117,7 +121,7 @@ class Server
 		}
 
 	private:
-		conwrap::ProcessorAsio<Server>*          processorPtr;
+		conwrap::ProcessorAsioProxy<Server>*     processorProxyPtr;
 		short                                    port;
 		std::unique_ptr<asio::ip::tcp::acceptor> acceptorPtr;
 		std::unique_ptr<asio::ip::tcp::socket>   socketPtr;
@@ -192,47 +196,38 @@ int main(int argc, char *argv[])
 		std::cout << "Echo server is listening on 1234 port (press ^C to terminate)\n\r";
 
 		// now server runs on a separate thread; any other logic can be done here
-		for (int i = 0; i < 3; i++)
+		// submitting a task in a regular way
+		processorAsio.process([]() -> int
 		{
-			// submitting a task in a regular way
-			processorAsio.process([]() -> int
-			{
-				std::cout << "Hello from asio task\n\r";
+			std::cout << "Hello from asio task\n\r";
 
-				// this is just to demonstrate that now asio can be used with tasks that return value
-				return 1234;
-			}).getResult();
+			// this is just to demonstrate that now asio can be used with tasks that return value
+			return 1234;
+		}).getResult();
 
-			for (int j = 0; j < 3; j++)
-			{
-				// submitting a task directly via asio io_service
-				processorAsio.getDispatcher()->post(
+		for (int i = 0; i < 5; i++)
+		{
+			// submitting a task directly via asio io_service
+			processorAsio.getDispatcher()->post(
 
-					// a task submitted directly via asio io_service must be wrapped as following
-					processorAsio.wrapHandler([&]
-					{
-						processorAsio.getResource()->ping();
-					})
-				);
+				// a task submitted directly via asio io_service must be wrapped as following
+				processorAsio.wrapHandler([&]
+				{
+					processorAsio.getResource()->ping();
+				})
+			);
 
-				// sleeping
-				std::this_thread::sleep_for(std::chrono::seconds{5});
-			}
-
-			// after this flush all tasks including asio handlers are executed
-			processorAsio.flush();
-			std::cout << "All tasks were flushed\n\r";
+			// sleeping
+			std::this_thread::sleep_for(std::chrono::seconds{5});
 		}
 
-		// without close invocation, processor's destructor would wait forever for any handlers
+		// without this close invocation, flush would wait forever for any handlers
 		// sync socket operations are thread safe since asio 1.4.0 so posting to asio thread is optional
-		processorAsio.getDispatcher()->post([&]
-		{
-			 processorAsio.getResource()->close();
-		});
+		processorAsio.getResource()->close();
 
-		// this flush is required as handler posted to asio captured processorAsio reference
+		// after this flush all tasks including asio handlers are executed
 		processorAsio.flush();
+		std::cout << "All tasks were executed\n\r";
 	}
 
 	return 0;
