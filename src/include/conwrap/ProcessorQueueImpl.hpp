@@ -169,7 +169,6 @@ namespace conwrap
 
 				virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
 				{
-					// TODO: MAX case must be handled
 					return HandlerWrapper(handler, proxy, (proxy ? currentEpoch : nextEpoch++));
 				}
 
