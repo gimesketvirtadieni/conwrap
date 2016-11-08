@@ -173,7 +173,7 @@ Moreover, a submitted task can obtain `conwrap::ProcessorProxy` from provided co
 }
 ```
 
-Combining tasks and using ‘child’ tasks allow creating complex hierarchy of sequence tasks. As explained previously all of them will be executed in the right order on a single thread.
+Combining tasks and using ‘child’ tasks allow creating complex hierarchy of sequence of tasks. As explained previously all of them will be executed in the right order on a single thread.
 
 
 ##Usage
