@@ -22,6 +22,7 @@
 #include <conwrap/Task.hpp>
 #include <functional>
 #include <memory>
+#include <type_traits>
 
 
 namespace conwrap
@@ -85,7 +86,7 @@ namespace conwrap
 			struct hasSetProcessor : std::false_type {};
 
 			template <typename T>
-			struct hasSetProcessor<T, decltype(std::declval<T>().setProcessor((conwrap::ProcessorAsio<ResourceType>*)nullptr))> : std::true_type {};
+			struct hasSetProcessor<T, decltype(std::declval<T>().setProcessor(std::declval<conwrap::ProcessorAsio<ResourceType>*>()))> : std::true_type {};
 
 			template <typename T, typename = void>
 			struct hasSetProcessorProxy : std::false_type {};
