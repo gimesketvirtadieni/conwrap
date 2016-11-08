@@ -101,7 +101,7 @@ namespace conwrap
 			template <typename T>
 			typename std::enable_if<hasSetProcessor<T>::value, void>::type setProcessor(T* obj)
 			{
-			    obj->setProcessorProxy(this);
+			    obj->setProcessor(this);
 			}
 
 			template <typename T>
