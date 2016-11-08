@@ -17,20 +17,6 @@
 #include <vector>
 
 
-struct Dummy {
-	Dummy() {}
-
-	virtual ~Dummy() {}
-
-	void setProcessorProxy(conwrap::ProcessorProxy<Dummy>* p)
-	{
-		processorProxyPtr = p;
-	}
-
-	conwrap::ProcessorProxy<Dummy>* processorProxyPtr;
-};
-
-
 void generate_baseline(conwrap::ConcurrentQueue<conwrap::HandlerWrapper>* queuePtr)
 {
 	for (int i = 0; i < 1000000; i++)
@@ -50,7 +36,7 @@ void generate_baseline(conwrap::ConcurrentQueue<conwrap::HandlerWrapper>* queueP
 }
 
 
-void generate(conwrap::Processor<Dummy>* processorPtr)
+void generate(conwrap::Processor<bool>* processorPtr)
 {
 	for (int i = 0; i < 1000000; i++)
 	{
@@ -61,8 +47,8 @@ void generate(conwrap::Processor<Dummy>* processorPtr)
 
 int main(int argc, char** argv) {
 	auto queuePtr          = std::make_unique<conwrap::ConcurrentQueue<conwrap::HandlerWrapper>>();
-	auto processorQueuePtr = std::make_unique<conwrap::ProcessorQueue<Dummy>>();
-	auto processorAsioPtr  = std::make_unique<conwrap::ProcessorAsio<Dummy>>();
+	auto processorQueuePtr = std::make_unique<conwrap::ProcessorQueue<bool>>();
+	auto processorAsioPtr  = std::make_unique<conwrap::ProcessorAsio<bool>>();
 
 	std::thread thread([&]
 	{
