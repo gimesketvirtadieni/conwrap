@@ -103,10 +103,7 @@ conwrap::ProcessorQueue<Dummy> processor;
 	// submitting an asynchronous task
 	processor.process([capturedPtr = someObjectPtr.get()](auto context)
 	{
-		// here pointer to the object can be used including for passing to any sub-sequent task
-		// waiting for this particular task to complete does not solve the problem, so flush must be used
-
-		// creating a new sub-sequent task
+		// creating a new task that captures the pointer provided to the current task
 		context.getProcessorProxy()->process([=]
 
 			// bummer
