@@ -21,13 +21,6 @@
 #include <iostream>
 
 
-struct Dummy
-{
-	// TODO: this is a temporary fix before reflection is implemented
-	void setProcessorProxy(conwrap::ProcessorProxy<Dummy>*) {}
-};
-
-
 class Server
 {
 	public:
@@ -91,9 +84,6 @@ class Server
 			);
 		}
 
-		// TODO: this is a temporary fix before reflection is implemented
-		void setProcessorProxy(conwrap::ProcessorQueueProxy<Server>*) {}
-
 	protected:
 		void onData(const std::error_code error, const std::size_t receivedSize)
 		{
@@ -135,7 +125,7 @@ class Server
 int main(int argc, char *argv[])
 {
 	{
-		conwrap::ProcessorQueue<Dummy> processorQueue;
+		conwrap::ProcessorQueue<bool> processorQueue;
 
 		processorQueue.process([]
 		{
@@ -146,7 +136,7 @@ int main(int argc, char *argv[])
 
 	// example demonstrating that Asio handlers are flushable now
 	{
-		conwrap::ProcessorAsio<Dummy> processorAsio;
+		conwrap::ProcessorAsio<bool> processorAsio;
 
 		processorAsio.process([]
 		{
@@ -158,7 +148,7 @@ int main(int argc, char *argv[])
 
 	// example demonstrating composition of tasks
 	{
-		conwrap::ProcessorQueue<Dummy> processorQueue;
+		conwrap::ProcessorQueue<bool> processorQueue;
 
 		processorQueue.process([]() -> int
 		{

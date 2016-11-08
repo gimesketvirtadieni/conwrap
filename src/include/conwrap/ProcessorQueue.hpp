@@ -20,6 +20,9 @@
 #include <conwrap/Task.hpp>
 #include <memory>
 
+#include <type_traits>
+#include <iostream>
+
 
 namespace conwrap
 {
@@ -29,6 +32,8 @@ namespace conwrap
 		template <typename ResourceType>
 		class ProcessorAsioImpl;
 	}
+	template <typename ResourceType>
+	class ProcessorQueueProxy;
 
 	template <typename ResourceType>
 	class ProcessorQueue : public Processor<ResourceType>
@@ -41,7 +46,7 @@ namespace conwrap
 			ProcessorQueue(Args... args)
 			: ProcessorQueue(std::move(std::make_unique<ResourceType>(std::forward<Args>(args)...))) {}
 
-			ProcessorQueue(std::unique_ptr<ResourceType> resource)
+            ProcessorQueue(std::unique_ptr<ResourceType> resource)
 			: processorImplPtr(std::make_shared<internal::ProcessorQueueImpl<ResourceType>>(std::move(resource)))
 			, processorProxyPtr(std::unique_ptr<ProcessorQueueProxy<ResourceType>>(new ProcessorQueueProxy<ResourceType>(processorImplPtr)))
 			{
@@ -49,10 +54,11 @@ namespace conwrap
 				processorImplPtr->setProvider(Provider<ResourceType, Task>(this, processorProxyPtr.get()));
 				processorImplPtr->setProviderProxy(Provider<ResourceType, TaskProxy>(this, processorProxyPtr.get()));
 
-				// TODO: implemet compile-time reflection to make this invocation optional
-				processorImplPtr->getResource()->setProcessorProxy(processorProxyPtr.get());
+				// this is a 'wooddoo' compile-time dependancy injection inspied by https://jguegant.github.io/blogs/tech/sfinae-introduction.html
+				setProcessor(processorImplPtr->getResource());
+				setProcessorProxy(processorImplPtr->getResource());
 
-				// starting processing
+			    // starting processing
 				processorImplPtr->start();
 			}
 
@@ -72,6 +78,18 @@ namespace conwrap
 			}
 
 		protected:
+			template <typename T, typename = void>
+			struct hasSetProcessor : std::false_type {};
+
+			template <typename T>
+			struct hasSetProcessor<T, decltype(std::declval<T>().setProcessor((conwrap::ProcessorQueue<ResourceType>*)nullptr))> : std::true_type {};
+
+			template <typename T, typename = void>
+			struct hasSetProcessorProxy : std::false_type {};
+
+			template <typename T>
+			struct hasSetProcessorProxy<T, decltype(std::declval<T>().setProcessorProxy((conwrap::ProcessorQueueProxy<ResourceType>*)nullptr))> : std::true_type {};
+
 			virtual Provider<ResourceType, Task>* getProvider() override
 			{
 				return processorImplPtr->getProvider();
@@ -81,6 +99,24 @@ namespace conwrap
 			{
 				processorImplPtr->post(handlerWrapper);
 			}
+
+			template <typename T>
+			typename std::enable_if<hasSetProcessor<T>::value, void>::type setProcessor(T* obj)
+			{
+			    obj->setProcessor(this);
+			}
+
+			template <typename T>
+			typename std::enable_if<!hasSetProcessor<T>::value, void>::type setProcessor(T* obj) {}
+
+			template <typename T>
+			typename std::enable_if<hasSetProcessorProxy<T>::value, void>::type setProcessorProxy(T* obj)
+			{
+			    obj->setProcessorProxy(processorProxyPtr.get());
+			}
+
+			template <typename T>
+			typename std::enable_if<!hasSetProcessorProxy<T>::value, void>::type setProcessorProxy(T* obj) {}
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler) override
 			{
