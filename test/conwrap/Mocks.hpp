@@ -43,9 +43,6 @@ struct Dummy {
 		processorProxyPtr = p;
 	}
 
-	// TODO: temporary fix
-	//void setProcessorProxy(conwrap::ProcessorMockProxy* p) {}
-
 	conwrap::ProcessorProxy<Dummy>* processorProxyPtr;
 
 	MOCK_METHOD0(method1, void());
