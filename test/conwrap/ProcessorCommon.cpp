@@ -140,7 +140,7 @@ TEST_P(ProcessorCommon, Process4)
 	auto              processorPtr(GetParam());
 	std::atomic<bool> wasCalled(false);
 
-	processorPtr->getResource()->processorProxyPtr->process([&](auto context)
+	processorPtr->getResource()->processorPtr->process([&]
 	{
 		wasCalled = true;
 	});
@@ -150,6 +150,20 @@ TEST_P(ProcessorCommon, Process4)
 
 
 TEST_P(ProcessorCommon, Process5)
+{
+	auto              processorPtr(GetParam());
+	std::atomic<bool> wasCalled(false);
+
+	processorPtr->getResource()->processorProxyPtr->process([&]
+	{
+		wasCalled = true;
+	});
+	processorPtr->flush();
+	EXPECT_TRUE(wasCalled);
+}
+
+
+TEST_P(ProcessorCommon, Process6)
 {
 	auto  processorPtr(GetParam());
 	Dummy dummy;
@@ -172,7 +186,7 @@ TEST_P(ProcessorCommon, Process5)
 }
 
 
-TEST_P(ProcessorCommon, Process6)
+TEST_P(ProcessorCommon, Process7)
 {
 	auto  processorPtr(GetParam());
 	Dummy dummy;
@@ -215,7 +229,7 @@ TEST_P(ProcessorCommon, Process6)
 }
 
 
-TEST_P(ProcessorCommon, Process7)
+TEST_P(ProcessorCommon, Process8)
 {
 	auto             processorPtr(GetParam());
 	std::atomic<int> result(0);
@@ -231,7 +245,7 @@ TEST_P(ProcessorCommon, Process7)
 }
 
 
-TEST_P(ProcessorCommon, Process8)
+TEST_P(ProcessorCommon, Process9)
 {
 	auto             processorPtr(GetParam());
 	std::atomic<int> result(0);

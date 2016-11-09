@@ -25,13 +25,6 @@ namespace conwrap
 	template <typename ResourceType, template<typename ResourceType, typename ResultType> class TaskType>
 	class ProcessorBase
 	{
-		// this 'weird' struct is a workaround to get decltype work for protected method
-		private:
-			struct s
-			{
-				static Context<ResourceType> createContext();
-			};
-
 		public:
 			virtual ResourceType* getResource() = 0;
 
@@ -50,9 +43,9 @@ namespace conwrap
 			}
 
 			template <typename F>
-			auto process(F fun) -> TaskType<ResourceType, decltype(fun(s::createContext()))>
+			auto process(F fun) -> TaskType<ResourceType, decltype(fun(std::declval<Context<ResourceType>>()))>
 			{
-				auto promisePtr = std::make_shared<std::promise<decltype(fun(s::createContext()))>>();
+				auto promisePtr = std::make_shared<std::promise<decltype(fun(std::declval<Context<ResourceType>>()))>>();
 
 				// posting a new handler
 				this->post(this->wrapHandler([=]
@@ -60,7 +53,7 @@ namespace conwrap
 					setPromiseValueWithContext(*promisePtr, fun);
 				}));
 
-				return getProvider()->createTask(std::shared_future<decltype(fun(s::createContext()))>(promisePtr->get_future()));
+				return getProvider()->createTask(std::shared_future<decltype(fun(std::declval<Context<ResourceType>>()))>(promisePtr->get_future()));
 			}
 
 		protected:

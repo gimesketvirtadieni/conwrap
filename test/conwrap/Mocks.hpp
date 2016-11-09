@@ -38,11 +38,19 @@ struct Dummy {
 
 	virtual ~Dummy() {}
 
+	void setProcessor(conwrap::Processor<Dummy>* p)
+	{
+		std::cout << "setProcessor called\n\r";
+		processorPtr = p;
+	}
+
 	void setProcessorProxy(conwrap::ProcessorProxy<Dummy>* p)
 	{
+		std::cout << "setProcessorProxy called\n\r";
 		processorProxyPtr = p;
 	}
 
+	conwrap::Processor<Dummy>*      processorPtr;
 	conwrap::ProcessorProxy<Dummy>* processorProxyPtr;
 
 	MOCK_METHOD0(method1, void());
@@ -165,6 +173,7 @@ namespace conwrap
 			{
 				processorImplPtr->setProvider(Provider<Dummy, Task>(this, processorProxyPtr.get()));
 				processorImplPtr->setProviderProxy(Provider<Dummy, TaskProxy>(this, processorProxyPtr.get()));
+				processorImplPtr->getResource()->setProcessor(this);
 				processorImplPtr->getResource()->setProcessorProxy(processorProxyPtr.get());
 			}
 

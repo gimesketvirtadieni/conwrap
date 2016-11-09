@@ -29,13 +29,6 @@ namespace conwrap
 	template <typename ResourceType, typename ResultType, template<typename ResourceType, typename ResultType> class TaskType>
 	class TaskBase
 	{
-		// this 'weird' struct is a workaround to get decltype work for protected method
-		private:
-			struct s
-			{
-				static ContinuationContext<ResourceType, ResultType> createContext();
-			};
-
 		public:
 			TaskBase(ProcessorBase<ResourceType, TaskType>* p, ProcessorProxy<ResourceType>* pp, std::shared_future<ResultType> r)
 			: processorPtr(p)
@@ -54,9 +47,9 @@ namespace conwrap
 			}
 
 			template <typename F>
-			auto then(F fun) -> TaskType<ResourceType, decltype(fun(s::createContext()))>
+			auto then(F fun) -> TaskType<ResourceType, decltype(fun(std::declval<ContinuationContext<ResourceType, ResultType>>()))>
 			{
-				return processorPtr->process([f = fun, c = createContext()]() -> decltype(fun(s::createContext()))
+				return processorPtr->process([f = fun, c = createContext()]() -> decltype(fun(std::declval<ContinuationContext<ResourceType, ResultType>>()))
 				{
 					return f(c);
 				});
