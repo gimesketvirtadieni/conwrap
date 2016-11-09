@@ -38,7 +38,7 @@ However `std::async` is not a good fit for task-based processing, because it spa
 conwrap::ProcessorQueue<Dummy> processor;
 
 // submitting an asynchronous task that will invoke syncMethod
-std::future<Result> resultFuture = processor.process([param = 123](auto context)
+conwrap::Task<Result> task = processor.process([param = 123](auto context)
 {
 	// gaining access to the object dummy
 	auto dummyPtr = context.getResource();
