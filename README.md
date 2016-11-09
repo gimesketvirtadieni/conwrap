@@ -178,13 +178,13 @@ Combining tasks and using ‘child’ tasks allow creating complex hierarchy of 
 
 ##Usage
 
-Concurrent Wrapper is a header-only library, which means you just need to drop [this directory's content](./src/include) into your project. Concurrent Wrapper relies on C++14 features so adequate compiler must have used.
+Concurrent Wrapper is a header-only library, which means you just need to drop [this directory's content](./src/include) into your project. The library relies on C++14 features so adequate compiler must be used.
 
 If you need working samples, please check out [this directory](./examples). On Linux samples can be compiled by using `make` utility like following:
-`
+```
 cd make
 make
-`
+```
 
 
 ##Limitations
