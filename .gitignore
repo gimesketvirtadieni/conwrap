@@ -2,5 +2,7 @@ syntax: glob
 .settings/
 Debug/
 Release/
-/UnitTest/
-/PerformanceTest/
+UnitTest/
+PerformanceTest/
+make/conwrap
+make/*.o
