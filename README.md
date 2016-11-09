@@ -185,3 +185,9 @@ If you need working samples, please check out [this directory](./examples). On L
 cd make
 make
 `
+
+
+##Limitations
+
+- Exceptions are not yet handled properly: it is already complex code, so implementing exceptions handling was posponed 
+- Processor do not accept `void` as resource type (although primitive types are supported)
