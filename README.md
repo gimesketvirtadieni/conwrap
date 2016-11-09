@@ -119,7 +119,7 @@ conwrap::ProcessorQueue<Dummy> processor;
 
 In a similar way, Concurrent Wrapper ensures there is no dangling pointers left when it's destroyed. This is achieved by waiting for all pending tasks to complete by its destructor. It is a different semantic compared to [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) `io_service` class, which requires stop method to be called and leaves unfinished handlers.
 
-To create a processor one need to provide a type of a 'resource' that processor going to contain. This resource provides possibility to keep a custom state between processing of different tasks:
+To create a processor one need to provide a type of a 'resource' that processor going to contain. This resource provides possibility to keep a custom state between executions of different tasks:
 ```c++
 struct Dummy {
 	Dummy() : counter(0) {}
