@@ -32,7 +32,7 @@ std::future<Result> resultFuture = std::async(
 );
 ```
 
-However `std::async` is not a good fit for task-based processing, because it spaws a new thread for every submitted task, which is not efficient for short-living tasks. On the other hand Concurrent Wrapper provides functionality to invoke arbitrary code asynchronously in a task-based processing fashion by using a single thread for processing all submitted tasks:
+However `std::async` is not a good fit for task-based processing, because depending on the policy and implementation it may spawn a new thread, use a thread pool or deferre sync execution of a submitted task. Such unclear semantic is not good for short-living tasks. On the other hand Concurrent Wrapper provides functionality to invoke arbitrary code asynchronously in a task-based processing fashion by using a single thread for processing all submitted tasks:
 ```c++
 // creating a concurrent wrapper object that contains an intance of Dummy
 conwrap::ProcessorQueue<Dummy> processor;
@@ -119,7 +119,7 @@ conwrap::ProcessorQueue<Dummy> processor;
 
 In a similar way, Concurrent Wrapper ensures there is no dangling pointers left when it's destroyed. This is achieved by waiting for all pending tasks to complete by its destructor. It is a different semantic compared to [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) `io_service` class, which requires stop method to be called and leaves unfinished handlers.
 
-To create a processor one need to provide a type of a 'resource' that processor going to contain. This resource provides possibility to keep a custom state between executions of different tasks:
+To create a processor one must provide a type of a 'resource' that processor going to contain. This resource provides possibility to keep a custom state between executions of different tasks:
 ```c++
 struct Dummy {
 	Dummy() : counter(0) {}
@@ -222,6 +222,8 @@ Concurrent Wrapper is a header-only library, which means you just need to drop [
 
 If you need working samples, please check out [this directory](./examples). On Linux samples can be compiled by using `make` utility like following:
 ```
+git clone https://github.com/gimesketvirtadieni/conwrap.git
+cd conwrap
 cd make
 make
 ```
