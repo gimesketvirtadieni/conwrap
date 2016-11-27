@@ -23,6 +23,9 @@ namespace conwrap
 	class Epoch
 	{
 		public:
+			Epoch()
+			: lowValue(0) {}
+
 			Epoch(unsigned long long v)
 			: lowValue(v) {}
 
@@ -54,6 +57,7 @@ namespace conwrap
 		    }
 
 		private:
-			unsigned long long lowValue;
+		    // TODO: atomic must be used
+		    unsigned long long lowValue;
 	};
 }
