@@ -224,6 +224,7 @@ If you need working samples, please check out [this directory](./examples). On L
 ```
 git clone https://github.com/gimesketvirtadieni/conwrap.git
 cd conwrap
+git submodule update --init --recursive
 cd make
 make
 ```
