@@ -26,6 +26,11 @@ namespace conwrap
 			, proxy(p)
 			, epoch(e) {}
 
+			HandlerWrapper(const HandlerWrapper& c)
+			: handler(c.handler)
+			, proxy(c.proxy)
+			, epoch(c.epoch) {}
+
 			HandlerWrapper(HandlerWrapper&& c)
 			: handler(std::move(c.handler))
 			, proxy(c.proxy)
