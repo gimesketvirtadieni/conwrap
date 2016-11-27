@@ -21,12 +21,15 @@ namespace conwrap
 	class HandlerWrapper
 	{
 		public:
-			HandlerWrapper(std::function<void()> h, bool p, conwrap::Epoch e)
-			: handler(h)
+			explicit HandlerWrapper(std::function<void()> h, bool p, conwrap::Epoch e)
+			: handler(std::move(h))
 			, proxy(p)
 			, epoch(e) {}
 
-			virtual ~HandlerWrapper() {}
+			HandlerWrapper(HandlerWrapper&& c)
+			: handler(std::move(c.handler))
+			, proxy(c.proxy)
+			, epoch(c.epoch) {}
 
 			inline auto getEpoch()
 			{
