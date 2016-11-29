@@ -103,7 +103,7 @@ namespace conwrap
 
 				virtual void post(HandlerWrapper handlerWrapper) override
 				{
-					queue.push(handlerWrapper);
+					queue.push(std::move(handlerWrapper));
 				}
 
 				inline void setProvider(Provider<ResourceType, Task> t)
@@ -128,7 +128,7 @@ namespace conwrap
 								for(finished = false; !(queue.empty() && finished);)
 								{
 									// waiting for a handler
-									auto handler = queue.front();
+									HandlerWrapper& handler = queue.front();
 
 									// setting current epoch to be used for submitted tasks via processor proxy
 									currentEpoch = handler.getEpoch();
@@ -164,12 +164,12 @@ namespace conwrap
 
 				virtual HandlerWrapper wrapHandler(std::function<void()> handler) override
 				{
-					return wrapHandler(handler, false);
+					return std::move(wrapHandler(std::move(handler), false));
 				}
 
 				virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
 				{
-					return HandlerWrapper(handler, proxy, (proxy ? currentEpoch : nextEpoch++));
+					return std::move(HandlerWrapper(std::move(handler), proxy, (proxy ? currentEpoch : nextEpoch++)));
 				}
 
 			private:

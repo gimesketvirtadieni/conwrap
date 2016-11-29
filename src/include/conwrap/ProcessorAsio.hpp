@@ -73,12 +73,12 @@ namespace conwrap
 
 			virtual void post(HandlerWrapper handlerWrapper) override
 			{
-				processorImplPtr->post(handlerWrapper);
+				processorImplPtr->post(std::move(handlerWrapper));
 			}
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler)
 			{
-				return wrapHandler(handler, false);
+				return std::move(wrapHandler(std::move(handler), false));
 			}
 
 		protected:
@@ -119,7 +119,7 @@ namespace conwrap
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
 			{
-				return processorImplPtr->wrapHandler(handler, proxy);
+				return std::move(processorImplPtr->wrapHandler(std::move(handler), proxy));
 			}
 
 		private:

@@ -12,12 +12,14 @@
 
 #pragma once
 
-#include <future>
-#include <functional>
 #include <conwrap/Context.hpp>
+#include <conwrap/Handler.hpp>
+#include <conwrap/HandlerWithContext.hpp>
 #include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/Provider.hpp>
 #include <conwrap/Task.hpp>
+#include <functional>
+#include <future>
 
 
 namespace conwrap
@@ -31,64 +33,31 @@ namespace conwrap
 			template <typename F>
 			auto process(F fun) -> TaskType<ResourceType, decltype(fun())>
 			{
-				auto promisePtr = std::make_shared<std::promise<decltype(fun())>>();
+				conwrap::Handler<F, decltype(fun()), ResourceType> handler(std::move(fun));
+				auto future = handler.getFuture();
 
 				// posting a new handler
-				this->post(this->wrapHandler([=]
-				{
-					setPromiseValue(*promisePtr, fun);
-				}));
+				this->post(std::move(this->wrapHandler(std::move(handler))));
 
-				return getProvider()->createTask(std::shared_future<decltype(fun())>(promisePtr->get_future()));
+				return getProvider()->createTask(std::shared_future<decltype(fun())>(std::move(future)));
 			}
 
 			template <typename F>
 			auto process(F fun) -> TaskType<ResourceType, decltype(fun(std::declval<Context<ResourceType>>()))>
 			{
-				auto promisePtr = std::make_shared<std::promise<decltype(fun(std::declval<Context<ResourceType>>()))>>();
+				conwrap::HandlerWithContext<F, decltype(fun(std::declval<Context<ResourceType>>())), ResourceType> handler(std::move(fun), getProvider()->createContext());
+				auto future = handler.getFuture();
 
 				// posting a new handler
-				this->post(this->wrapHandler([=]
-				{
-					setPromiseValueWithContext(*promisePtr, fun);
-				}));
+				this->post(std::move(this->wrapHandler(std::move(handler))));
 
-				return getProvider()->createTask(std::shared_future<decltype(fun(std::declval<Context<ResourceType>>()))>(promisePtr->get_future()));
+				return getProvider()->createTask(std::shared_future<decltype(fun(std::declval<Context<ResourceType>>()))>(std::move(future)));
 			}
 
 		protected:
 			virtual Provider<ResourceType, TaskType>* getProvider() = 0;
-
-			virtual void post(HandlerWrapper) = 0;
-
-			template <typename Fut, typename Fun>
-			void setPromiseValue(std::promise<Fut>& p, Fun& f)
-			{
-				p.set_value(f());
-			}
-
-			template <typename Fun>
-			void setPromiseValue(std::promise<void>& p, Fun& f)
-			{
-				f();
-				p.set_value();
-			}
-
-			template <typename Fut, typename Fun>
-			void setPromiseValueWithContext(std::promise<Fut>& p, Fun& f)
-			{
-				p.set_value(f(getProvider()->createContext()));
-			}
-
-			template <typename Fun>
-			void setPromiseValueWithContext(std::promise<void>& p, Fun& f)
-			{
-				f(getProvider()->createContext());
-				p.set_value();
-			}
-
-			virtual HandlerWrapper wrapHandler(std::function<void()>) = 0;
-
-			virtual HandlerWrapper wrapHandler(std::function<void()>, bool) = 0;
+			virtual void                              post(HandlerWrapper) = 0;
+			virtual HandlerWrapper                    wrapHandler(std::function<void()>) = 0;
+			virtual HandlerWrapper                    wrapHandler(std::function<void()>, bool) = 0;
 	};
 }

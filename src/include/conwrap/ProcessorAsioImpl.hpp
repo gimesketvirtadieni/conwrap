@@ -93,7 +93,7 @@ namespace conwrap
 
 				virtual HandlerWrapper wrapHandler(std::function<void()> handler) override
 				{
-					return wrapHandler(handler, false);
+					return std::move(wrapHandler(std::move(handler), false));
 				}
 
 			protected:
@@ -176,13 +176,13 @@ namespace conwrap
 
 				virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
 				{
-					return HandlerWrapper([=]
+					return std::move(HandlerWrapper([=]
 					{
-						processorQueue.post(processorQueue.wrapHandler([=]
+						processorQueue.post(std::move(processorQueue.wrapHandler([=]
 						{
 							handler();
-						}, proxy));
-					}, proxy, 0);
+						}, proxy)));
+					}, proxy, 0));
 				}
 
 			private:

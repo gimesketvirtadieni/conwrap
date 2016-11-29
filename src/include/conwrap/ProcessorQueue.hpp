@@ -95,7 +95,7 @@ namespace conwrap
 
 			virtual void post(HandlerWrapper handlerWrapper) override
 			{
-				processorImplPtr->post(handlerWrapper);
+				processorImplPtr->post(std::move(handlerWrapper));
 			}
 
 			template <typename T>
@@ -118,12 +118,12 @@ namespace conwrap
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler) override
 			{
-				return wrapHandler(handler, false);
+				return std::move(wrapHandler(std::move(handler), false));
 			}
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
 			{
-				return processorImplPtr->wrapHandler(handler, proxy);
+				return std::move(processorImplPtr->wrapHandler(std::move(handler), proxy));
 			}
 
 		private:

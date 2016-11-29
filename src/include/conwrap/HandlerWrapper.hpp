@@ -26,8 +26,9 @@ namespace conwrap
 			, proxy(p)
 			, epoch(e) {}
 
+			// copy contructor is required to comply with Asio handler
 			HandlerWrapper(const HandlerWrapper& c)
-			: handler(c.handler)
+			: handler(std::move(c.handler))
 			, proxy(c.proxy)
 			, epoch(c.epoch) {}
 
