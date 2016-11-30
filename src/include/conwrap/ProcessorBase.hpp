@@ -17,21 +17,21 @@
 #include <conwrap/HandlerWithContext.hpp>
 #include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/Provider.hpp>
-#include <conwrap/Task.hpp>
+#include <conwrap/TaskResult.hpp>
 #include <functional>
 #include <future>
 
 
 namespace conwrap
 {
-	template <typename ResourceType, template<typename ResourceType, typename ResultType> class TaskType>
+	template <typename ResourceType, template<typename ResourceType, typename ResultType> class TaskResultType>
 	class ProcessorBase
 	{
 		public:
 			virtual ResourceType* getResource() = 0;
 
 			template <typename F>
-			auto process(F fun) -> TaskType<ResourceType, decltype(fun())>
+			auto process(F fun) -> TaskResultType<ResourceType, decltype(fun())>
 			{
 				conwrap::Handler<F, decltype(fun()), ResourceType> handler(std::move(fun));
 				auto future = handler.getFuture();
@@ -43,7 +43,7 @@ namespace conwrap
 			}
 
 			template <typename F>
-			auto process(F fun) -> TaskType<ResourceType, decltype(fun(std::declval<Context<ResourceType>>()))>
+			auto process(F fun) -> TaskResultType<ResourceType, decltype(fun(std::declval<Context<ResourceType>>()))>
 			{
 				conwrap::HandlerWithContext<F, decltype(fun(std::declval<Context<ResourceType>>())), ResourceType> handler(std::move(fun), getProvider()->createContext());
 				auto future = handler.getFuture();
@@ -55,9 +55,9 @@ namespace conwrap
 			}
 
 		protected:
-			virtual Provider<ResourceType, TaskType>* getProvider() = 0;
-			virtual void                              post(HandlerWrapper) = 0;
-			virtual HandlerWrapper                    wrapHandler(std::function<void()>) = 0;
-			virtual HandlerWrapper                    wrapHandler(std::function<void()>, bool) = 0;
+			virtual Provider<ResourceType, TaskResultType>* getProvider() = 0;
+			virtual void                                    post(HandlerWrapper) = 0;
+			virtual HandlerWrapper                          wrapHandler(std::function<void()>) = 0;
+			virtual HandlerWrapper                          wrapHandler(std::function<void()>, bool) = 0;
 	};
 }

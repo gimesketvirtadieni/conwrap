@@ -17,8 +17,8 @@
 #include <conwrap/Processor.hpp>
 #include <conwrap/ProcessorQueue.hpp>
 #include <conwrap/Provider.hpp>
-#include <conwrap/Task.hpp>
-#include <conwrap/TaskProxy.hpp>
+#include <conwrap/TaskResult.hpp>
+#include <conwrap/TaskResultProxy.hpp>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -97,12 +97,12 @@ namespace conwrap
 				}
 
 			protected:
-				virtual Provider<ResourceType, Task>* getProvider() override
+				virtual Provider<ResourceType, TaskResult>* getProvider() override
 				{
 					return providerPtr.get();
 				}
 
-				inline Provider<ResourceType, TaskProxy>* getProviderProxy()
+				inline Provider<ResourceType, TaskResultProxy>* getProviderProxy()
 				{
 					return providerProxyPtr.get();
 				}
@@ -113,14 +113,14 @@ namespace conwrap
 					return dispatcher.run();
 				}
 
-				inline void setProvider(Provider<ResourceType, Task> t)
+				inline void setProvider(Provider<ResourceType, TaskResult> t)
 				{
-					providerPtr = std::make_unique<Provider<ResourceType, Task>>(t);
+					providerPtr = std::make_unique<Provider<ResourceType, TaskResult>>(t);
 				}
 
-				inline void setProviderProxy(Provider<ResourceType, TaskProxy> t)
+				inline void setProviderProxy(Provider<ResourceType, TaskResultProxy> t)
 				{
-					providerProxyPtr = std::make_unique<Provider<ResourceType, TaskProxy>>(t);
+					providerProxyPtr = std::make_unique<Provider<ResourceType, TaskResultProxy>>(t);
 				}
 
 				void start()
@@ -186,16 +186,16 @@ namespace conwrap
 				}
 
 			private:
-				std::unique_ptr<Provider<ResourceType, Task>>      providerPtr;
-				std::unique_ptr<Provider<ResourceType, TaskProxy>> providerProxyPtr;
-				ProcessorQueue<ResourceType>                       processorQueue;
-				asio::io_service                                   dispatcher;
-				std::unique_ptr<asio::io_service::work>            workPtr;
-				std::mutex                                         workLock;
-				std::condition_variable                            conditionVariable;
-				std::thread                                        thread;
-				std::mutex                                         threadLock;
-				bool                                               finished;
+				std::unique_ptr<Provider<ResourceType, TaskResult>>      providerPtr;
+				std::unique_ptr<Provider<ResourceType, TaskResultProxy>> providerProxyPtr;
+				ProcessorQueue<ResourceType>                             processorQueue;
+				asio::io_service                                         dispatcher;
+				std::unique_ptr<asio::io_service::work>                  workPtr;
+				std::mutex                                               workLock;
+				std::condition_variable                                  conditionVariable;
+				std::thread                                              thread;
+				std::mutex                                               threadLock;
+				bool                                                     finished;
 		};
 	}
 }

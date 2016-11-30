@@ -13,7 +13,7 @@
 #pragma once
 
 #include <future>
-#include <conwrap/ContinuationContext.hpp>
+#include <conwrap/ContextContinuation.hpp>
 
 
 namespace conwrap
@@ -21,24 +21,22 @@ namespace conwrap
 	// forward declaration
 	template <typename ResourceType>
 	class Processor;
-	template <typename ResourceType, template<typename ResourceType, typename ResultType> class TaskType>
+	template <typename ResourceType, template<typename ResourceType, typename ResultType> class TaskResultType>
 	class ProcessorBase;
 	template <typename ResourceType>
 	class ProcessorProxy;
 
-	template <typename ResourceType, typename ResultType, template<typename ResourceType, typename ResultType> class TaskType>
-	class TaskBase
+	template <typename ResourceType, typename ResultType, template<typename ResourceType, typename ResultType> class TaskResultType>
+	class TaskResultBase
 	{
 		public:
-			TaskBase(ProcessorBase<ResourceType, TaskType>* p, ProcessorProxy<ResourceType>* pp, std::shared_future<ResultType> r)
+			explicit TaskResultBase(ProcessorBase<ResourceType, TaskResultType>* p, ProcessorProxy<ResourceType>* pp, std::shared_future<ResultType> r)
 			: processorPtr(p)
 			, processorProxyPtr(pp)
-			, result(r) {}
-
-			virtual ~TaskBase() {}
+			, resultFuture(r) {}
 
 			template <typename F>
-			auto then(F fun) -> TaskType<ResourceType, decltype(fun())>
+			auto then(F fun) -> TaskResultType<ResourceType, decltype(fun())>
 			{
 				return processorPtr->process([=]() -> decltype(fun())
 				{
@@ -47,28 +45,28 @@ namespace conwrap
 			}
 
 			template <typename F>
-			auto then(F fun) -> TaskType<ResourceType, decltype(fun(std::declval<ContinuationContext<ResourceType, ResultType>>()))>
+			auto then(F fun) -> TaskResultType<ResourceType, decltype(fun(std::declval<ContextContinuation<ResourceType, ResultType>>()))>
 			{
-				return processorPtr->process([f = fun, c = createContext()]() -> decltype(fun(std::declval<ContinuationContext<ResourceType, ResultType>>()))
+				return processorPtr->process([f = fun, c = createContext()]() -> decltype(fun(std::declval<ContextContinuation<ResourceType, ResultType>>()))
 				{
 					return f(c);
 				});
 			}
 
 		protected:
-			inline ContinuationContext<ResourceType, ResultType> createContext()
+			inline ContextContinuation<ResourceType, ResultType> createContext()
 			{
-				return ContinuationContext<ResourceType, ResultType>(processorProxyPtr, result);
+				return ContextContinuation<ResourceType, ResultType>(processorProxyPtr, resultFuture);
 			}
 
-			inline std::shared_future<ResultType>* getResultFuture()
+			inline std::shared_future<ResultType> getResultFuture()
 			{
-				return &result;
+				return resultFuture;
 			}
 
 		private:
-			ProcessorBase<ResourceType, TaskType>* processorPtr;
-			ProcessorProxy<ResourceType>*          processorProxyPtr;
-			std::shared_future<ResultType>         result;
+			ProcessorBase<ResourceType, TaskResultType>* processorPtr;
+			ProcessorProxy<ResourceType>*                processorProxyPtr;
+			std::shared_future<ResultType>               resultFuture;
 	};
 }

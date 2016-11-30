@@ -19,7 +19,7 @@
 #include <conwrap/ProcessorAsioProxy.hpp>
 #include <conwrap/ProcessorQueue.hpp>
 #include <conwrap/Provider.hpp>
-#include <conwrap/Task.hpp>
+#include <conwrap/TaskResult.hpp>
 #include <functional>
 #include <memory>
 #include <type_traits>
@@ -39,9 +39,9 @@ namespace conwrap
 			: processorImplPtr(std::make_shared<internal::ProcessorAsioImpl<ResourceType>>(std::move(resource)))
 			, processorProxyPtr(std::unique_ptr<ProcessorAsioProxy<ResourceType>>(new ProcessorAsioProxy<ResourceType>(processorImplPtr)))
 			{
-				// creating task providers
-				processorImplPtr->setProvider(Provider<ResourceType, Task>(this, processorProxyPtr.get()));
-				processorImplPtr->setProviderProxy(Provider<ResourceType, TaskProxy>(this, processorProxyPtr.get()));
+				// creating providers
+				processorImplPtr->setProvider(Provider<ResourceType, TaskResult>(this, processorProxyPtr.get()));
+				processorImplPtr->setProviderProxy(Provider<ResourceType, TaskResultProxy>(this, processorProxyPtr.get()));
 
 				// this is a 'wooddoo' compile-time dependancy injection inspied by https://jguegant.github.io/blogs/tech/sfinae-introduction.html
 				setProcessor(processorImplPtr->getResource());
@@ -94,7 +94,7 @@ namespace conwrap
 			template <typename T>
 			struct hasSetProcessorProxy<T, decltype(std::declval<T>().setProcessorProxy((conwrap::ProcessorAsioProxy<ResourceType>*)nullptr))> : std::true_type {};
 
-			virtual Provider<ResourceType, Task>* getProvider() override
+			virtual Provider<ResourceType, TaskResult>* getProvider() override
 			{
 				return processorImplPtr->getProvider();
 			}

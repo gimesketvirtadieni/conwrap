@@ -18,7 +18,7 @@
 #include <conwrap/ProcessorQueueImpl.hpp>
 #include <conwrap/ProcessorProxy.hpp>
 #include <conwrap/Provider.hpp>
-#include <conwrap/TaskProxy.hpp>
+#include <conwrap/TaskResultProxy.hpp>
 
 
 namespace conwrap
@@ -45,7 +45,7 @@ namespace conwrap
 			}
 
 		protected:
-			virtual Provider<ResourceType, TaskProxy>* getProvider() override
+			virtual Provider<ResourceType, TaskResultProxy>* getProvider() override
 			{
 				return processorImplPtr->getProviderProxy();
 			}

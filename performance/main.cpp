@@ -2,7 +2,6 @@
 #include <conwrap/ConcurrentQueue.hpp>
 #include <conwrap/Handler.hpp>
 #include <conwrap/HandlerWrapper.hpp>
-#include <conwrap/MoveOnCopy.hpp>
 #include <conwrap/Processor.hpp>
 #include <conwrap/ProcessorProxy.hpp>
 #include <conwrap/ProcessorQueue.hpp>

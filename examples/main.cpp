@@ -193,7 +193,7 @@ int main(int argc, char *argv[])
 
 			// this is just to demonstrate that now asio can be used with tasks that return value
 			return 1234;
-		}).getResult();
+		}).get();
 
 		for (int i = 0; i < 5; i++)
 		{

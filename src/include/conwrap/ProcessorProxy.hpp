@@ -13,11 +13,11 @@
 #pragma once
 
 #include <conwrap/ProcessorBase.hpp>
-#include <conwrap/TaskProxy.hpp>
+#include <conwrap/TaskResultProxy.hpp>
 
 
 namespace conwrap
 {
 	template <typename ResourceType>
-	class ProcessorProxy : public ProcessorBase<ResourceType, TaskProxy> {};
+	class ProcessorProxy : public ProcessorBase<ResourceType, TaskResultProxy> {};
 }

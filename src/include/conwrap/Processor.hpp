@@ -13,13 +13,13 @@
 #pragma once
 
 #include <conwrap/ProcessorBase.hpp>
-#include <conwrap/Task.hpp>
+#include <conwrap/TaskResult.hpp>
 
 
 namespace conwrap
 {
 	template <typename ResourceType>
-	class Processor : public ProcessorBase<ResourceType, Task>
+	class Processor : public ProcessorBase<ResourceType, TaskResult>
 	{
 		public:
 			virtual void flush() = 0;

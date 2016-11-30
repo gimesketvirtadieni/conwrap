@@ -19,21 +19,19 @@
 namespace conwrap
 {
 	template <typename ResourceType, typename ResultType>
-	class ContinuationContext : public Context<ResourceType>
+	class ContextContinuation : public Context<ResourceType>
 	{
 		public:
-			ContinuationContext(ProcessorProxy<ResourceType>* p, std::shared_future<ResultType> r)
+			explicit ContextContinuation(ProcessorProxy<ResourceType>* p, std::shared_future<ResultType> r)
 			: Context<ResourceType>(p)
-			, result(r) {}
+			, resultFuture(r) {}
 
-			virtual ~ContinuationContext() {}
-
-			virtual ResultType getResult()
+			inline ResultType getResult()
 			{
-				return result.get();
+				return resultFuture.get();
 			}
 
 		private:
-			std::shared_future<ResultType> result;
+			std::shared_future<ResultType> resultFuture;
 	};
 }
