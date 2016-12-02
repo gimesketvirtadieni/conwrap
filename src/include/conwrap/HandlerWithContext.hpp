@@ -21,14 +21,14 @@
 namespace conwrap
 {
 	// forward declaration
-	template <typename ResourceType, template<typename ResourceType, typename ResultType> class TaskType>
-	class ProcessorBase;
+	template <typename ResourceType, template<typename ResourceType, typename ResultType> class TaskResultType>
+	class Provider;
 
 	template <typename FunctionType, typename ResultType, typename ResourceType>
 	class HandlerWithContext
 	{
 		// friend declaration
-		template <typename, template<typename, typename> class> friend class ProcessorBase;
+		template <typename, template<typename, typename> class> friend class Provider;
 
 		public:
 			explicit HandlerWithContext(FunctionType f, Context<ResourceType> c)

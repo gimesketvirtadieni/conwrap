@@ -30,28 +30,31 @@ namespace conwrap
 		public:
 			virtual ResourceType* getResource() = 0;
 
+			// TODO: both process(...) methods should be combined, because only task type differs
 			template <typename F>
 			auto process(F fun) -> TaskResultType<ResourceType, decltype(fun())>
 			{
-				conwrap::Handler<F, decltype(fun()), ResourceType> handler(std::move(fun));
-				auto future = handler.getFuture();
+				Handler<F, decltype(fun()), ResourceType> handler(std::move(fun));
+
+				auto taskResult = getProvider()->createTaskResult(handler);
 
 				// posting a new handler
 				this->post(std::move(this->wrapHandler(std::move(handler))));
 
-				return getProvider()->createTask(std::shared_future<decltype(fun())>(std::move(future)));
+				return taskResult;
 			}
 
 			template <typename F>
 			auto process(F fun) -> TaskResultType<ResourceType, decltype(fun(std::declval<Context<ResourceType>>()))>
 			{
-				conwrap::HandlerWithContext<F, decltype(fun(std::declval<Context<ResourceType>>())), ResourceType> handler(std::move(fun), getProvider()->createContext());
-				auto future = handler.getFuture();
+				HandlerWithContext<F, decltype(fun(std::declval<Context<ResourceType>>())), ResourceType> handler(std::move(fun), getProvider()->createContext());
+
+				auto taskResult = getProvider()->createTaskResult(handler);
 
 				// posting a new handler
 				this->post(std::move(this->wrapHandler(std::move(handler))));
 
-				return getProvider()->createTask(std::shared_future<decltype(fun(std::declval<Context<ResourceType>>()))>(std::move(future)));
+				return taskResult;
 			}
 
 		protected:

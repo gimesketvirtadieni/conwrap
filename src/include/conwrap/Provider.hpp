@@ -13,6 +13,8 @@
 #pragma once
 
 #include <conwrap/Context.hpp>
+#include <conwrap/Handler.hpp>
+#include <conwrap/HandlerWithContext.hpp>
 #include <future>
 
 
@@ -24,25 +26,30 @@ namespace conwrap
 	template <typename ResourceType>
 	class ProcessorProxy;
 
-	template <typename ResourceType, template<typename ResourceType, typename ResultType> class TaskType>
+	template <typename ResourceType, template<typename ResourceType, typename ResultType> class TaskResultType>
 	class Provider
 	{
 		public:
-			Provider(Processor<ResourceType>* p, ProcessorProxy<ResourceType>* pp)
+			explicit Provider(Processor<ResourceType>* p, ProcessorProxy<ResourceType>* pp)
 			: processorPtr(p)
 			, processorProxyPtr(pp) {}
-
-			virtual ~Provider() {}
 
 			inline Context<ResourceType> createContext()
 			{
 				return Context<ResourceType>(getProcessorProxy());
 			}
 
-			template <typename ResultType>
-			auto createTask(std::shared_future<ResultType> result) -> TaskType<ResourceType, ResultType>
+			// TODO: createTaskResult(...) should be refactored
+			template <typename F, typename ResultType>
+			auto createTaskResult(Handler<F, ResultType, ResourceType>& task) -> TaskResultType<ResourceType, ResultType>
 			{
-				return TaskType<ResourceType, ResultType>(getProcessor(), getProcessorProxy(), result);
+				return TaskResultType<ResourceType, ResultType>(getProcessor(), getProcessorProxy(), task.getFuture());
+			}
+
+			template <typename F, typename ResultType>
+			auto createTaskResult(HandlerWithContext<F, ResultType, ResourceType>& task) -> TaskResultType<ResourceType, ResultType>
+			{
+				return TaskResultType<ResourceType, ResultType>(getProcessor(), getProcessorProxy(), task.getFuture());
 			}
 
 			inline Processor<ResourceType>* getProcessor()

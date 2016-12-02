@@ -21,15 +21,15 @@
 namespace conwrap
 {
 	// forward declaration
-	template <typename ResourceType, template<typename ResourceType, typename ResultType> class TaskType>
-	class ProcessorBase;
+	template <typename ResourceType, template<typename ResourceType, typename ResultType> class TaskResultType>
+	class Provider;
 
 	// this is a bit quicker version for std::packaged_task
 	template <typename FunctionType, typename ResultType, typename ResourceType>
 	class Handler
 	{
 		// friend declaration
-		template <typename, template<typename, typename> class> friend class ProcessorBase;
+		template <typename, template<typename, typename> class> friend class Provider;
 
 		public:
 			explicit Handler(FunctionType f)
@@ -43,6 +43,13 @@ namespace conwrap
 			: fun(std::move(c.fun))
 			, promise(std::move(c.promise)) {}
 
+			// TODO: task should be connected with its result
+/*
+			auto createResult() -> TaskResultType<ResourceType, ResultType>
+			{
+				return TaskResultType<ResourceType, ResultType>(getProcessor(), getProcessorProxy(), task.getFuture());
+			}
+*/
 			inline void operator() ()
 			{
 				setPromiseValue(fun, promise);
