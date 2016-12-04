@@ -24,11 +24,16 @@ namespace conwrap
 	template <typename ResourceType, template<typename ResourceType, typename ResultType> class TaskResultType>
 	class Provider;
 
-	template <typename FunctionType, typename ResultType, typename ResourceType>
+	template <typename ResourceType, typename FunctionType, typename ResultType>
 	class HandlerWithContext
 	{
 		// friend declaration
 		template <typename, template<typename, typename> class> friend class Provider;
+
+		private:
+			FunctionType                                                       fun;
+			std::promise<decltype(fun(std::declval<Context<ResourceType>>()))> promise;
+			Context<ResourceType>                                              context;
 
 		public:
 			explicit HandlerWithContext(FunctionType f, Context<ResourceType> c)
@@ -68,10 +73,5 @@ namespace conwrap
 				f(context);
 				p.set_value();
 			}
-
-		private:
-			FunctionType             fun;
-			std::promise<ResultType> promise;
-			Context<ResourceType>    context;
 	};
 }

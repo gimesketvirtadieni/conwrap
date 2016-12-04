@@ -41,13 +41,13 @@ namespace conwrap
 
 			// TODO: createTaskResult(...) should be refactored
 			template <typename F, typename ResultType>
-			auto createTaskResult(Handler<F, ResultType, ResourceType>& task) -> TaskResultType<ResourceType, ResultType>
+			auto createTaskResult(Handler<ResourceType, F, ResultType>& task) -> TaskResultType<ResourceType, ResultType>
 			{
 				return TaskResultType<ResourceType, ResultType>(getProcessor(), getProcessorProxy(), task.getFuture());
 			}
 
 			template <typename F, typename ResultType>
-			auto createTaskResult(HandlerWithContext<F, ResultType, ResourceType>& task) -> TaskResultType<ResourceType, ResultType>
+			auto createTaskResult(HandlerWithContext<ResourceType, F, ResultType>& task) -> TaskResultType<ResourceType, ResultType>
 			{
 				return TaskResultType<ResourceType, ResultType>(getProcessor(), getProcessorProxy(), task.getFuture());
 			}

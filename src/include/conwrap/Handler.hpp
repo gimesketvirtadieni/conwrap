@@ -25,11 +25,15 @@ namespace conwrap
 	class Provider;
 
 	// this is a bit quicker version for std::packaged_task
-	template <typename FunctionType, typename ResultType, typename ResourceType>
+	template <typename ResourceType, typename FunctionType, typename ResultType>
 	class Handler
 	{
 		// friend declaration
 		template <typename, template<typename, typename> class> friend class Provider;
+
+		private:
+			FunctionType                  fun;
+			std::promise<decltype(fun())> promise;
 
 		public:
 			explicit Handler(FunctionType f)
@@ -73,9 +77,5 @@ namespace conwrap
 				f();
 				p.set_value();
 			}
-
-		private:
-			FunctionType             fun;
-			std::promise<ResultType> promise;
 	};
 }

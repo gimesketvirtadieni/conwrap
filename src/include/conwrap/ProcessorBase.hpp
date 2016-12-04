@@ -34,7 +34,7 @@ namespace conwrap
 			template <typename F>
 			auto process(F fun) -> TaskResultType<ResourceType, decltype(fun())>
 			{
-				Handler<F, decltype(fun()), ResourceType> handler(std::move(fun));
+				Handler<ResourceType, F, decltype(fun())> handler(std::move(fun));
 
 				auto taskResult = getProvider()->createTaskResult(handler);
 
@@ -47,7 +47,7 @@ namespace conwrap
 			template <typename F>
 			auto process(F fun) -> TaskResultType<ResourceType, decltype(fun(std::declval<Context<ResourceType>>()))>
 			{
-				HandlerWithContext<F, decltype(fun(std::declval<Context<ResourceType>>())), ResourceType> handler(std::move(fun), getProvider()->createContext());
+				HandlerWithContext<ResourceType, F, decltype(fun(std::declval<Context<ResourceType>>()))> handler(std::move(fun), getProvider()->createContext());
 
 				auto taskResult = getProvider()->createTaskResult(handler);
 

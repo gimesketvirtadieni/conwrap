@@ -11,7 +11,7 @@
 
 
 // rewriting visibility of getFuture in conwrap::Handler
-class HandlerDummy : public conwrap::Handler<std::function<void()>, void, bool>
+class HandlerDummy : public conwrap::Handler<bool, std::function<void()>, void>
 {
 	public:
 		explicit HandlerDummy(std::function<void()> f)
@@ -19,7 +19,7 @@ class HandlerDummy : public conwrap::Handler<std::function<void()>, void, bool>
 
 		inline auto getFuture()
 		{
-			return conwrap::Handler<std::function<void()>, void, bool>::getFuture();
+			return conwrap::Handler<bool, std::function<void()>, void>::getFuture();
 		}
 };
 
