@@ -30,10 +30,10 @@ namespace conwrap
 	class TaskResultBase
 	{
 		public:
-			explicit TaskResultBase(ProcessorBase<ResourceType, TaskResultType>* p, ProcessorProxy<ResourceType>* pp, std::shared_future<ResultType> r)
+			explicit TaskResultBase(ProcessorBase<ResourceType, TaskResultType>* p, ProcessorProxy<ResourceType>* pp, std::shared_future<ResultType> rf)
 			: processorPtr(p)
 			, processorProxyPtr(pp)
-			, resultFuture(r) {}
+			, resultFuture(rf) {}
 
 			template <typename F>
 			auto then(F fun) -> TaskResultType<ResourceType, decltype(fun())>
@@ -56,10 +56,11 @@ namespace conwrap
 		protected:
 			inline ContextContinuation<ResourceType, ResultType> createContext()
 			{
+				// TODO: check ContextContinuation std::shared_future<ResultType>...
 				return ContextContinuation<ResourceType, ResultType>(processorProxyPtr, resultFuture);
 			}
 
-			inline std::shared_future<ResultType> getResultFuture()
+			inline auto getResultFuture()
 			{
 				return resultFuture;
 			}

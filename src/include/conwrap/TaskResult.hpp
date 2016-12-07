@@ -28,8 +28,8 @@ namespace conwrap
 	class TaskResult : public TaskResultBase<ResourceType, ResultType, TaskResult>
 	{
 		public:
-			explicit TaskResult(Processor<ResourceType>* p, ProcessorProxy<ResourceType>* pp, std::shared_future<ResultType> r)
-			: TaskResultBase<ResourceType, ResultType, TaskResult>(p, pp, r) {}
+			explicit TaskResult(Processor<ResourceType>* p, ProcessorProxy<ResourceType>* pp, std::shared_future<ResultType> rf)
+			: TaskResultBase<ResourceType, ResultType, TaskResult>(p, pp, rf) {}
 
 			inline ResultType get()
 			{

@@ -34,9 +34,10 @@ namespace conwrap
 			template <typename F>
 			auto process(F fun) -> TaskResultType<ResourceType, decltype(fun())>
 			{
-				Handler<ResourceType, F, decltype(fun())> handler(std::move(fun));
+				Handler<ResourceType, F, TaskResultType> handler(std::move(fun), getProvider()->getProcessor(), getProvider()->getProcessorProxy());
 
-				auto taskResult = getProvider()->createTaskResult(handler);
+				// creating and storing on the stack a task result so it can be returned to the caller
+				auto taskResult = handler.createResult();
 
 				// posting a new handler
 				this->post(std::move(this->wrapHandler(std::move(handler))));
@@ -47,9 +48,10 @@ namespace conwrap
 			template <typename F>
 			auto process(F fun) -> TaskResultType<ResourceType, decltype(fun(std::declval<Context<ResourceType>>()))>
 			{
-				HandlerWithContext<ResourceType, F, decltype(fun(std::declval<Context<ResourceType>>()))> handler(std::move(fun), getProvider()->createContext());
+				HandlerWithContext<ResourceType, F, TaskResultType> handler(std::move(fun), Context<ResourceType>(getProvider()->getProcessorProxy()), getProvider()->getProcessor(), getProvider()->getProcessorProxy());
 
-				auto taskResult = getProvider()->createTaskResult(handler);
+				// creating and storing on the stack a task result so it can be returned to the caller
+				auto taskResult = handler.createResult();
 
 				// posting a new handler
 				this->post(std::move(this->wrapHandler(std::move(handler))));
@@ -58,9 +60,9 @@ namespace conwrap
 			}
 
 		protected:
-			virtual Provider<ResourceType, TaskResultType>* getProvider() = 0;
-			virtual void                                    post(HandlerWrapper) = 0;
-			virtual HandlerWrapper                          wrapHandler(std::function<void()>) = 0;
-			virtual HandlerWrapper                          wrapHandler(std::function<void()>, bool) = 0;
+			virtual Provider<ResourceType>* getProvider() = 0;
+			virtual void                    post(HandlerWrapper) = 0;
+			virtual HandlerWrapper          wrapHandler(std::function<void()>) = 0;
+			virtual HandlerWrapper          wrapHandler(std::function<void()>, bool) = 0;
 	};
 }

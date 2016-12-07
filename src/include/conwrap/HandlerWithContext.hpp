@@ -21,34 +21,46 @@
 namespace conwrap
 {
 	// forward declaration
+	template <typename ResourceType>
+	class Processor;
 	template <typename ResourceType, template<typename ResourceType, typename ResultType> class TaskResultType>
-	class Provider;
+	class ProcessorBase;
+	template <typename ResourceType>
+	class ProcessorProxy;
 
-	template <typename ResourceType, typename FunctionType, typename ResultType>
+	template <typename ResourceType, typename FunctionType, template<typename ResourceType, typename ResultType> class TaskResultType>
 	class HandlerWithContext
 	{
 		// friend declaration
-		template <typename, template<typename, typename> class> friend class Provider;
+		template <typename, template<typename, typename> class> friend class ProcessorBase;
 
 		private:
 			FunctionType                                                       fun;
-			std::promise<decltype(fun(std::declval<Context<ResourceType>>()))> promise;
 			Context<ResourceType>                                              context;
+			Processor<ResourceType>*                                           processorPtr;
+			ProcessorProxy<ResourceType>*                                      processorProxyPtr;
+			std::promise<decltype(fun(std::declval<Context<ResourceType>>()))> promise;
 
 		public:
-			explicit HandlerWithContext(FunctionType f, Context<ResourceType> c)
+			explicit HandlerWithContext(FunctionType f, Context<ResourceType> c, Processor<ResourceType>* p, ProcessorProxy<ResourceType>* pp)
 			: fun(f)
-			, context(c) {}
+			, context(c)
+			, processorPtr(p)
+			, processorProxyPtr(pp) {}
 
 			HandlerWithContext(HandlerWithContext& c)
 			: fun(std::move(c.fun))
-			, promise(std::move(c.promise))
-			, context(std::move(c.context)) {}
+			, context(std::move(c.context))
+			, processorPtr(std::move(c.processorPtr))
+			, processorProxyPtr(std::move(c.processorProxyPtr))
+			, promise(std::move(c.promise)) {}
 
 			HandlerWithContext(HandlerWithContext&& c)
 			: fun(std::move(c.fun))
-			, promise(std::move(c.promise))
-			, context(std::move(c.context)) {}
+			, context(std::move(c.context))
+			, processorPtr(std::move(c.processorPtr))
+			, processorProxyPtr(std::move(c.processorProxyPtr))
+			, promise(std::move(c.promise)) {}
 
 			inline void operator() ()
 			{
@@ -56,9 +68,15 @@ namespace conwrap
 			}
 
 		protected:
+			auto createResult() -> TaskResultType<ResourceType, decltype(fun(std::declval<Context<ResourceType>>()))>
+			{
+				// this method can be called only once per task
+				return TaskResultType<ResourceType, decltype(fun(std::declval<Context<ResourceType>>()))>(processorPtr, processorProxyPtr, std::shared_future<decltype(fun(std::declval<Context<ResourceType>>()))>(std::move(getFuture())));
+			}
+
 			inline auto getFuture()
 			{
-				return promise.get_future();
+				return std::move(promise.get_future());
 			}
 
 			template <typename Fun, typename Fut>

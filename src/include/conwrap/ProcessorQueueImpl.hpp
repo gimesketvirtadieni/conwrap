@@ -91,12 +91,12 @@ namespace conwrap
 					return nextEpoch;
 				}
 
-				virtual Provider<ResourceType, TaskResult>* getProvider() override
+				virtual Provider<ResourceType>* getProvider() override
 				{
 					return providerPtr.get();
 				}
 
-				inline Provider<ResourceType, TaskResultProxy>* getProviderProxy()
+				inline Provider<ResourceType>* getProviderProxy()
 				{
 					return providerProxyPtr.get();
 				}
@@ -106,14 +106,14 @@ namespace conwrap
 					queue.push(std::move(handlerWrapper));
 				}
 
-				inline void setProvider(Provider<ResourceType, TaskResult> t)
+				inline void setProvider(Provider<ResourceType> t)
 				{
-					providerPtr = std::make_unique<Provider<ResourceType, TaskResult>>(t);
+					providerPtr = std::make_unique<Provider<ResourceType>>(t);
 				}
 
-				inline void setProviderProxy(Provider<ResourceType, TaskResultProxy> t)
+				inline void setProviderProxy(Provider<ResourceType> t)
 				{
-					providerProxyPtr = std::make_unique<Provider<ResourceType, TaskResultProxy>>(t);
+					providerProxyPtr = std::make_unique<Provider<ResourceType>>(t);
 				}
 
 				void start()
@@ -173,15 +173,15 @@ namespace conwrap
 				}
 
 			private:
-				std::unique_ptr<ResourceType>                            resourcePtr;
-				std::unique_ptr<Provider<ResourceType, TaskResult>>      providerPtr;
-				std::unique_ptr<Provider<ResourceType, TaskResultProxy>> providerProxyPtr;
-				ConcurrentQueue<HandlerWrapper>                          queue;
-				std::thread                                              thread;
-				std::mutex                                               threadLock;
-				bool                                                     finished;
-				conwrap::Epoch                                           nextEpoch;
-				conwrap::Epoch                                           currentEpoch;
+				std::unique_ptr<ResourceType>           resourcePtr;
+				std::unique_ptr<Provider<ResourceType>> providerPtr;
+				std::unique_ptr<Provider<ResourceType>> providerProxyPtr;
+				ConcurrentQueue<HandlerWrapper>         queue;
+				std::thread                             thread;
+				std::mutex                              threadLock;
+				bool                                    finished;
+				conwrap::Epoch                          nextEpoch;
+				conwrap::Epoch                          currentEpoch;
 		};
 	}
 }

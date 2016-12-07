@@ -12,9 +12,6 @@
 
 #pragma once
 
-#include <conwrap/Context.hpp>
-#include <conwrap/Handler.hpp>
-#include <conwrap/HandlerWithContext.hpp>
 #include <future>
 
 
@@ -26,31 +23,13 @@ namespace conwrap
 	template <typename ResourceType>
 	class ProcessorProxy;
 
-	template <typename ResourceType, template<typename ResourceType, typename ResultType> class TaskResultType>
+	template <typename ResourceType>
 	class Provider
 	{
 		public:
 			explicit Provider(Processor<ResourceType>* p, ProcessorProxy<ResourceType>* pp)
 			: processorPtr(p)
 			, processorProxyPtr(pp) {}
-
-			inline Context<ResourceType> createContext()
-			{
-				return Context<ResourceType>(getProcessorProxy());
-			}
-
-			// TODO: createTaskResult(...) should be refactored
-			template <typename F, typename ResultType>
-			auto createTaskResult(Handler<ResourceType, F, ResultType>& task) -> TaskResultType<ResourceType, ResultType>
-			{
-				return TaskResultType<ResourceType, ResultType>(getProcessor(), getProcessorProxy(), task.getFuture());
-			}
-
-			template <typename F, typename ResultType>
-			auto createTaskResult(HandlerWithContext<ResourceType, F, ResultType>& task) -> TaskResultType<ResourceType, ResultType>
-			{
-				return TaskResultType<ResourceType, ResultType>(getProcessor(), getProcessorProxy(), task.getFuture());
-			}
 
 			inline Processor<ResourceType>* getProcessor()
 			{

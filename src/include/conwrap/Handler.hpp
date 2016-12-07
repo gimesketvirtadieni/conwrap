@@ -13,7 +13,6 @@
 
 #pragma once
 
-#include <conwrap/Context.hpp>
 #include <future>
 #include <utility>
 
@@ -21,48 +20,59 @@
 namespace conwrap
 {
 	// forward declaration
+	template <typename ResourceType>
+	class Processor;
 	template <typename ResourceType, template<typename ResourceType, typename ResultType> class TaskResultType>
-	class Provider;
+	class ProcessorBase;
+	template <typename ResourceType>
+	class ProcessorProxy;
 
 	// this is a bit quicker version for std::packaged_task
-	template <typename ResourceType, typename FunctionType, typename ResultType>
+	template <typename ResourceType, typename FunctionType, template<typename ResourceType, typename ResultType> class TaskResultType>
 	class Handler
 	{
 		// friend declaration
-		template <typename, template<typename, typename> class> friend class Provider;
+		template <typename, template<typename, typename> class> friend class ProcessorBase;
 
 		private:
 			FunctionType                  fun;
+			Processor<ResourceType>*      processorPtr;
+			ProcessorProxy<ResourceType>* processorProxyPtr;
 			std::promise<decltype(fun())> promise;
 
 		public:
-			explicit Handler(FunctionType f)
-			: fun(f) {}
+			explicit Handler(FunctionType f, Processor<ResourceType>* p, ProcessorProxy<ResourceType>* pp)
+			: fun(f)
+			, processorPtr(p)
+			, processorProxyPtr(pp) {}
 
 			Handler(Handler& c)
 			: fun(std::move(c.fun))
+			, processorPtr(std::move(c.processorPtr))
+			, processorProxyPtr(std::move(c.processorProxyPtr))
 			, promise(std::move(c.promise)) {}
 
 			Handler(Handler&& c)
 			: fun(std::move(c.fun))
+			, processorPtr(std::move(c.processorPtr))
+			, processorProxyPtr(std::move(c.processorProxyPtr))
 			, promise(std::move(c.promise)) {}
 
-			// TODO: task should be connected with its result
-/*
-			auto createResult() -> TaskResultType<ResourceType, ResultType>
-			{
-				return TaskResultType<ResourceType, ResultType>(getProcessor(), getProcessorProxy(), task.getFuture());
-			}
-*/
 			inline void operator() ()
 			{
 				setPromiseValue(fun, promise);
 			}
 
 		protected:
+			auto createResult() -> TaskResultType<ResourceType, decltype(fun())>
+			{
+				// this method can be called only once per task
+				return TaskResultType<ResourceType, decltype(fun())>(processorPtr, processorProxyPtr, std::shared_future<decltype(fun())>(std::move(getFuture())));
+			}
+
 			inline auto getFuture()
 			{
-				return promise.get_future();
+				return std::move(promise.get_future());
 			}
 
 			template <typename Fun, typename Fut>

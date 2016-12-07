@@ -45,7 +45,7 @@ namespace conwrap
 			}
 
 		protected:
-			virtual Provider<ResourceType, TaskResultProxy>* getProvider() override
+			virtual Provider<ResourceType>* getProvider() override
 			{
 				return processorImplPtr->getProviderProxy();
 			}

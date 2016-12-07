@@ -11,15 +11,15 @@
 
 
 // rewriting visibility of getFuture in conwrap::Handler
-class HandlerDummy : public conwrap::Handler<bool, std::function<void()>, void>
+class HandlerDummy : public conwrap::Handler<bool, std::function<void()>, conwrap::TaskResult>
 {
 	public:
 		explicit HandlerDummy(std::function<void()> f)
-		: Handler(std::move(f)) {}
+		: Handler(std::move(f), nullptr, nullptr) {}
 
 		inline auto getFuture()
 		{
-			return conwrap::Handler<bool, std::function<void()>, void>::getFuture();
+			return conwrap::Handler<bool, std::function<void()>, conwrap::TaskResult>::getFuture();
 		}
 };
 
