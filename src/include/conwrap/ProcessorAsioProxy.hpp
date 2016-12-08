@@ -54,9 +54,14 @@ namespace conwrap
 			}
 
 		protected:
-			virtual Provider<ResourceType>* getProvider() override
+			virtual Processor<ResourceType>* getProcessor() override
 			{
-				return processorImplPtr->getProviderProxy();
+				return processorImplPtr->getProvider()->getProcessor();
+			}
+
+			virtual ProcessorProxy<ResourceType>* getProcessorProxy() override
+			{
+				return this;
 			}
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override

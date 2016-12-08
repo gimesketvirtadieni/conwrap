@@ -16,7 +16,6 @@
 #include <conwrap/Handler.hpp>
 #include <conwrap/HandlerWithContext.hpp>
 #include <conwrap/HandlerWrapper.hpp>
-#include <conwrap/Provider.hpp>
 #include <conwrap/TaskResult.hpp>
 #include <functional>
 #include <future>
@@ -24,6 +23,12 @@
 
 namespace conwrap
 {
+	// forward declaration
+	template <typename ResourceType>
+	class Processor;
+	template <typename ResourceType>
+	class ProcessorProxy;
+
 	template <typename ResourceType, template<typename ResourceType, typename ResultType> class TaskResultType>
 	class ProcessorBase
 	{
@@ -34,7 +39,7 @@ namespace conwrap
 			template <typename F>
 			auto process(F fun) -> TaskResultType<ResourceType, decltype(fun())>
 			{
-				Handler<ResourceType, F, TaskResultType> handler(std::move(fun), getProvider()->getProcessor(), getProvider()->getProcessorProxy());
+				Handler<ResourceType, F, TaskResultType> handler(std::move(fun), getProcessor(), getProcessorProxy());
 
 				// creating and storing on the stack a task result so it can be returned to the caller
 				auto taskResult = handler.createResult();
@@ -48,7 +53,7 @@ namespace conwrap
 			template <typename F>
 			auto process(F fun) -> TaskResultType<ResourceType, decltype(fun(std::declval<Context<ResourceType>>()))>
 			{
-				HandlerWithContext<ResourceType, F, TaskResultType> handler(std::move(fun), Context<ResourceType>(getProvider()->getProcessorProxy()), getProvider()->getProcessor(), getProvider()->getProcessorProxy());
+				HandlerWithContext<ResourceType, F, TaskResultType> handler(std::move(fun), Context<ResourceType>(getProcessorProxy()), getProcessor(), getProcessorProxy());
 
 				// creating and storing on the stack a task result so it can be returned to the caller
 				auto taskResult = handler.createResult();
@@ -60,9 +65,10 @@ namespace conwrap
 			}
 
 		protected:
-			virtual Provider<ResourceType>* getProvider() = 0;
-			virtual void                    post(HandlerWrapper) = 0;
-			virtual HandlerWrapper          wrapHandler(std::function<void()>) = 0;
-			virtual HandlerWrapper          wrapHandler(std::function<void()>, bool) = 0;
+			virtual Processor<ResourceType>*      getProcessor() = 0;
+			virtual ProcessorProxy<ResourceType>* getProcessorProxy() = 0;
+			virtual void                          post(HandlerWrapper) = 0;
+			virtual HandlerWrapper                wrapHandler(std::function<void()>) = 0;
+			virtual HandlerWrapper                wrapHandler(std::function<void()>, bool) = 0;
 	};
 }

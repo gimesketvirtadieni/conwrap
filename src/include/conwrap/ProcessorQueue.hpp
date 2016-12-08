@@ -50,7 +50,6 @@ namespace conwrap
 			{
 				// creating providers
 				processorImplPtr->setProvider(Provider<ResourceType>(this, processorProxyPtr.get()));
-				processorImplPtr->setProviderProxy(Provider<ResourceType>(this, processorProxyPtr.get()));
 
 				// this is a 'wooddoo' compile-time dependancy injection inspied by https://jguegant.github.io/blogs/tech/sfinae-introduction.html
 				setProcessor(processorImplPtr->getResource());
@@ -88,9 +87,14 @@ namespace conwrap
 			template <typename T>
 			struct hasSetProcessorProxy<T, decltype(std::declval<T>().setProcessorProxy((conwrap::ProcessorQueueProxy<ResourceType>*)nullptr))> : std::true_type {};
 
-			virtual Provider<ResourceType>* getProvider() override
+			virtual Processor<ResourceType>* getProcessor() override
 			{
-				return processorImplPtr->getProvider();
+				return this;
+			}
+
+			virtual ProcessorProxy<ResourceType>* getProcessorProxy() override
+			{
+				return processorProxyPtr.get();
 			}
 
 			virtual void post(HandlerWrapper handlerWrapper) override

@@ -91,14 +91,19 @@ namespace conwrap
 					return nextEpoch;
 				}
 
-				virtual Provider<ResourceType>* getProvider() override
+				virtual Processor<ResourceType>* getProcessor() override
 				{
-					return providerPtr.get();
+					return getProvider()->getProcessor();
 				}
 
-				inline Provider<ResourceType>* getProviderProxy()
+				virtual ProcessorProxy<ResourceType>* getProcessorProxy() override
 				{
-					return providerProxyPtr.get();
+					return getProvider()->getProcessorProxy();
+				}
+
+				inline Provider<ResourceType>* getProvider()
+				{
+					return providerPtr.get();
 				}
 
 				virtual void post(HandlerWrapper handlerWrapper) override
@@ -109,11 +114,6 @@ namespace conwrap
 				inline void setProvider(Provider<ResourceType> t)
 				{
 					providerPtr = std::make_unique<Provider<ResourceType>>(t);
-				}
-
-				inline void setProviderProxy(Provider<ResourceType> t)
-				{
-					providerProxyPtr = std::make_unique<Provider<ResourceType>>(t);
 				}
 
 				void start()
@@ -175,7 +175,6 @@ namespace conwrap
 			private:
 				std::unique_ptr<ResourceType>           resourcePtr;
 				std::unique_ptr<Provider<ResourceType>> providerPtr;
-				std::unique_ptr<Provider<ResourceType>> providerProxyPtr;
 				ConcurrentQueue<HandlerWrapper>         queue;
 				std::thread                             thread;
 				std::mutex                              threadLock;

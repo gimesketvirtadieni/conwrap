@@ -83,14 +83,19 @@ namespace conwrap
 				}
 
 			protected:
-				virtual Provider<Dummy>* getProvider() override
+				virtual Processor<Dummy>* getProcessor() override
 				{
-					return providerPtr.get();
+					return getProvider()->getProcessor();
 				}
 
-				inline Provider<Dummy>* getProviderProxy()
+				virtual ProcessorProxy<Dummy>* getProcessorProxy() override
 				{
-					return providerProxyPtr.get();
+					return getProvider()->getProcessorProxy();
+				}
+
+				inline Provider<Dummy>* getProvider()
+				{
+					return providerPtr.get();
 				}
 
 				virtual void post(HandlerWrapper handlerWrapper) override
@@ -101,11 +106,6 @@ namespace conwrap
 				inline void setProvider(Provider<Dummy> t)
 				{
 					providerPtr = std::make_unique<Provider<Dummy>>(t);
-				}
-
-				inline void setProviderProxy(Provider<Dummy> t)
-				{
-					providerProxyPtr = std::make_unique<Provider<Dummy>>(t);
 				}
 
 				virtual conwrap::HandlerWrapper wrapHandler(std::function<void()> handler) override
@@ -121,7 +121,6 @@ namespace conwrap
 			private:
 				std::unique_ptr<Dummy>           resourcePtr;
 				std::unique_ptr<Provider<Dummy>> providerPtr;
-				std::unique_ptr<Provider<Dummy>> providerProxyPtr;
 		};
 	}
 
@@ -147,9 +146,14 @@ namespace conwrap
 			}
 
 		protected:
-			virtual Provider<Dummy>* getProvider() override
+			virtual Processor<Dummy>* getProcessor() override
 			{
-				return processorImplPtr->getProviderProxy();
+				return processorImplPtr->getProvider()->getProcessor();
+			}
+
+			virtual ProcessorProxy<Dummy>* getProcessorProxy() override
+			{
+				return this;
 			}
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
@@ -172,7 +176,6 @@ namespace conwrap
 			, processorProxyPtr(std::unique_ptr<ProcessorMockProxy>(new ProcessorMockProxy(processorImplPtr)))
 			{
 				processorImplPtr->setProvider(Provider<Dummy>(this, processorProxyPtr.get()));
-				processorImplPtr->setProviderProxy(Provider<Dummy>(this, processorProxyPtr.get()));
 				processorImplPtr->getResource()->setProcessor(this);
 				processorImplPtr->getResource()->setProcessorProxy(processorProxyPtr.get());
 			}
@@ -195,9 +198,14 @@ namespace conwrap
 			}
 
 		protected:
-			virtual Provider<Dummy>* getProvider() override
+			virtual Processor<Dummy>* getProcessor() override
 			{
-				return processorImplPtr->getProvider();
+				return this;
+			}
+
+			virtual ProcessorProxy<Dummy>* getProcessorProxy() override
+			{
+				return processorProxyPtr.get();
 			}
 
 			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override

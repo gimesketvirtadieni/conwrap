@@ -97,14 +97,19 @@ namespace conwrap
 				}
 
 			protected:
-				virtual Provider<ResourceType>* getProvider() override
+				virtual Processor<ResourceType>* getProcessor() override
 				{
-					return providerPtr.get();
+					return getProvider()->getProcessor();
 				}
 
-				inline Provider<ResourceType>* getProviderProxy()
+				virtual ProcessorProxy<ResourceType>* getProcessorProxy() override
 				{
-					return providerProxyPtr.get();
+					return getProvider()->getProcessorProxy();
+				}
+
+				inline Provider<ResourceType>* getProvider()
+				{
+					return providerPtr.get();
 				}
 
 				auto processPending()
@@ -116,11 +121,6 @@ namespace conwrap
 				inline void setProvider(Provider<ResourceType> t)
 				{
 					providerPtr = std::make_unique<Provider<ResourceType>>(t);
-				}
-
-				inline void setProviderProxy(Provider<ResourceType> t)
-				{
-					providerProxyPtr = std::make_unique<Provider<ResourceType>>(t);
 				}
 
 				void start()
@@ -187,7 +187,6 @@ namespace conwrap
 
 			private:
 				std::unique_ptr<Provider<ResourceType>> providerPtr;
-				std::unique_ptr<Provider<ResourceType>> providerProxyPtr;
 				ProcessorQueue<ResourceType>            processorQueue;
 				asio::io_service                        dispatcher;
 				std::unique_ptr<asio::io_service::work> workPtr;
