@@ -90,9 +90,9 @@ namespace conwrap
 					dispatcher.post(handlerWrapper);
 				}
 
-				virtual TaskWrapped wrapHandler(std::function<void()> handler) override
+				virtual TaskWrapped wrap(std::function<void()> handler) override
 				{
-					return std::move(wrapHandler(std::move(handler), false));
+					return std::move(wrap(std::move(handler), false));
 				}
 
 			protected:
@@ -173,11 +173,11 @@ namespace conwrap
 					}
 				}
 
-				virtual TaskWrapped wrapHandler(std::function<void()> handler, bool proxy) override
+				virtual TaskWrapped wrap(std::function<void()> handler, bool proxy) override
 				{
 					return std::move(TaskWrapped([=]
 					{
-						processorQueue.post(std::move(processorQueue.wrapHandler([=]
+						processorQueue.post(std::move(processorQueue.wrap([=]
 						{
 							handler();
 						}, proxy)));

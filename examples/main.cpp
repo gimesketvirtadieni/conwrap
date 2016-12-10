@@ -75,7 +75,7 @@ class Server
 				[=](const std::error_code error)
 				{
 					// wrapping is needed to pass handler from asio's thread to the processor's thread
-					processorProxyPtr->wrapHandler([=]
+					processorProxyPtr->wrap([=]
 					{
 						// start receiving data
 						onData(error, 0);
@@ -101,7 +101,7 @@ class Server
 					[=](const std::error_code error, const std::size_t receivedSize)
 					{
 						// wrapping is needed to pass handler from asio's thread to the processor's thread
-						processorProxyPtr->wrapHandler([=]
+						processorProxyPtr->wrap([=]
 						{
 							onData(error, receivedSize);
 						})();
@@ -201,7 +201,7 @@ int main(int argc, char *argv[])
 			processorAsio.getDispatcher()->post(
 
 				// a task submitted directly via asio io_service must be wrapped as following
-				processorAsio.wrapHandler([&]
+				processorAsio.wrap([&]
 				{
 					processorAsio.getResource()->ping();
 				})

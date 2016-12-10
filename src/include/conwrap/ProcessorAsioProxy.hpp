@@ -47,9 +47,9 @@ namespace conwrap
 				processorImplPtr->post(std::move(handlerWrapper));
 			}
 
-			virtual TaskWrapped wrapHandler(std::function<void()> handler)
+			virtual TaskWrapped wrap(std::function<void()> handler)
 			{
-				return std::move(wrapHandler(std::move(handler), true));
+				return std::move(wrap(std::move(handler), true));
 			}
 
 		protected:
@@ -63,9 +63,9 @@ namespace conwrap
 				return this;
 			}
 
-			virtual TaskWrapped wrapHandler(std::function<void()> handler, bool proxy) override
+			virtual TaskWrapped wrap(std::function<void()> handler, bool proxy) override
 			{
-				return std::move(processorImplPtr->wrapHandler(std::move(handler), proxy));
+				return std::move(processorImplPtr->wrap(std::move(handler), proxy));
 			}
 
 		private:

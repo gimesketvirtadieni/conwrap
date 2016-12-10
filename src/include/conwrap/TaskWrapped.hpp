@@ -42,11 +42,6 @@ namespace conwrap
 				return epoch;
 			}
 
-			inline auto getHandler()
-			{
-				return handler;
-			}
-
 			inline auto getProxy()
 			{
 				return proxy;

@@ -75,9 +75,9 @@ namespace conwrap
 				processorImplPtr->post(std::move(handlerWrapper));
 			}
 
-			virtual TaskWrapped wrapHandler(std::function<void()> handler)
+			virtual TaskWrapped wrap(std::function<void()> handler)
 			{
-				return std::move(wrapHandler(std::move(handler), false));
+				return std::move(wrap(std::move(handler), false));
 			}
 
 		protected:
@@ -121,9 +121,9 @@ namespace conwrap
 			template <typename T>
 			typename std::enable_if<!hasSetProcessorProxy<T>::value, void>::type setProcessorProxy(T* obj) {}
 
-			virtual TaskWrapped wrapHandler(std::function<void()> handler, bool proxy) override
+			virtual TaskWrapped wrap(std::function<void()> handler, bool proxy) override
 			{
-				return std::move(processorImplPtr->wrapHandler(std::move(handler), proxy));
+				return std::move(processorImplPtr->wrap(std::move(handler), proxy));
 			}
 
 		private:

@@ -76,7 +76,7 @@ TEST(ProcessorAsio, wrapHandler1)
 	std::atomic<bool>             wasCalled(false);
 
 	auto dispatcher = processor.getDispatcher();
-	auto handler    = processor.wrapHandler([&]
+	auto handler    = processor.wrap([&]
 	{
 		// simulating some action
 		std::this_thread::sleep_for(std::chrono::milliseconds{10});

@@ -58,13 +58,13 @@ namespace conwrap
 				// creating and storing on the stack a task result so it can be returned to the caller
 				auto taskResult = task.createResult();
 
-				// posting a new handler
-				this->post(std::move(this->wrapHandler(std::move(task))));
+				// posting the task for the processing
+				this->post(std::move(this->wrap(std::move(task))));
 
 				return std::move(taskResult);
 			}
 
-			virtual TaskWrapped wrapHandler(std::function<void()>) = 0;
-			virtual TaskWrapped wrapHandler(std::function<void()>, bool) = 0;
+			virtual TaskWrapped wrap(std::function<void()>) = 0;
+			virtual TaskWrapped wrap(std::function<void()>, bool) = 0;
 	};
 }

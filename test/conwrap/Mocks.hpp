@@ -103,12 +103,12 @@ namespace conwrap
 					processorProxyPtr = pp;
 				}
 
-				virtual conwrap::TaskWrapped wrapHandler(std::function<void()> handler) override
+				virtual conwrap::TaskWrapped wrap(std::function<void()> handler) override
 				{
-					return wrapHandler(handler, false);
+					return wrap(handler, false);
 				}
 
-				virtual conwrap::TaskWrapped wrapHandler(std::function<void()> handler, bool proxy) override
+				virtual conwrap::TaskWrapped wrap(std::function<void()> handler, bool proxy) override
 				{
 					return conwrap::TaskWrapped(handler, proxy, 0);
 				}
@@ -136,9 +136,9 @@ namespace conwrap
 				handlerWrapper();
 			}
 
-			virtual TaskWrapped wrapHandler(std::function<void()> handler) override
+			virtual TaskWrapped wrap(std::function<void()> handler) override
 			{
-				return wrapHandler(handler, false);
+				return wrap(handler, false);
 			}
 
 		protected:
@@ -152,7 +152,7 @@ namespace conwrap
 				return this;
 			}
 
-			virtual TaskWrapped wrapHandler(std::function<void()> handler, bool proxy) override
+			virtual TaskWrapped wrap(std::function<void()> handler, bool proxy) override
 			{
 				return TaskWrapped(handler, proxy, 0);
 			}
@@ -187,9 +187,9 @@ namespace conwrap
 				handlerWrapper();
 			}
 
-			virtual TaskWrapped wrapHandler(std::function<void()> handler) override
+			virtual TaskWrapped wrap(std::function<void()> handler) override
 			{
-				return wrapHandler(handler, false);
+				return wrap(handler, false);
 			}
 
 		protected:
@@ -203,7 +203,7 @@ namespace conwrap
 				return processorProxyPtr.get();
 			}
 
-			virtual TaskWrapped wrapHandler(std::function<void()> handler, bool proxy) override
+			virtual TaskWrapped wrap(std::function<void()> handler, bool proxy) override
 			{
 				return TaskWrapped(handler, proxy, 0);
 			}
