@@ -29,7 +29,7 @@ namespace conwrap
 	class ProcessorProxy;
 
 	template <typename ResourceType, typename FunctionType, template<typename ResourceType, typename ResultType> class TaskResultType>
-	class HandlerWithContext
+	class TaskWithContext
 	{
 		// friend declaration
 		template <typename, template<typename, typename> class> friend class ProcessorBase;
@@ -42,20 +42,21 @@ namespace conwrap
 			std::promise<decltype(fun(std::declval<Context<ResourceType>>()))> promise;
 
 		public:
-			explicit HandlerWithContext(FunctionType f, Context<ResourceType> c, Processor<ResourceType>* p, ProcessorProxy<ResourceType>* pp)
+			explicit TaskWithContext(FunctionType f, Context<ResourceType> c, Processor<ResourceType>* p, ProcessorProxy<ResourceType>* pp)
 			: fun(f)
 			, context(c)
 			, processorPtr(p)
 			, processorProxyPtr(pp) {}
 
-			HandlerWithContext(HandlerWithContext& c)
+			// copy contructor is required to comply with std::function<...>
+			TaskWithContext(TaskWithContext& c)
 			: fun(std::move(c.fun))
 			, context(std::move(c.context))
 			, processorPtr(std::move(c.processorPtr))
 			, processorProxyPtr(std::move(c.processorProxyPtr))
 			, promise(std::move(c.promise)) {}
 
-			HandlerWithContext(HandlerWithContext&& c)
+			TaskWithContext(TaskWithContext&& c)
 			: fun(std::move(c.fun))
 			, context(std::move(c.context))
 			, processorPtr(std::move(c.processorPtr))

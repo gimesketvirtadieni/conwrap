@@ -1,30 +1,30 @@
 #include <chrono>
 #include <conwrap/ConcurrentQueue.hpp>
-#include <conwrap/Handler.hpp>
-#include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/Processor.hpp>
 #include <conwrap/ProcessorProxy.hpp>
 #include <conwrap/ProcessorQueue.hpp>
 #include <conwrap/ProcessorAsio.hpp>
+#include <conwrap/Task.hpp>
+#include <conwrap/TaskWrapped.hpp>
 #include <future>
 #include <iostream>
 
 
 // rewriting visibility of getFuture in conwrap::Handler
-class HandlerDummy : public conwrap::Handler<bool, std::function<void()>, conwrap::TaskResult>
+class HandlerDummy : public conwrap::Task<bool, std::function<void()>, conwrap::TaskResult>
 {
 	public:
 		explicit HandlerDummy(std::function<void()> f)
-		: Handler(std::move(f), nullptr, nullptr) {}
+		: Task(std::move(f), nullptr, nullptr) {}
 
 		inline auto getFuture()
 		{
-			return conwrap::Handler<bool, std::function<void()>, conwrap::TaskResult>::getFuture();
+			return conwrap::Task<bool, std::function<void()>, conwrap::TaskResult>::getFuture();
 		}
 };
 
 
-void generate_baseline(conwrap::ConcurrentQueue<conwrap::HandlerWrapper>* queuePtr)
+void generate_baseline(conwrap::ConcurrentQueue<conwrap::TaskWrapped>* queuePtr)
 {
 	for (int i = 0; i < 1000000; i++)
 	{
@@ -33,7 +33,7 @@ void generate_baseline(conwrap::ConcurrentQueue<conwrap::HandlerWrapper>* queueP
 		// even though this shared future is not used, it is left here keep logic alike to processor
 		std::shared_future<void>(handler.getFuture());
 
-		queuePtr->push(std::move(conwrap::HandlerWrapper(std::move(handler), false, 0)));
+		queuePtr->push(std::move(conwrap::TaskWrapped(std::move(handler), false, 0)));
 	}
 }
 
@@ -48,7 +48,7 @@ void generate(conwrap::Processor<bool>* processorPtr)
 
 
 int main(int argc, char** argv) {
-	auto queuePtr          = std::make_unique<conwrap::ConcurrentQueue<conwrap::HandlerWrapper>>();
+	auto queuePtr          = std::make_unique<conwrap::ConcurrentQueue<conwrap::TaskWrapped>>();
 	auto processorQueuePtr = std::make_unique<conwrap::ProcessorQueue<bool>>();
 	auto processorAsioPtr  = std::make_unique<conwrap::ProcessorAsio<bool>>();
 
@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
 		// executing handlers
 		for (int i = 0; i < 1000000; i++)
 		{
-			conwrap::HandlerWrapper& handler = queuePtr->front();
+			conwrap::TaskWrapped& handler = queuePtr->front();
 			handler();
 			queuePtr->pop();
 		}

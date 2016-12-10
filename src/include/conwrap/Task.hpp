@@ -29,7 +29,7 @@ namespace conwrap
 
 	// this is a bit quicker version for std::packaged_task
 	template <typename ResourceType, typename FunctionType, template<typename ResourceType, typename ResultType> class TaskResultType>
-	class Handler
+	class Task
 	{
 		// friend declaration
 		template <typename, template<typename, typename> class> friend class ProcessorBase;
@@ -41,18 +41,19 @@ namespace conwrap
 			std::promise<decltype(fun())> promise;
 
 		public:
-			explicit Handler(FunctionType f, Processor<ResourceType>* p, ProcessorProxy<ResourceType>* pp)
+			explicit Task(FunctionType f, Processor<ResourceType>* p, ProcessorProxy<ResourceType>* pp)
 			: fun(f)
 			, processorPtr(p)
 			, processorProxyPtr(pp) {}
 
-			Handler(Handler& c)
+			// copy contructor is required to comply with std::function<...>
+			Task(Task& c)
 			: fun(std::move(c.fun))
 			, processorPtr(std::move(c.processorPtr))
 			, processorProxyPtr(std::move(c.processorProxyPtr))
 			, promise(std::move(c.promise)) {}
 
-			Handler(Handler&& c)
+			Task(Task&& c)
 			: fun(std::move(c.fun))
 			, processorPtr(std::move(c.processorPtr))
 			, processorProxyPtr(std::move(c.processorProxyPtr))

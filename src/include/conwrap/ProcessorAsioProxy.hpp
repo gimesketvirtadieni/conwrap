@@ -15,11 +15,10 @@
 #include <asio.hpp>
 #include <functional>
 #include <memory>
-#include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/ProcessorAsioImpl.hpp>
 #include <conwrap/ProcessorProxy.hpp>
-#include <conwrap/Provider.hpp>
 #include <conwrap/TaskResultProxy.hpp>
+#include <conwrap/TaskWrapped.hpp>
 
 
 namespace conwrap
@@ -43,12 +42,12 @@ namespace conwrap
 				return processorImplPtr->getResource();
 			}
 
-			virtual void post(HandlerWrapper handlerWrapper) override
+			virtual void post(TaskWrapped handlerWrapper) override
 			{
 				processorImplPtr->post(std::move(handlerWrapper));
 			}
 
-			virtual HandlerWrapper wrapHandler(std::function<void()> handler)
+			virtual TaskWrapped wrapHandler(std::function<void()> handler)
 			{
 				return std::move(wrapHandler(std::move(handler), true));
 			}
@@ -56,7 +55,7 @@ namespace conwrap
 		protected:
 			virtual Processor<ResourceType>* getProcessor() override
 			{
-				return processorImplPtr->getProvider()->getProcessor();
+				return processorImplPtr->getProcessor();
 			}
 
 			virtual ProcessorProxy<ResourceType>* getProcessorProxy() override
@@ -64,7 +63,7 @@ namespace conwrap
 				return this;
 			}
 
-			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
+			virtual TaskWrapped wrapHandler(std::function<void()> handler, bool proxy) override
 			{
 				return std::move(processorImplPtr->wrapHandler(std::move(handler), proxy));
 			}

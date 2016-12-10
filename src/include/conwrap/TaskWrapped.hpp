@@ -18,21 +18,21 @@
 
 namespace conwrap
 {
-	class HandlerWrapper
+	class TaskWrapped
 	{
 		public:
-			explicit HandlerWrapper(std::function<void()> h, bool p, conwrap::Epoch e)
+			explicit TaskWrapped(std::function<void()> h, bool p, conwrap::Epoch e)
 			: handler(std::move(h))
 			, proxy(p)
 			, epoch(e) {}
 
 			// copy contructor is required to comply with Asio handler
-			HandlerWrapper(const HandlerWrapper& c)
+			TaskWrapped(const TaskWrapped& c)
 			: handler(std::move(c.handler))
 			, proxy(c.proxy)
 			, epoch(c.epoch) {}
 
-			HandlerWrapper(HandlerWrapper&& c)
+			TaskWrapped(TaskWrapped&& c)
 			: handler(std::move(c.handler))
 			, proxy(c.proxy)
 			, epoch(c.epoch) {}

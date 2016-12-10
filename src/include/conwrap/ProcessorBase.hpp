@@ -13,10 +13,10 @@
 #pragma once
 
 #include <conwrap/Context.hpp>
-#include <conwrap/Handler.hpp>
-#include <conwrap/HandlerWithContext.hpp>
-#include <conwrap/HandlerWrapper.hpp>
+#include <conwrap/Task.hpp>
 #include <conwrap/TaskResult.hpp>
+#include <conwrap/TaskWithContext.hpp>
+#include <conwrap/TaskWrapped.hpp>
 #include <functional>
 #include <future>
 
@@ -35,40 +35,36 @@ namespace conwrap
 		public:
 			virtual ResourceType* getResource() = 0;
 
-			// TODO: both process(...) methods should be combined, because only task type differs
-			template <typename F>
-			auto process(F fun) -> TaskResultType<ResourceType, decltype(fun())>
+			template <typename FunctionType>
+			auto process(FunctionType fun) -> TaskResultType<ResourceType, decltype(fun())>
 			{
-				Handler<ResourceType, F, TaskResultType> handler(std::move(fun), getProcessor(), getProcessorProxy());
-
-				// creating and storing on the stack a task result so it can be returned to the caller
-				auto taskResult = handler.createResult();
-
-				// posting a new handler
-				this->post(std::move(this->wrapHandler(std::move(handler))));
-
-				return taskResult;
+				return std::move(processTask(std::move(Task<ResourceType, FunctionType, TaskResultType>(std::move(fun), getProcessor(), getProcessorProxy()))));
 			}
 
-			template <typename F>
-			auto process(F fun) -> TaskResultType<ResourceType, decltype(fun(std::declval<Context<ResourceType>>()))>
+			template <typename FunctionType>
+			auto process(FunctionType fun) -> TaskResultType<ResourceType, decltype(fun(std::declval<Context<ResourceType>>()))>
 			{
-				HandlerWithContext<ResourceType, F, TaskResultType> handler(std::move(fun), Context<ResourceType>(getProcessorProxy()), getProcessor(), getProcessorProxy());
-
-				// creating and storing on the stack a task result so it can be returned to the caller
-				auto taskResult = handler.createResult();
-
-				// posting a new handler
-				this->post(std::move(this->wrapHandler(std::move(handler))));
-
-				return taskResult;
+				return std::move(processTask(std::move(TaskWithContext<ResourceType, FunctionType, TaskResultType>(std::move(fun), Context<ResourceType>(getProcessorProxy()), getProcessor(), getProcessorProxy()))));
 			}
 
 		protected:
 			virtual Processor<ResourceType>*      getProcessor() = 0;
 			virtual ProcessorProxy<ResourceType>* getProcessorProxy() = 0;
-			virtual void                          post(HandlerWrapper) = 0;
-			virtual HandlerWrapper                wrapHandler(std::function<void()>) = 0;
-			virtual HandlerWrapper                wrapHandler(std::function<void()>, bool) = 0;
+			virtual void                          post(TaskWrapped) = 0;
+
+			template <typename TaskType>
+			auto processTask(TaskType task)
+			{
+				// creating and storing on the stack a task result so it can be returned to the caller
+				auto taskResult = task.createResult();
+
+				// posting a new handler
+				this->post(std::move(this->wrapHandler(std::move(task))));
+
+				return std::move(taskResult);
+			}
+
+			virtual TaskWrapped wrapHandler(std::function<void()>) = 0;
+			virtual TaskWrapped wrapHandler(std::function<void()>, bool) = 0;
 	};
 }

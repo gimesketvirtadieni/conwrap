@@ -56,7 +56,6 @@ namespace conwrap
 		protected:
 			inline ContextContinuation<ResourceType, ResultType> createContext()
 			{
-				// TODO: check ContextContinuation std::shared_future<ResultType>...
 				return ContextContinuation<ResourceType, ResultType>(processorProxyPtr, resultFuture);
 			}
 

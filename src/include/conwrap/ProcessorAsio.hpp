@@ -13,13 +13,12 @@
 #pragma once
 
 #include <asio.hpp>
-#include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/Processor.hpp>
 #include <conwrap/ProcessorAsioImpl.hpp>
 #include <conwrap/ProcessorAsioProxy.hpp>
 #include <conwrap/ProcessorQueue.hpp>
-#include <conwrap/Provider.hpp>
 #include <conwrap/TaskResult.hpp>
+#include <conwrap/TaskWrapped.hpp>
 #include <functional>
 #include <memory>
 #include <type_traits>
@@ -39,8 +38,9 @@ namespace conwrap
 			: processorImplPtr(std::make_shared<internal::ProcessorAsioImpl<ResourceType>>(std::move(resource)))
 			, processorProxyPtr(std::unique_ptr<ProcessorAsioProxy<ResourceType>>(new ProcessorAsioProxy<ResourceType>(processorImplPtr)))
 			{
-				// creating providers
-				processorImplPtr->setProvider(Provider<ResourceType>(this, processorProxyPtr.get()));
+				// weiring processors
+				processorImplPtr->setProcessor(this);
+				processorImplPtr->setProcessorProxy(processorProxyPtr.get());
 
 				// this is a 'wooddoo' compile-time dependancy injection inspied by https://jguegant.github.io/blogs/tech/sfinae-introduction.html
 				setProcessor(processorImplPtr->getResource());
@@ -70,12 +70,12 @@ namespace conwrap
 				processorImplPtr->flush();
 			}
 
-			virtual void post(HandlerWrapper handlerWrapper) override
+			virtual void post(TaskWrapped handlerWrapper) override
 			{
 				processorImplPtr->post(std::move(handlerWrapper));
 			}
 
-			virtual HandlerWrapper wrapHandler(std::function<void()> handler)
+			virtual TaskWrapped wrapHandler(std::function<void()> handler)
 			{
 				return std::move(wrapHandler(std::move(handler), false));
 			}
@@ -121,7 +121,7 @@ namespace conwrap
 			template <typename T>
 			typename std::enable_if<!hasSetProcessorProxy<T>::value, void>::type setProcessorProxy(T* obj) {}
 
-			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
+			virtual TaskWrapped wrapHandler(std::function<void()> handler, bool proxy) override
 			{
 				return std::move(processorImplPtr->wrapHandler(std::move(handler), proxy));
 			}
