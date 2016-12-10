@@ -54,19 +54,19 @@ namespace conwrap
 				return this;
 			}
 
-			virtual void post(TaskWrapped handlerWrapper) override
+			virtual void post(TaskWrapped task) override
 			{
-				processorImplPtr->post(std::move(handlerWrapper));
+				processorImplPtr->post(std::move(task));
 			}
 
-			virtual TaskWrapped wrap(std::function<void()> handler) override
+			virtual TaskWrapped wrap(std::function<void()> task) override
 			{
-				return std::move(wrap(std::move(handler), true));
+				return std::move(wrap(std::move(task), true));
 			}
 
-			virtual TaskWrapped wrap(std::function<void()> handler, bool proxy) override
+			virtual TaskWrapped wrap(std::function<void()> task, bool proxy) override
 			{
-				return std::move(processorImplPtr->wrap(std::move(handler), proxy));
+				return std::move(processorImplPtr->wrap(std::move(task), proxy));
 			}
 
 		private:

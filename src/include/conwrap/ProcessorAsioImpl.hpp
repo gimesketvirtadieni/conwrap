@@ -49,13 +49,13 @@ namespace conwrap
 
 				virtual void flush() override
 				{
-					// restarting dispatcher which will make sure all handlers are processed
+					// restarting dispatcher which will make sure all tasks are processed
 					{
 						std::lock_guard<std::mutex> guard(threadLock);
 
 						if (thread.joinable())
 						{
-							// reseting work object will make dispatcher exit as soon as there is no handler to process
+							// reseting work object will make dispatcher exit as soon as there is no task to process
 							this->process([&]
 							{
 								workPtr.reset();
@@ -85,14 +85,14 @@ namespace conwrap
 					return processorQueue.getResource();
 				}
 
-				virtual void post(TaskWrapped handlerWrapper) override
+				virtual void post(TaskWrapped task) override
 				{
-					dispatcher.post(handlerWrapper);
+					dispatcher.post(task);
 				}
 
-				virtual TaskWrapped wrap(std::function<void()> handler) override
+				virtual TaskWrapped wrap(std::function<void()> task) override
 				{
-					return std::move(wrap(std::move(handler), false));
+					return std::move(wrap(std::move(task), false));
 				}
 
 			protected:
@@ -144,7 +144,7 @@ namespace conwrap
 									// the main processing loop
 									while (processPending() > 0)
 									{
-										// queue must be flushed because it may generate new handlers
+										// queue must be flushed because it may generate new tasks
 										processorQueue.flush();
 									}
 								}
@@ -173,13 +173,13 @@ namespace conwrap
 					}
 				}
 
-				virtual TaskWrapped wrap(std::function<void()> handler, bool proxy) override
+				virtual TaskWrapped wrap(std::function<void()> task, bool proxy) override
 				{
 					return std::move(TaskWrapped([=]
 					{
 						processorQueue.post(std::move(processorQueue.wrap([=]
 						{
-							handler();
+							task();
 						}, proxy)));
 					}, proxy, 0));
 				}

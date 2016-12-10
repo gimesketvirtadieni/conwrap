@@ -21,19 +21,19 @@ namespace conwrap
 	class TaskWrapped
 	{
 		public:
-			explicit TaskWrapped(std::function<void()> h, bool p, conwrap::Epoch e)
-			: handler(std::move(h))
+			explicit TaskWrapped(std::function<void()> t, bool p, conwrap::Epoch e)
+			: task(std::move(t))
 			, proxy(p)
 			, epoch(e) {}
 
 			// copy contructor is required to comply with Asio handler
 			TaskWrapped(const TaskWrapped& c)
-			: handler(std::move(c.handler))
+			: task(std::move(c.task))
 			, proxy(c.proxy)
 			, epoch(c.epoch) {}
 
 			TaskWrapped(TaskWrapped&& c)
-			: handler(std::move(c.handler))
+			: task(std::move(c.task))
 			, proxy(c.proxy)
 			, epoch(c.epoch) {}
 
@@ -49,11 +49,11 @@ namespace conwrap
 
 			inline auto operator()()
 			{
-				handler();
+				task();
 			}
 
 		private:
-			std::function<void()> handler;
+			std::function<void()> task;
 			bool                  proxy;
 			conwrap::Epoch        epoch;
 	};

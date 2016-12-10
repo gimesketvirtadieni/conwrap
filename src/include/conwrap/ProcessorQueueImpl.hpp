@@ -55,10 +55,10 @@ namespace conwrap
 						return getNextEpoch();
 					}).get();
 
-					// waiting for all 'child' handlers to be processed
+					// waiting for all 'child' tasks to complete
 					while (childExists(currentEpoch))
 					{
-						// TODO: insert flush handler after the last child instead of adding at the end of the queue
+						// TODO: insert flush task after the last child instead of adding at the end of the queue
 						this->process([=] {}).wait();
 					}
 				}
@@ -100,9 +100,9 @@ namespace conwrap
 					return processorProxyPtr;
 				}
 
-				virtual void post(TaskWrapped handlerWrapper) override
+				virtual void post(TaskWrapped task) override
 				{
-					queue.push(std::move(handlerWrapper));
+					queue.push(std::move(task));
 				}
 
 				inline void setProcessor(Processor<ResourceType>* p)
@@ -126,14 +126,14 @@ namespace conwrap
 							{
 								for(finished = false; !(queue.empty() && finished);)
 								{
-									// waiting for a handler
-									TaskWrapped& handler = queue.front();
+									// waiting for a task to arrive
+									TaskWrapped& task = queue.front();
 
 									// setting current epoch to be used for submitted tasks via processor proxy
-									currentEpoch = handler.getEpoch();
+									currentEpoch = task.getEpoch();
 
-									// executing handler
-									handler();
+									// executing task
+									task();
 
 									// removing executed item
 									queue.pop();
@@ -155,20 +155,20 @@ namespace conwrap
 								finished = true;
 							});
 
-							// waiting until consumer finsihes all pending handlers
+							// waiting until consumer finsihes all pending tasks
 							thread.join();
 						}
 					}
 				}
 
-				virtual TaskWrapped wrap(std::function<void()> handler) override
+				virtual TaskWrapped wrap(std::function<void()> task) override
 				{
-					return std::move(wrap(std::move(handler), false));
+					return std::move(wrap(std::move(task), false));
 				}
 
-				virtual TaskWrapped wrap(std::function<void()> handler, bool proxy) override
+				virtual TaskWrapped wrap(std::function<void()> task, bool proxy) override
 				{
-					return std::move(TaskWrapped(std::move(handler), proxy, (proxy ? currentEpoch : nextEpoch++)));
+					return std::move(TaskWrapped(std::move(task), proxy, (proxy ? currentEpoch : nextEpoch++)));
 				}
 
 			private:
