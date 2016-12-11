@@ -58,7 +58,6 @@ namespace conwrap
 					// waiting for all 'child' tasks to complete
 					while (childExists(currentEpoch))
 					{
-						// TODO: insert flush task after the last child instead of adding at the end of the queue
 						this->process([=] {}).wait();
 					}
 				}

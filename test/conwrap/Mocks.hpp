@@ -110,7 +110,7 @@ namespace conwrap
 
 				virtual conwrap::TaskWrapped wrap(std::function<void()> handler, bool proxy) override
 				{
-					return conwrap::TaskWrapped(handler, proxy, 0);
+					return conwrap::TaskWrapped(handler, proxy, Epoch(0));
 				}
 
 			private:
@@ -154,7 +154,7 @@ namespace conwrap
 
 			virtual TaskWrapped wrap(std::function<void()> handler, bool proxy) override
 			{
-				return TaskWrapped(handler, proxy, 0);
+				return TaskWrapped(handler, proxy, Epoch(0));
 			}
 
 		private:
@@ -205,7 +205,7 @@ namespace conwrap
 
 			virtual TaskWrapped wrap(std::function<void()> handler, bool proxy) override
 			{
-				return TaskWrapped(handler, proxy, 0);
+				return TaskWrapped(handler, proxy, Epoch(0));
 			}
 
 		private:
