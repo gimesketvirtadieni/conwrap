@@ -26,10 +26,8 @@ namespace conwrap
 			Epoch()
 			: lowValue(0) {}
 
-			Epoch(unsigned long long v)
+			explicit Epoch(unsigned long long v)
 			: lowValue(v) {}
-
-			virtual ~Epoch() {}
 
 			inline Epoch& operator++()
 			{

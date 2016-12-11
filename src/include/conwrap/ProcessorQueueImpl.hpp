@@ -76,7 +76,7 @@ namespace conwrap
 					for (auto& h : queue)
 					{
 						auto epoch = h.getEpoch();
-						if (h.getProxy() && 0 < epoch && epoch < currentEpoch)
+						if (h.getProxy() && Epoch(0) < epoch && epoch < currentEpoch)
 						{
 							found = true;
 							break;

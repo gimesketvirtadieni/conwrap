@@ -55,6 +55,6 @@ namespace conwrap
 		private:
 			std::function<void()> task;
 			bool                  proxy;
-			conwrap::Epoch        epoch;
+			const Epoch           epoch;
 	};
 }

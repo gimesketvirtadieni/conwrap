@@ -181,7 +181,7 @@ namespace conwrap
 						{
 							task();
 						}, proxy)));
-					}, proxy, 0));
+					}, proxy, Epoch(0)));
 				}
 
 			private:

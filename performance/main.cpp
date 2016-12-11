@@ -33,7 +33,7 @@ void generate_baseline(conwrap::ConcurrentQueue<conwrap::TaskWrapped>* queuePtr)
 		// even though this shared future is not used, it is left here keep logic alike to processor
 		std::shared_future<void>(handler.getFuture());
 
-		queuePtr->push(std::move(conwrap::TaskWrapped(std::move(handler), false, 0)));
+		queuePtr->push(std::move(conwrap::TaskWrapped(std::move(handler), false, conwrap::Epoch(0))));
 	}
 }
 
