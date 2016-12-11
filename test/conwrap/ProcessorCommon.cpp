@@ -117,7 +117,7 @@ TEST_P(ProcessorCommon, Process2)
 	auto result = processorPtr->process([&]() -> int
 	{
 		return val;
-	}).getResult();
+	}).get();
 	EXPECT_EQ(val, result);
 }
 

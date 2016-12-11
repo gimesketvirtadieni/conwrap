@@ -14,11 +14,10 @@
 
 #include <functional>
 #include <memory>
-#include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/ProcessorQueueImpl.hpp>
 #include <conwrap/ProcessorProxy.hpp>
-#include <conwrap/Provider.hpp>
-#include <conwrap/TaskProxy.hpp>
+#include <conwrap/TaskResultProxy.hpp>
+#include <conwrap/TaskWrapped.hpp>
 
 
 namespace conwrap
@@ -45,28 +44,32 @@ namespace conwrap
 			}
 
 		protected:
-			virtual Provider<ResourceType, TaskProxy>* getProvider() override
+			virtual Processor<ResourceType>* getProcessor() override
 			{
-				return processorImplPtr->getProviderProxy();
+				return processorImplPtr->getProcessor();
 			}
 
-			virtual void post(HandlerWrapper handlerWrapper) override
+			virtual ProcessorProxy<ResourceType>* getProcessorProxy() override
 			{
-				processorImplPtr->post(handlerWrapper);
+				return this;
 			}
 
-			virtual HandlerWrapper wrapHandler(std::function<void()> handler) override
+			virtual void post(TaskWrapped task) override
 			{
-				return wrapHandler(handler, true);
+				processorImplPtr->post(std::move(task));
 			}
 
-			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
+			virtual TaskWrapped wrap(std::function<void()> task) override
 			{
-				return processorImplPtr->wrapHandler(handler, proxy);
+				return std::move(wrap(std::move(task), true));
+			}
+
+			virtual TaskWrapped wrap(std::function<void()> task, bool proxy) override
+			{
+				return std::move(processorImplPtr->wrap(std::move(task), proxy));
 			}
 
 		private:
 			std::shared_ptr<internal::ProcessorQueueImpl<ResourceType>> processorImplPtr;
 	};
-
 }

@@ -15,11 +15,10 @@
 #include <asio.hpp>
 #include <functional>
 #include <memory>
-#include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/ProcessorAsioImpl.hpp>
 #include <conwrap/ProcessorProxy.hpp>
-#include <conwrap/Provider.hpp>
-#include <conwrap/TaskProxy.hpp>
+#include <conwrap/TaskResultProxy.hpp>
+#include <conwrap/TaskWrapped.hpp>
 
 
 namespace conwrap
@@ -43,29 +42,33 @@ namespace conwrap
 				return processorImplPtr->getResource();
 			}
 
-			virtual void post(HandlerWrapper handlerWrapper) override
+			virtual void post(TaskWrapped task) override
 			{
-				processorImplPtr->post(handlerWrapper);
+				processorImplPtr->post(std::move(task));
 			}
 
-			virtual HandlerWrapper wrapHandler(std::function<void()> handler)
+			virtual TaskWrapped wrap(std::function<void()> task)
 			{
-				return wrapHandler(handler, true);
+				return std::move(wrap(std::move(task), true));
 			}
 
 		protected:
-			virtual Provider<ResourceType, TaskProxy>* getProvider() override
+			virtual Processor<ResourceType>* getProcessor() override
 			{
-				return processorImplPtr->getProviderProxy();
+				return processorImplPtr->getProcessor();
 			}
 
-			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
+			virtual ProcessorProxy<ResourceType>* getProcessorProxy() override
 			{
-				return processorImplPtr->wrapHandler(handler, proxy);
+				return this;
+			}
+
+			virtual TaskWrapped wrap(std::function<void()> task, bool proxy) override
+			{
+				return std::move(processorImplPtr->wrap(std::move(task), proxy));
 			}
 
 		private:
 			std::shared_ptr<internal::ProcessorAsioImpl<ResourceType>> processorImplPtr;
 	};
-
 }

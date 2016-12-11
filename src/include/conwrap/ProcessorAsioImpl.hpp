@@ -13,12 +13,11 @@
 #pragma once
 
 #include <asio.hpp>
-#include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/Processor.hpp>
 #include <conwrap/ProcessorQueue.hpp>
-#include <conwrap/Provider.hpp>
-#include <conwrap/Task.hpp>
-#include <conwrap/TaskProxy.hpp>
+#include <conwrap/TaskResult.hpp>
+#include <conwrap/TaskResultProxy.hpp>
+#include <conwrap/TaskWrapped.hpp>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -39,8 +38,8 @@ namespace conwrap
 		class ProcessorAsioImpl : public Processor<ResourceType>
 		{
 			// friend declaration
-			template <typename> friend class conwrap::ProcessorAsio;
-			template <typename> friend class conwrap::ProcessorAsioProxy;
+			template <typename> friend class ProcessorAsio;
+			template <typename> friend class ProcessorAsioProxy;
 
 			public:
 				ProcessorAsioImpl(std::unique_ptr<ResourceType> r)
@@ -50,13 +49,13 @@ namespace conwrap
 
 				virtual void flush() override
 				{
-					// restarting dispatcher which will make sure all handlers are processed
+					// restarting dispatcher which will make sure all tasks are processed
 					{
 						std::lock_guard<std::mutex> guard(threadLock);
 
 						if (thread.joinable())
 						{
-							// reseting work object will make dispatcher exit as soon as there is no handler to process
+							// reseting work object will make dispatcher exit as soon as there is no task to process
 							this->process([&]
 							{
 								workPtr.reset();
@@ -86,25 +85,25 @@ namespace conwrap
 					return processorQueue.getResource();
 				}
 
-				virtual void post(HandlerWrapper handlerWrapper) override
+				virtual void post(TaskWrapped task) override
 				{
-					dispatcher.post(handlerWrapper);
+					dispatcher.post(task);
 				}
 
-				virtual HandlerWrapper wrapHandler(std::function<void()> handler) override
+				virtual TaskWrapped wrap(std::function<void()> task) override
 				{
-					return wrapHandler(handler, false);
+					return std::move(wrap(std::move(task), false));
 				}
 
 			protected:
-				virtual Provider<ResourceType, Task>* getProvider() override
+				virtual Processor<ResourceType>* getProcessor() override
 				{
-					return providerPtr.get();
+					return processorPtr;
 				}
 
-				inline Provider<ResourceType, TaskProxy>* getProviderProxy()
+				virtual ProcessorProxy<ResourceType>* getProcessorProxy() override
 				{
-					return providerProxyPtr.get();
+					return processorProxyPtr;
 				}
 
 				auto processPending()
@@ -113,14 +112,14 @@ namespace conwrap
 					return dispatcher.run();
 				}
 
-				inline void setProvider(Provider<ResourceType, Task> t)
+				inline void setProcessor(Processor<ResourceType>* p)
 				{
-					providerPtr = std::make_unique<Provider<ResourceType, Task>>(t);
+					processorPtr = p;
 				}
 
-				inline void setProviderProxy(Provider<ResourceType, TaskProxy> t)
+				inline void setProcessorProxy(ProcessorProxy<ResourceType>* pp)
 				{
-					providerProxyPtr = std::make_unique<Provider<ResourceType, TaskProxy>>(t);
+					processorProxyPtr = pp;
 				}
 
 				void start()
@@ -145,7 +144,7 @@ namespace conwrap
 									// the main processing loop
 									while (processPending() > 0)
 									{
-										// queue must be flushed because it may generate new handlers
+										// queue must be flushed because it may generate new tasks
 										processorQueue.flush();
 									}
 								}
@@ -174,28 +173,28 @@ namespace conwrap
 					}
 				}
 
-				virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
+				virtual TaskWrapped wrap(std::function<void()> task, bool proxy) override
 				{
-					return HandlerWrapper([=]
+					return std::move(TaskWrapped([=]
 					{
-						processorQueue.post(processorQueue.wrapHandler([=]
+						processorQueue.post(std::move(processorQueue.wrap([=]
 						{
-							handler();
-						}, proxy));
-					}, proxy, 0);
+							task();
+						}, proxy)));
+					}, proxy, Epoch(0)));
 				}
 
 			private:
-				std::unique_ptr<Provider<ResourceType, Task>>      providerPtr;
-				std::unique_ptr<Provider<ResourceType, TaskProxy>> providerProxyPtr;
-				ProcessorQueue<ResourceType>                       processorQueue;
-				asio::io_service                                   dispatcher;
-				std::unique_ptr<asio::io_service::work>            workPtr;
-				std::mutex                                         workLock;
-				std::condition_variable                            conditionVariable;
-				std::thread                                        thread;
-				std::mutex                                         threadLock;
-				bool                                               finished;
+				Processor<ResourceType>*                processorPtr;
+				ProcessorProxy<ResourceType>*           processorProxyPtr;
+				ProcessorQueue<ResourceType>            processorQueue;
+				asio::io_service                        dispatcher;
+				std::unique_ptr<asio::io_service::work> workPtr;
+				std::mutex                              workLock;
+				std::condition_variable                 conditionVariable;
+				std::thread                             thread;
+				std::mutex                              threadLock;
+				bool                                    finished;
 		};
 	}
 }

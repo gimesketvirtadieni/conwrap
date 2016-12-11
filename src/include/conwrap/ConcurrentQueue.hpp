@@ -60,7 +60,7 @@ namespace conwrap
 				return queue.c.end();
 			}
 
-			auto front()
+			ResourceType1& front()
 			{
 				// making sure queue is not empty
 				std::unique_lock<std::mutex> lock(queueLock);

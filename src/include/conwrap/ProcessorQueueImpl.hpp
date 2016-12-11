@@ -14,11 +14,10 @@
 
 #include <conwrap/ConcurrentQueue.hpp>
 #include <conwrap/Epoch.hpp>
-#include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/Processor.hpp>
-#include <conwrap/Provider.hpp>
-#include <conwrap/Task.hpp>
-#include <conwrap/TaskProxy.hpp>
+#include <conwrap/TaskResult.hpp>
+#include <conwrap/TaskResultProxy.hpp>
+#include <conwrap/TaskWrapped.hpp>
 #include <memory>
 #include <thread>
 
@@ -37,8 +36,8 @@ namespace conwrap
 		class ProcessorQueueImpl : public Processor<ResourceType>
 		{
 			// friend declaration
-			template <typename> friend class conwrap::ProcessorQueue;
-			template <typename> friend class conwrap::ProcessorQueueProxy;
+			template <typename> friend class ProcessorQueue;
+			template <typename> friend class ProcessorQueueProxy;
 
 			public:
 				ProcessorQueueImpl(std::unique_ptr<ResourceType> r)
@@ -54,12 +53,11 @@ namespace conwrap
 					auto currentEpoch = this->process([&]() -> auto
 					{
 						return getNextEpoch();
-					}).getResult();
+					}).get();
 
-					// waiting for all 'child' handlers to be processed
+					// waiting for all 'child' tasks to complete
 					while (childExists(currentEpoch))
 					{
-						// TODO: insert flush handler after the last child instead of adding at the end of the queue
 						this->process([=] {}).wait();
 					}
 				}
@@ -70,14 +68,14 @@ namespace conwrap
 				}
 
 			protected:
-				bool childExists(conwrap::Epoch currentEpoch)
+				bool childExists(Epoch currentEpoch)
 				{
 					auto found = false;
 
 					for (auto& h : queue)
 					{
 						auto epoch = h.getEpoch();
-						if (h.getProxy() && 0 < epoch && epoch < currentEpoch)
+						if (h.getProxy() && Epoch(0) < epoch && epoch < currentEpoch)
 						{
 							found = true;
 							break;
@@ -91,29 +89,29 @@ namespace conwrap
 					return nextEpoch;
 				}
 
-				virtual Provider<ResourceType, Task>* getProvider() override
+				virtual Processor<ResourceType>* getProcessor() override
 				{
-					return providerPtr.get();
+					return processorPtr;
 				}
 
-				inline Provider<ResourceType, TaskProxy>* getProviderProxy()
+				virtual ProcessorProxy<ResourceType>* getProcessorProxy() override
 				{
-					return providerProxyPtr.get();
+					return processorProxyPtr;
 				}
 
-				virtual void post(HandlerWrapper handlerWrapper) override
+				virtual void post(TaskWrapped task) override
 				{
-					queue.push(handlerWrapper);
+					queue.push(std::move(task));
 				}
 
-				inline void setProvider(Provider<ResourceType, Task> t)
+				inline void setProcessor(Processor<ResourceType>* p)
 				{
-					providerPtr = std::make_unique<Provider<ResourceType, Task>>(t);
+					processorPtr = p;
 				}
 
-				inline void setProviderProxy(Provider<ResourceType, TaskProxy> t)
+				inline void setProcessorProxy(ProcessorProxy<ResourceType>* pp)
 				{
-					providerProxyPtr = std::make_unique<Provider<ResourceType, TaskProxy>>(t);
+					processorProxyPtr = pp;
 				}
 
 				void start()
@@ -127,14 +125,14 @@ namespace conwrap
 							{
 								for(finished = false; !(queue.empty() && finished);)
 								{
-									// waiting for a handler
-									auto handler = queue.front();
+									// waiting for a task to arrive
+									TaskWrapped& task = queue.front();
 
 									// setting current epoch to be used for submitted tasks via processor proxy
-									currentEpoch = handler.getEpoch();
+									currentEpoch = task.getEpoch();
 
-									// executing handler
-									handler();
+									// executing task
+									task();
 
 									// removing executed item
 									queue.pop();
@@ -156,32 +154,32 @@ namespace conwrap
 								finished = true;
 							});
 
-							// waiting until consumer finsihes all pending handlers
+							// waiting until consumer finsihes all pending tasks
 							thread.join();
 						}
 					}
 				}
 
-				virtual HandlerWrapper wrapHandler(std::function<void()> handler) override
+				virtual TaskWrapped wrap(std::function<void()> task) override
 				{
-					return wrapHandler(handler, false);
+					return std::move(wrap(std::move(task), false));
 				}
 
-				virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
+				virtual TaskWrapped wrap(std::function<void()> task, bool proxy) override
 				{
-					return HandlerWrapper(handler, proxy, (proxy ? currentEpoch : nextEpoch++));
+					return std::move(TaskWrapped(std::move(task), proxy, (proxy ? currentEpoch : nextEpoch++)));
 				}
 
 			private:
-				std::unique_ptr<ResourceType>                      resourcePtr;
-				std::unique_ptr<Provider<ResourceType, Task>>      providerPtr;
-				std::unique_ptr<Provider<ResourceType, TaskProxy>> providerProxyPtr;
-				ConcurrentQueue<HandlerWrapper>                    queue;
-				std::thread                                        thread;
-				std::mutex                                         threadLock;
-				bool                                               finished;
-				conwrap::Epoch                                     nextEpoch;
-				conwrap::Epoch                                     currentEpoch;
+				std::unique_ptr<ResourceType> resourcePtr;
+				Processor<ResourceType>*      processorPtr;
+				ProcessorProxy<ResourceType>* processorProxyPtr;
+				ConcurrentQueue<TaskWrapped>  queue;
+				std::thread                   thread;
+				std::mutex                    threadLock;
+				bool                          finished;
+				Epoch                         nextEpoch;
+				Epoch                         currentEpoch;
 		};
 	}
 }

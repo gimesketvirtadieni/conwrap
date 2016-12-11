@@ -13,7 +13,7 @@
 #pragma once
 
 #include <future>
-#include <conwrap/TaskBase.hpp>
+#include <conwrap/TaskResultBase.hpp>
 
 
 namespace conwrap
@@ -25,12 +25,10 @@ namespace conwrap
 	class ProcessorProxy;
 
 	template <typename ResourceType, typename ResultType>
-	class TaskProxy : public TaskBase<ResourceType, ResultType, TaskProxy>
+	class TaskResultProxy : public TaskResultBase<ResourceType, ResultType, TaskResultProxy>
 	{
 		public:
-			TaskProxy(Processor<ResourceType>* p, ProcessorProxy<ResourceType>* pp, std::shared_future<ResultType> r)
-			: TaskBase<ResourceType, ResultType, TaskProxy>(pp, pp, r) {}
-
-			virtual ~TaskProxy() {}
+			explicit TaskResultProxy(Processor<ResourceType>* p, ProcessorProxy<ResourceType>* pp, std::shared_future<ResultType> r)
+			: TaskResultBase<ResourceType, ResultType, TaskResultProxy>(pp, pp, r) {}
 	};
 }

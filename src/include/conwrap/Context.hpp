@@ -25,10 +25,8 @@ namespace conwrap
 	class Context
 	{
 		public:
-			Context(ProcessorProxy<ResourceType>* p)
+			explicit Context(ProcessorProxy<ResourceType>* p)
 			: processorProxyPtr(p) {}
-
-			virtual ~Context() {}
 
 			inline ProcessorProxy<ResourceType>* getProcessorProxy()
 			{

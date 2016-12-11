@@ -23,10 +23,11 @@ namespace conwrap
 	class Epoch
 	{
 		public:
-			Epoch(unsigned long long v)
-			: lowValue(v) {}
+			Epoch()
+			: lowValue(0) {}
 
-			virtual ~Epoch() {}
+			explicit Epoch(unsigned long long v)
+			: lowValue(v) {}
 
 			inline Epoch& operator++()
 			{
@@ -54,6 +55,7 @@ namespace conwrap
 		    }
 
 		private:
-			unsigned long long lowValue;
+		    // TODO: atomic must be used
+		    unsigned long long lowValue;
 	};
 }

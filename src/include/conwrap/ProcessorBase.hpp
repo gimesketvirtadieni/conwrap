@@ -12,83 +12,59 @@
 
 #pragma once
 
-#include <future>
-#include <functional>
 #include <conwrap/Context.hpp>
-#include <conwrap/HandlerWrapper.hpp>
-#include <conwrap/Provider.hpp>
 #include <conwrap/Task.hpp>
+#include <conwrap/TaskResult.hpp>
+#include <conwrap/TaskWithContext.hpp>
+#include <conwrap/TaskWrapped.hpp>
+#include <functional>
+#include <future>
 
 
 namespace conwrap
 {
-	template <typename ResourceType, template<typename ResourceType, typename ResultType> class TaskType>
+	// forward declaration
+	template <typename ResourceType>
+	class Processor;
+	template <typename ResourceType>
+	class ProcessorProxy;
+
+	template <typename ResourceType, template<typename ResourceType, typename ResultType> class TaskResultType>
 	class ProcessorBase
 	{
 		public:
 			virtual ResourceType* getResource() = 0;
 
-			template <typename F>
-			auto process(F fun) -> TaskType<ResourceType, decltype(fun())>
+			template <typename FunctionType>
+			auto process(FunctionType fun) -> TaskResultType<ResourceType, decltype(fun())>
 			{
-				auto promisePtr = std::make_shared<std::promise<decltype(fun())>>();
-
-				// posting a new handler
-				this->post(this->wrapHandler([=]
-				{
-					setPromiseValue(*promisePtr, fun);
-				}));
-
-				return getProvider()->createTask(std::shared_future<decltype(fun())>(promisePtr->get_future()));
+				return std::move(processTask(std::move(Task<ResourceType, FunctionType, TaskResultType>(std::move(fun), getProcessor(), getProcessorProxy()))));
 			}
 
-			template <typename F>
-			auto process(F fun) -> TaskType<ResourceType, decltype(fun(std::declval<Context<ResourceType>>()))>
+			template <typename FunctionType>
+			auto process(FunctionType fun) -> TaskResultType<ResourceType, decltype(fun(std::declval<Context<ResourceType>>()))>
 			{
-				auto promisePtr = std::make_shared<std::promise<decltype(fun(std::declval<Context<ResourceType>>()))>>();
-
-				// posting a new handler
-				this->post(this->wrapHandler([=]
-				{
-					setPromiseValueWithContext(*promisePtr, fun);
-				}));
-
-				return getProvider()->createTask(std::shared_future<decltype(fun(std::declval<Context<ResourceType>>()))>(promisePtr->get_future()));
+				return std::move(processTask(std::move(TaskWithContext<ResourceType, FunctionType, TaskResultType>(std::move(fun), Context<ResourceType>(getProcessorProxy()), getProcessor(), getProcessorProxy()))));
 			}
 
 		protected:
-			virtual Provider<ResourceType, TaskType>* getProvider() = 0;
+			virtual Processor<ResourceType>*      getProcessor() = 0;
+			virtual ProcessorProxy<ResourceType>* getProcessorProxy() = 0;
+			virtual void                          post(TaskWrapped) = 0;
 
-			virtual void post(HandlerWrapper) = 0;
-
-			template <typename Fut, typename Fun>
-			void setPromiseValue(std::promise<Fut>& p, Fun& f)
+			template <typename TaskType>
+			auto processTask(TaskType task)
 			{
-				p.set_value(f());
+				// creating and storing on the stack a task result so it can be returned to the caller
+				auto taskResult = task.createResult();
+
+				// posting the task for the processing
+				this->post(std::move(this->wrap(std::move(task))));
+
+				return std::move(taskResult);
 			}
 
-			template <typename Fun>
-			void setPromiseValue(std::promise<void>& p, Fun& f)
-			{
-				f();
-				p.set_value();
-			}
-
-			template <typename Fut, typename Fun>
-			void setPromiseValueWithContext(std::promise<Fut>& p, Fun& f)
-			{
-				p.set_value(f(getProvider()->createContext()));
-			}
-
-			template <typename Fun>
-			void setPromiseValueWithContext(std::promise<void>& p, Fun& f)
-			{
-				f(getProvider()->createContext());
-				p.set_value();
-			}
-
-			virtual HandlerWrapper wrapHandler(std::function<void()>) = 0;
-
-			virtual HandlerWrapper wrapHandler(std::function<void()>, bool) = 0;
+			virtual TaskWrapped wrap(std::function<void()>) = 0;
+			virtual TaskWrapped wrap(std::function<void()>, bool) = 0;
 	};
 }

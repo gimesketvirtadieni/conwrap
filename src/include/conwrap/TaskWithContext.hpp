@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include <conwrap/Context.hpp>
 #include <future>
 #include <utility>
 
@@ -27,34 +28,37 @@ namespace conwrap
 	template <typename ResourceType>
 	class ProcessorProxy;
 
-	// this is a bit quicker version for std::packaged_task
 	template <typename ResourceType, typename FunctionType, template<typename ResourceType, typename ResultType> class TaskResultType>
-	class Task
+	class TaskWithContext
 	{
 		// friend declaration
 		template <typename, template<typename, typename> class> friend class ProcessorBase;
 
 		private:
-			FunctionType                  fun;
-			Processor<ResourceType>*      processorPtr;
-			ProcessorProxy<ResourceType>* processorProxyPtr;
-			std::promise<decltype(fun())> promise;
+			FunctionType                                                       fun;
+			Context<ResourceType>                                              context;
+			Processor<ResourceType>*                                           processorPtr;
+			ProcessorProxy<ResourceType>*                                      processorProxyPtr;
+			std::promise<decltype(fun(std::declval<Context<ResourceType>>()))> promise;
 
 		public:
-			explicit Task(FunctionType f, Processor<ResourceType>* p, ProcessorProxy<ResourceType>* pp)
+			explicit TaskWithContext(FunctionType f, Context<ResourceType> c, Processor<ResourceType>* p, ProcessorProxy<ResourceType>* pp)
 			: fun(f)
+			, context(c)
 			, processorPtr(p)
 			, processorProxyPtr(pp) {}
 
 			// copy contructor is required to comply with std::function<...>
-			Task(Task& c)
+			TaskWithContext(TaskWithContext& c)
 			: fun(std::move(c.fun))
+			, context(std::move(c.context))
 			, processorPtr(std::move(c.processorPtr))
 			, processorProxyPtr(std::move(c.processorProxyPtr))
 			, promise(std::move(c.promise)) {}
 
-			Task(Task&& c)
+			TaskWithContext(TaskWithContext&& c)
 			: fun(std::move(c.fun))
+			, context(std::move(c.context))
 			, processorPtr(std::move(c.processorPtr))
 			, processorProxyPtr(std::move(c.processorProxyPtr))
 			, promise(std::move(c.promise)) {}
@@ -65,10 +69,10 @@ namespace conwrap
 			}
 
 		protected:
-			auto createResult() -> TaskResultType<ResourceType, decltype(fun())>
+			auto createResult() -> TaskResultType<ResourceType, decltype(fun(std::declval<Context<ResourceType>>()))>
 			{
 				// this method can be called only once per task
-				return TaskResultType<ResourceType, decltype(fun())>(processorPtr, processorProxyPtr, std::shared_future<decltype(fun())>(std::move(getFuture())));
+				return TaskResultType<ResourceType, decltype(fun(std::declval<Context<ResourceType>>()))>(processorPtr, processorProxyPtr, std::shared_future<decltype(fun(std::declval<Context<ResourceType>>()))>(std::move(getFuture())));
 			}
 
 			inline auto getFuture()
@@ -79,13 +83,13 @@ namespace conwrap
 			template <typename Fun, typename Fut>
 			void setPromiseValue(Fun& f, std::promise<Fut>& p)
 			{
-				p.set_value(f());
+				p.set_value(f(context));
 			}
 
 			template <typename Fun>
 			void setPromiseValue(Fun& f, std::promise<void>& p)
 			{
-				f();
+				f(context);
 				p.set_value();
 			}
 	};

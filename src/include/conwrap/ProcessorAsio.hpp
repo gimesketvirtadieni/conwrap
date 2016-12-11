@@ -13,13 +13,12 @@
 #pragma once
 
 #include <asio.hpp>
-#include <conwrap/HandlerWrapper.hpp>
 #include <conwrap/Processor.hpp>
 #include <conwrap/ProcessorAsioImpl.hpp>
 #include <conwrap/ProcessorAsioProxy.hpp>
 #include <conwrap/ProcessorQueue.hpp>
-#include <conwrap/Provider.hpp>
-#include <conwrap/Task.hpp>
+#include <conwrap/TaskResult.hpp>
+#include <conwrap/TaskWrapped.hpp>
 #include <functional>
 #include <memory>
 #include <type_traits>
@@ -39,9 +38,9 @@ namespace conwrap
 			: processorImplPtr(std::make_shared<internal::ProcessorAsioImpl<ResourceType>>(std::move(resource)))
 			, processorProxyPtr(std::unique_ptr<ProcessorAsioProxy<ResourceType>>(new ProcessorAsioProxy<ResourceType>(processorImplPtr)))
 			{
-				// creating task providers
-				processorImplPtr->setProvider(Provider<ResourceType, Task>(this, processorProxyPtr.get()));
-				processorImplPtr->setProviderProxy(Provider<ResourceType, TaskProxy>(this, processorProxyPtr.get()));
+				// weiring processors
+				processorImplPtr->setProcessor(this);
+				processorImplPtr->setProcessorProxy(processorProxyPtr.get());
 
 				// this is a 'wooddoo' compile-time dependancy injection inspied by https://jguegant.github.io/blogs/tech/sfinae-introduction.html
 				setProcessor(processorImplPtr->getResource());
@@ -71,14 +70,14 @@ namespace conwrap
 				processorImplPtr->flush();
 			}
 
-			virtual void post(HandlerWrapper handlerWrapper) override
+			virtual void post(TaskWrapped task) override
 			{
-				processorImplPtr->post(handlerWrapper);
+				processorImplPtr->post(std::move(task));
 			}
 
-			virtual HandlerWrapper wrapHandler(std::function<void()> handler)
+			virtual TaskWrapped wrap(std::function<void()> task)
 			{
-				return wrapHandler(handler, false);
+				return std::move(wrap(std::move(task), false));
 			}
 
 		protected:
@@ -94,9 +93,14 @@ namespace conwrap
 			template <typename T>
 			struct hasSetProcessorProxy<T, decltype(std::declval<T>().setProcessorProxy((conwrap::ProcessorAsioProxy<ResourceType>*)nullptr))> : std::true_type {};
 
-			virtual Provider<ResourceType, Task>* getProvider() override
+			virtual Processor<ResourceType>* getProcessor() override
 			{
-				return processorImplPtr->getProvider();
+				return this;
+			}
+
+			virtual ProcessorProxy<ResourceType>* getProcessorProxy() override
+			{
+				return processorProxyPtr.get();
 			}
 
 			template <typename T>
@@ -117,9 +121,9 @@ namespace conwrap
 			template <typename T>
 			typename std::enable_if<!hasSetProcessorProxy<T>::value, void>::type setProcessorProxy(T* obj) {}
 
-			virtual HandlerWrapper wrapHandler(std::function<void()> handler, bool proxy) override
+			virtual TaskWrapped wrap(std::function<void()> task, bool proxy) override
 			{
-				return processorImplPtr->wrapHandler(handler, proxy);
+				return std::move(processorImplPtr->wrap(std::move(task), proxy));
 			}
 
 		private:
