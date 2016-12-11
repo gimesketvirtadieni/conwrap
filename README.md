@@ -38,7 +38,7 @@ However `std::async` is not a good fit for task-based processing, because depend
 conwrap::ProcessorQueue<Dummy> processor;
 
 // submitting an asynchronous task that will invoke syncMethod
-conwrap::Task<Result> task = processor.process([param = 123](auto context)
+auto taskResult = processor.process([param = 123](auto context)
 {
 	// gaining access to the object dummy
 	auto dummyPtr = context.getResource();
@@ -51,9 +51,9 @@ conwrap::Task<Result> task = processor.process([param = 123](auto context)
 
 ##Background
 
-If you are into C++ asynchronous code then you recall great talk by Herb Sutter: [“C++ and Beyond 2012: Herb Sutter - C++ Concurrency”](https://channel9.msdn.com/Shows/Going+Deep/C-and-Beyond-2012-Herb-Sutter-Concurrency-and-Parallelism). Otherwise I highly recommend watching it as Herb presents a pattern for a generic wrapper. This pattern can be used to turn synchronous code into asynchronous one in a so elegant way that it cannot be wrong. However there is a catch: presented design is too simplistic and omits one crucial feature: task (handler) should be able to issue a new task (handler). Why is this feature so crucial and why it ruins elegance of the presented design?
+If you are into C++ asynchronous code then you recall great talk by Herb Sutter: [“C++ and Beyond 2012: Herb Sutter - C++ Concurrency”](https://channel9.msdn.com/Shows/Going+Deep/C-and-Beyond-2012-Herb-Sutter-Concurrency-and-Parallelism). Otherwise I highly recommend watching it as Herb presents a pattern for a generic wrapper. This pattern can be used to turn synchronous code into asynchronous one in a so elegant way that it cannot be wrong. However there is a catch: presented design is too simplistic and omits one crucial feature: a task should be able to issue a new task. Why is this feature so crucial and why it ruins elegance of the presented design?
 
-For a simple application with minimal logic in tasks being submitted for asynchronous execution (like for example log library where a task simply outputs a message to all sinks) mentioned feature is irrelevant. But in most cases logic presented in the tasks is more complex and requires new tasks to be issued based on certain conditions. For example if you develop a server using [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) then your `onReceive` task (handler) will submit a new task (handler) to keep receiving new data coming in.
+For a simple application with small tasks being submitted for asynchronous execution (like for example log library where a task simply outputs a message to all sinks) mentioned feature is irrelevant. But in most cases logic presented in the tasks is more complex and requires new tasks to be issued based on certain conditions. For example if you develop a server using [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) then your `onReceive` task (handler) will submit a new task (handler) to keep receiving new data coming in.
 
 Now why submitting a new task from a running task spoils all the elegance? Without this functionality processing termination and processing flushing are straight-forward to implement:
 - To terminate processing one just need to add a new task that will tell processor to stop. This can be done safely from the processor’s destructor which will wait for that task to complete (see Herb’s talk for details).
@@ -117,7 +117,7 @@ conwrap::ProcessorQueue<Dummy> processor;
 }  // someObjectPtr is destroyed here
 ```
 
-In a similar way, Concurrent Wrapper ensures there is no dangling pointers left when it's destroyed. This is achieved by waiting for all pending tasks to complete by its destructor. It is a different semantic compared to [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) `io_service` class, which requires stop method to be called and leaves unfinished handlers.
+In a similar way, Concurrent Wrapper ensures there is no dangling pointers left when it's destroyed. This is achieved by waiting for all pending tasks to complete by its destructor. It is a different semantic compared to [Boos.Asio](http://www.boost.org/doc/libs/1_61_0/doc/html/boost_asio.html) `io_service` class, which requires stop method to be called and leaves unfinished tasks (handlers).
 
 To create a processor one must provide a type of a 'resource' that processor going to contain. This resource provides possibility to keep a custom state between executions of different tasks:
 ```c++
@@ -169,7 +169,7 @@ Under the hood, `conwrap::ProcessorAsio` is implemented by using one more thread
 
 ##Composing tasks by using `.then(...)`
 
-One more great feature of this library is that tasks are composable! In other words when an arbitrary code is submitted for processing, the library returns a `conwrap::Task` object which can be used for submitting a new piece of code (continuation) for asynchronious processing:
+One more great feature of this library is that tasks are composable! In other words when an arbitrary code is submitted for processing, the library returns a `conwrap::TaskResult` object which can be used for submitting a new piece of code (continuation) for asynchronious processing:
 ```c++
 {
 	// creating a concurrent processor
