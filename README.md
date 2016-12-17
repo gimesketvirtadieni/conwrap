@@ -239,5 +239,10 @@ Other options for compiling Concurrent Wrapper library:
 
 ##Limitations
 
-- Exceptions are not yet handled properly: it is already complex code, so implementing exceptions handling was posponed 
+- Exceptions are not yet handled properly: it is already complex code, so implementing exceptions handling was postponed 
 - Processor do not accept `void` as resource type (although primitive types are supported)
+
+
+##Current Status and Roadmap
+
+I developed this library as a part of my other ['Command Line Interface for C++ Applications'](/gimesketvirtadieni/cli) project. It is used as the main ‘machinery’ for asynchronous telnet server implementation. Currently this library already provides more capabilities than I need so I do not plan to extend its functionality but rather maintain it by resolving issues once discovered.
