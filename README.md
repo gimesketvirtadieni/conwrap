@@ -245,4 +245,4 @@ Other options for compiling Concurrent Wrapper library:
 
 ##Current Status and Roadmap
 
-I developed this library as a part of my other ['Command Line Interface for C++ Applications'](/gimesketvirtadieni/cli) project. It is used as the main ‘machinery’ for asynchronous telnet server implementation. Currently this library already provides more capabilities than I need so I do not plan to extend its functionality but rather maintain it by resolving issues once discovered.
+I developed this library as a part of my other ['Command Line Interface for C++ Applications'](gimesketvirtadieni/cli) project. It is used as the main ‘machinery’ for asynchronous telnet server implementation. Currently this library already provides more capabilities than I need so I do not plan to extend its functionality but rather maintain it by resolving issues once discovered.
