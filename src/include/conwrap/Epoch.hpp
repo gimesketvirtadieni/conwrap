@@ -19,7 +19,7 @@ namespace conwrap
 {
 	// this is just a 'big-enough' counter
 	// assuming increment rate is 1M per sec, it will expire in ~584942 years!
-	// it can be hugely increased by implementing highValue along with lowValue
+	// it can be hugely increased by implementing highValue along with lowValue, but it this case a dedicate lock must be used by generator
 	class Epoch
 	{
 		public:
@@ -29,24 +29,9 @@ namespace conwrap
 			explicit Epoch(unsigned long long v)
 			: lowValue(v) {}
 
-			inline Epoch& operator++()
-			{
-				// incrementing value and returning result
-				lowValue++;
-				return *this;
-			}
-
-			inline Epoch operator++(int)
-			{
-				// saving value before post-increment
-				Epoch tmp(*this);
-				operator++();
-				return tmp;
-			}
-
-		    inline friend bool operator<(const Epoch& l, const Epoch& r)
+		    inline friend bool operator<=(const Epoch& l, const Epoch& r)
 		    {
-		        return std::tie(l.lowValue) < std::tie(r.lowValue);
+		        return std::tie(l.lowValue) <= std::tie(r.lowValue);
 		    }
 
 		    inline auto getLowValue()
@@ -55,7 +40,6 @@ namespace conwrap
 		    }
 
 		private:
-		    // TODO: atomic must be used
 		    unsigned long long lowValue;
 	};
 }

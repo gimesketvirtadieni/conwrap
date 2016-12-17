@@ -14,6 +14,7 @@
 
 #include <conwrap/ConcurrentQueue.hpp>
 #include <conwrap/Epoch.hpp>
+#include <conwrap/EpochGenerator.hpp>
 #include <conwrap/Processor.hpp>
 #include <conwrap/TaskResult.hpp>
 #include <conwrap/TaskResultProxy.hpp>
@@ -42,17 +43,17 @@ namespace conwrap
 			public:
 				ProcessorQueueImpl(std::unique_ptr<ResourceType> r)
 				: resourcePtr(std::move(r))
-				, nextEpoch(1)
-				, currentEpoch(0) {}
+				, epoch(0) {}
 
 				virtual ~ProcessorQueueImpl() {}
 
 				virtual void flush() override
 				{
-					// figuring out next epoch value
+					// figuring out current epoch value
 					auto currentEpoch = this->process([&]() -> auto
 					{
-						return getNextEpoch();
+						// it is safe to copy current epoch value here as it will be done on the processor's thread
+						return epochGenerator.current();
 					}).get();
 
 					// waiting for all 'child' tasks to complete
@@ -75,18 +76,13 @@ namespace conwrap
 					for (auto& h : queue)
 					{
 						auto epoch = h.getEpoch();
-						if (h.getProxy() && Epoch(0) < epoch && epoch < currentEpoch)
+						if (h.getProxy() && Epoch(1) <= epoch && epoch <= currentEpoch)
 						{
 							found = true;
 							break;
 						}
 					}
 					return found;
-				}
-
-				inline auto getNextEpoch()
-				{
-					return nextEpoch;
 				}
 
 				virtual Processor<ResourceType>* getProcessor() override
@@ -129,7 +125,7 @@ namespace conwrap
 									TaskWrapped& task = queue.front();
 
 									// setting current epoch to be used for submitted tasks via processor proxy
-									currentEpoch = task.getEpoch();
+									epoch = task.getEpoch();
 
 									// executing task
 									task();
@@ -167,7 +163,8 @@ namespace conwrap
 
 				virtual TaskWrapped wrap(std::function<void()> task, bool proxy) override
 				{
-					return std::move(TaskWrapped(std::move(task), proxy, (proxy ? currentEpoch : nextEpoch++)));
+					// it is safe to use this->epoch here as submitting 'child' tasks can be done only from processor's thread
+					return std::move(TaskWrapped(std::move(task), proxy, (proxy ? epoch : epochGenerator.generate())));
 				}
 
 			private:
@@ -178,8 +175,8 @@ namespace conwrap
 				std::thread                   thread;
 				std::mutex                    threadLock;
 				bool                          finished;
-				Epoch                         nextEpoch;
-				Epoch                         currentEpoch;
+				EpochGenerator                epochGenerator;
+				Epoch                         epoch;
 		};
 	}
 }

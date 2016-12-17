@@ -59,7 +59,7 @@ namespace conwrap
 			, processorProxyPtr(std::move(c.processorProxyPtr))
 			, promise(std::move(c.promise)) {}
 
-			inline void operator() ()
+			inline void operator()()
 			{
 				setPromiseValue(fun, promise);
 			}
@@ -68,7 +68,7 @@ namespace conwrap
 			auto createResult() -> TaskResultType<ResourceType, decltype(fun())>
 			{
 				// this method can be called only once per task
-				return TaskResultType<ResourceType, decltype(fun())>(processorPtr, processorProxyPtr, std::shared_future<decltype(fun())>(std::move(getFuture())));
+				return std::move(TaskResultType<ResourceType, decltype(fun())>(processorPtr, processorProxyPtr, std::shared_future<decltype(fun())>(std::move(getFuture()))));
 			}
 
 			inline auto getFuture()
