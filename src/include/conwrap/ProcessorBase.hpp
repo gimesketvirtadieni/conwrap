@@ -29,7 +29,7 @@ namespace conwrap
 	template <typename ResourceType>
 	class ProcessorProxy;
 
-	template <typename ResourceType, template<typename ResourceType, typename ResultType> class TaskResultType>
+	template <typename ResourceType, template<typename, typename> class TaskResultType>
 	class ProcessorBase
 	{
 		public:

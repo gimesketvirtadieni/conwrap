@@ -22,13 +22,13 @@ namespace conwrap
 	// forward declaration
 	template <typename ResourceType>
 	class Processor;
-	template <typename ResourceType, template<typename ResourceType, typename ResultType> class TaskResultType>
+	template <typename ResourceType, template<typename, typename> class TaskResultType>
 	class ProcessorBase;
 	template <typename ResourceType>
 	class ProcessorProxy;
 
 	// this is a bit quicker version for std::packaged_task
-	template <typename ResourceType, typename FunctionType, template<typename ResourceType, typename ResultType> class TaskResultType>
+	template <typename ResourceType, typename FunctionType, template<typename, typename> class TaskResultType>
 	class Task
 	{
 		// friend declaration

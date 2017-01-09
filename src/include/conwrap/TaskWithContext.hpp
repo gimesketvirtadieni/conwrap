@@ -23,12 +23,12 @@ namespace conwrap
 	// forward declaration
 	template <typename ResourceType>
 	class Processor;
-	template <typename ResourceType, template<typename ResourceType, typename ResultType> class TaskResultType>
+	template <typename ResourceType, template<typename, typename> class TaskResultType>
 	class ProcessorBase;
 	template <typename ResourceType>
 	class ProcessorProxy;
 
-	template <typename ResourceType, typename FunctionType, template<typename ResourceType, typename ResultType> class TaskResultType>
+	template <typename ResourceType, typename FunctionType, template<typename, typename> class TaskResultType>
 	class TaskWithContext
 	{
 		// friend declaration
