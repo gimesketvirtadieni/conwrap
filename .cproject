@@ -166,8 +166,8 @@
 									<listOptionValue builtIn="false" value="gtest"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.932959948" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" useByScannerDiscovery="false" valueType="libPaths">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ConcurrentWrapper/contrib/googletest/build/googlemock}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ConcurrentWrapper/contrib/googletest/build/googletest}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/contrib/googletest/googlemock/build-aux}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/contrib/googletest/googletest/build-aux}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1654118487" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
@@ -252,6 +252,7 @@
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="PerformanceTest"/>
 		<configuration configurationName="Debug">
 			<resource resourceType="PROJECT" workspacePath="/3"/>
 		</configuration>

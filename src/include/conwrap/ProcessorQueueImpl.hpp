@@ -43,6 +43,9 @@ namespace conwrap
 			public:
 				ProcessorQueueImpl(std::unique_ptr<ResourceType> r)
 				: resourcePtr(std::move(r))
+				, processorPtr(nullptr)
+				, processorProxyPtr(nullptr)
+				, finished(false)
 				, epoch(0) {}
 
 				virtual ~ProcessorQueueImpl() {}

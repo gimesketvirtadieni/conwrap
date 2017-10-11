@@ -24,7 +24,9 @@
 class Server
 {
 	public:
-		Server(short p) : port(p) {}
+		Server(short p)
+		: processorProxyPtr(nullptr)
+		, port(p) {}
 
 		void close()
 		{

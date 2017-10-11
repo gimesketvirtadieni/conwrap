@@ -33,6 +33,8 @@ namespace conwrap
 	class ProcessorBase
 	{
 		public:
+			virtual ~ProcessorBase() = default;
+
 			virtual ResourceType* getResource() = 0;
 
 			template <typename FunctionType>
