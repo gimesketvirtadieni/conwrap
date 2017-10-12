@@ -43,9 +43,9 @@ namespace conwrap
 
 			public:
 				ProcessorAsioImpl(std::unique_ptr<ResourceType> r)
-				: processorQueue(std::move(r))
-				, processorPtr(nullptr)
+				: processorPtr(nullptr)
 				, processorProxyPtr(nullptr)
+				, processorQueue(std::move(r))
 				, finished(false) {}
 
 				virtual ~ProcessorAsioImpl() {}
