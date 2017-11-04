@@ -38,6 +38,11 @@ namespace conwrap
 
 			virtual ~ProcessorQueueProxy() {}
 
+			virtual ProcessorProxy<ResourceType>* getProcessorProxy() override
+			{
+				return this;
+			}
+
 			virtual ResourceType* getResource() override
 			{
 				return processorImplPtr->getResource();
@@ -47,11 +52,6 @@ namespace conwrap
 			virtual Processor<ResourceType>* getProcessor() override
 			{
 				return processorImplPtr->getProcessor();
-			}
-
-			virtual ProcessorProxy<ResourceType>* getProcessorProxy() override
-			{
-				return this;
 			}
 
 			virtual void post(TaskWrapped task) override

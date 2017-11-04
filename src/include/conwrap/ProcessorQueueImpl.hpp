@@ -66,6 +66,11 @@ namespace conwrap
 					}
 				}
 
+				virtual ProcessorProxy<ResourceType>* getProcessorProxy() override
+				{
+					return processorProxyPtr;
+				}
+
 				virtual ResourceType* getResource() override
 				{
 					return resourcePtr.get();
@@ -91,11 +96,6 @@ namespace conwrap
 				virtual Processor<ResourceType>* getProcessor() override
 				{
 					return processorPtr;
-				}
-
-				virtual ProcessorProxy<ResourceType>* getProcessorProxy() override
-				{
-					return processorProxyPtr;
 				}
 
 				virtual void post(TaskWrapped task) override

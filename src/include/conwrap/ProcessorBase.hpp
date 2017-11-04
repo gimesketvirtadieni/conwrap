@@ -35,6 +35,8 @@ namespace conwrap
 		public:
 			virtual ~ProcessorBase() = default;
 
+			virtual ProcessorProxy<ResourceType>* getProcessorProxy() = 0;
+
 			virtual ResourceType* getResource() = 0;
 
 			template <typename FunctionType>
@@ -50,9 +52,8 @@ namespace conwrap
 			}
 
 		protected:
-			virtual Processor<ResourceType>*      getProcessor() = 0;
-			virtual ProcessorProxy<ResourceType>* getProcessorProxy() = 0;
-			virtual void                          post(TaskWrapped) = 0;
+			virtual Processor<ResourceType>* getProcessor() = 0;
+			virtual void                     post(TaskWrapped) = 0;
 
 			template <typename TaskType>
 			auto processTask(TaskType task)

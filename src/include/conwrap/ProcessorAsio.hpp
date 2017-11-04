@@ -60,6 +60,11 @@ namespace conwrap
 				return processorImplPtr->getDispatcher();
 			}
 
+			virtual ProcessorProxy<ResourceType>* getProcessorProxy() override
+			{
+				return processorProxyPtr.get();
+			}
+
 			virtual ResourceType* getResource() override
 			{
 				return processorImplPtr->getResource();
@@ -96,11 +101,6 @@ namespace conwrap
 			virtual Processor<ResourceType>* getProcessor() override
 			{
 				return this;
-			}
-
-			virtual ProcessorProxy<ResourceType>* getProcessorProxy() override
-			{
-				return processorProxyPtr.get();
 			}
 
 			template <typename T>

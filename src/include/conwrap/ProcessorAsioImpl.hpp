@@ -83,6 +83,11 @@ namespace conwrap
 					return &dispatcher;
 				}
 
+				virtual ProcessorProxy<ResourceType>* getProcessorProxy() override
+				{
+					return processorProxyPtr;
+				}
+
 				virtual ResourceType* getResource() override
 				{
 					return processorQueue.getResource();
@@ -102,11 +107,6 @@ namespace conwrap
 				virtual Processor<ResourceType>* getProcessor() override
 				{
 					return processorPtr;
-				}
-
-				virtual ProcessorProxy<ResourceType>* getProcessorProxy() override
-				{
-					return processorProxyPtr;
 				}
 
 				auto processPending()
